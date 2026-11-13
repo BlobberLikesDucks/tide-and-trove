@@ -1,0 +1,227 @@
+{
+  "communities": {
+    "0": [
+      "game_feedback_list",
+      "game_feedback_list_auto_display_option",
+      "game_feedback_list_bottom_right_ui",
+      "game_feedback_list_curators_desk",
+      "game_feedback_list_curators_field_guide",
+      "game_feedback_list_game_map",
+      "game_feedback_list_gui_title_plate",
+      "game_feedback_list_guide_popup",
+      "game_feedback_list_missing_collision",
+      "game_feedback_list_prep_lab",
+      "game_feedback_list_settings_menu",
+      "game_feedback_list_texture_gaps"
+    ],
+    "1": [
+      "game_feedback_list_amber",
+      "game_feedback_list_backpack",
+      "game_feedback_list_cleaned_fossils",
+      "game_feedback_list_first_person_arms",
+      "game_feedback_list_fossils",
+      "game_feedback_list_held_item_display",
+      "game_feedback_list_hotbar",
+      "game_feedback_list_inventory",
+      "game_feedback_list_storage",
+      "game_feedback_list_tool_equip_system",
+      "game_feedback_list_tool_station",
+      "game_feedback_list_vital_tools"
+    ],
+    "2": [
+      "game_feedback_list_black_line_artifacts",
+      "game_feedback_list_customers",
+      "game_feedback_list_daily_review",
+      "game_feedback_list_gem_display",
+      "game_feedback_list_hanged_shells",
+      "game_feedback_list_manual_fossil_display",
+      "game_feedback_list_museum",
+      "game_feedback_list_nerd_customers",
+      "game_feedback_list_npc_model",
+      "game_feedback_list_refreshment_stands",
+      "game_feedback_list_z_fighting"
+    ],
+    "3": [
+      "game_feedback_list_build_menu",
+      "game_feedback_list_cash",
+      "game_feedback_list_display_validator_building",
+      "game_feedback_list_employee_system",
+      "game_feedback_list_star_rating",
+      "game_feedback_list_upgrade_points",
+      "game_feedback_list_upgrade_tree"
+    ],
+    "4": [
+      "game_feedback_list_equipment_shop",
+      "game_feedback_list_floating_objects",
+      "game_feedback_list_look_at_interaction_prompt",
+      "game_feedback_list_open_closed_sign",
+      "game_feedback_list_physical_trash",
+      "game_feedback_list_trash_bin",
+      "game_feedback_list_workbench"
+    ],
+    "5": [
+      "game_feedback_list_bench_model",
+      "game_feedback_list_bus_stop",
+      "game_feedback_list_floating_billboard_text",
+      "game_feedback_list_mesh_interpenetration",
+      "game_feedback_list_sign_text",
+      "game_feedback_list_tide_trove"
+    ]
+  },
+  "cohesion": {
+    "0": 0.24242424242424243,
+    "1": 0.21212121212121213,
+    "2": 0.2727272727272727,
+    "3": 0.3333333333333333,
+    "4": 0.2857142857142857,
+    "5": 0.4
+  },
+  "gods": [
+    {
+      "id": "game_feedback_list",
+      "label": "Game Feedback List",
+      "degree": 54
+    },
+    {
+      "id": "game_feedback_list_museum",
+      "label": "Museum",
+      "degree": 10
+    },
+    {
+      "id": "game_feedback_list_manual_fossil_display",
+      "label": "Manual Fossil Display Categorization",
+      "degree": 7
+    },
+    {
+      "id": "game_feedback_list_sign_text",
+      "label": "Sign Text (Bus, Museum, Shop, Tide & Trove, Open/Closed)",
+      "degree": 6
+    },
+    {
+      "id": "game_feedback_list_hotbar",
+      "label": "Hotbar",
+      "degree": 6
+    },
+    {
+      "id": "game_feedback_list_upgrade_tree",
+      "label": "Upgrade Tree",
+      "degree": 6
+    },
+    {
+      "id": "game_feedback_list_customers",
+      "label": "Museum Customers",
+      "degree": 6
+    },
+    {
+      "id": "game_feedback_list_bus_stop",
+      "label": "Bus Stop",
+      "degree": 5
+    },
+    {
+      "id": "game_feedback_list_look_at_interaction_prompt",
+      "label": "Look-At Interaction Prompt Range",
+      "degree": 5
+    },
+    {
+      "id": "game_feedback_list_inventory",
+      "label": "Inventory",
+      "degree": 5
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Tool Station",
+      "target": "Equipment Shop",
+      "source_files": [
+        "game_feedback_list.md",
+        "game_feedback_list.md"
+      ],
+      "confidence": "AMBIGUOUS",
+      "relation": "conceptually_related_to",
+      "note": "Bridges community 4 → community 1"
+    },
+    {
+      "source": "Physical Trash Pickup",
+      "target": "Employee System",
+      "source_files": [
+        "game_feedback_list.md",
+        "game_feedback_list.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "note": "Bridges community 4 → community 3"
+    },
+    {
+      "source": "'Auto' Display Option",
+      "target": "Manual Fossil Display Categorization",
+      "source_files": [
+        "game_feedback_list.md",
+        "game_feedback_list.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "note": "Bridges community 0 → community 2"
+    },
+    {
+      "source": "Game Feedback List",
+      "target": "Amber",
+      "source_files": [
+        "game_feedback_list.md",
+        "game_feedback_list.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "note": "Bridges community 0 → community 1"
+    },
+    {
+      "source": "Game Feedback List",
+      "target": "Bench Model",
+      "source_files": [
+        "game_feedback_list.md",
+        "game_feedback_list.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "note": "Bridges community 0 → community 5"
+    }
+  ],
+  "questions": [
+    {
+      "type": "ambiguous_edge",
+      "question": "What is the exact relationship between `Settings Menu` and `'Auto' Display Option`?",
+      "why": "Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low.",
+      "low_confidence": true
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Game Feedback List` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`, `Community 4`, `Community 5`?",
+      "why": "High betweenness centrality (0.905) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `Museum` (e.g. with `Gem Display` and `Manual Fossil Display Categorization`) actually correct?",
+      "why": "`Museum` has 2 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `GUI Title Plate Alignment`, `Bottom-Right UI Element`, `Unpainted Texture Gaps` to the rest of the system?",
+      "why": "3 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "ambiguous_edge",
+      "question": "What is the exact relationship between `Equipment Shop` and `Tool Station`?",
+      "why": "Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low.",
+      "low_confidence": true
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Museum` connect `Community 2` to `Community 0`, `Community 5`?",
+      "why": "High betweenness centrality (0.011) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `Manual Fossil Display Categorization` (e.g. with `'Auto' Display Option` and `Museum`) actually correct?",
+      "why": "`Manual Fossil Display Categorization` has 2 INFERRED edges - model-reasoned connections that need verification."
+    }
+  ]
+}

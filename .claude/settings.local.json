@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($root = \"C:\\\\Users\\\\Jawad\\\\AppData\\\\Local\\\\Claude-Data\\\\claude_pzs8sxrjxfjjc\\\\scratch-workspaces\\\\7be31867-4fdb-4385-b8c1-e65bc2a3ab20\\\\cd2c594d-3c9d-43a3-885f-8e7ca169dc6b\\\\scratch-2026-11-11-a10295\"; Get-Content \"$root\\\\graphify-out\\\\.graphify_python\" -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force \"$root\\\\docs\\\\feedback\" | Out-Null; Copy-Item \"C:\\\\Users\\\\Jawad\\\\Downloads\\\\game_feedback_list.md\" \"$root\\\\docs\\\\feedback\\\\game_feedback_list.md\" -Force; Get-ChildItem \"$root\\\\docs\\\\feedback\" | Select-Object Name, Length)"
+    ]
+  }
+}

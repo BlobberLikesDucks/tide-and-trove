@@ -1,0 +1,1611 @@
+[
+ {
+  "id": "wall",
+  "tier": "building",
+  "tris": 2192,
+  "budget": 40000,
+  "materials": [
+   "MAT_Wall"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.6
+ },
+ {
+  "id": "wall_window",
+  "tier": "building",
+  "tris": 5328,
+  "budget": 40000,
+  "materials": [
+   "Glass",
+   "MAT_WallWindow"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.5
+ },
+ {
+  "id": "wall_door",
+  "tier": "building",
+  "tris": 7504,
+  "budget": 40000,
+  "materials": [
+   "MAT_WallDoor"
+  ],
+  "objects": 1,
+  "collision": 5,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.6
+ },
+ {
+  "id": "wall_corner",
+  "tier": "prop",
+  "tris": 540,
+  "budget": 15000,
+  "materials": [
+   "MAT_WallCorner"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.3
+ },
+ {
+  "id": "floor_tile",
+  "tier": "prop",
+  "tris": 1160,
+  "budget": 15000,
+  "materials": [
+   "MAT_FloorTile"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.8
+ },
+ {
+  "id": "porch",
+  "tier": "prop",
+  "tris": 2384,
+  "budget": 15000,
+  "materials": [
+   "MAT_Porch"
+  ],
+  "objects": 1,
+  "collision": 2,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.7
+ },
+ {
+  "id": "open_sign",
+  "tier": "item",
+  "tris": 5392,
+  "budget": 6000,
+  "materials": [
+   "MAT_OpenSign"
+  ],
+  "objects": 2,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.4
+ },
+ {
+  "id": "museum_sign",
+  "tier": "building",
+  "tris": 16664,
+  "budget": 40000,
+  "materials": [
+   "MAT_MuseumSign"
+  ],
+  "objects": 1,
+  "collision": 2,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.2
+ },
+ {
+  "id": "path_stones",
+  "tier": "prop",
+  "tris": 3532,
+  "budget": 15000,
+  "materials": [
+   "MAT_PathStones"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.6
+ },
+ {
+  "id": "museum_roof_0",
+  "tier": "building",
+  "tris": 9340,
+  "budget": 40000,
+  "materials": [
+   "Glass",
+   "MAT_MuseumRoof0"
+  ],
+  "objects": 5,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.1
+ },
+ {
+  "id": "museum_roof_1",
+  "tier": "building",
+  "tris": 13420,
+  "budget": 40000,
+  "materials": [
+   "Glass",
+   "MAT_MuseumRoof1"
+  ],
+  "objects": 5,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.4
+ },
+ {
+  "id": "museum_roof_2",
+  "tier": "building",
+  "tris": 18412,
+  "budget": 40000,
+  "materials": [
+   "Glass",
+   "MAT_MuseumRoof2"
+  ],
+  "objects": 5,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.1
+ },
+ {
+  "id": "museum_roof_3",
+  "tier": "building",
+  "tris": 23668,
+  "budget": 40000,
+  "materials": [
+   "Glass",
+   "MAT_MuseumRoof3"
+  ],
+  "objects": 5,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.0
+ },
+ {
+  "id": "tool_shop",
+  "tier": "building",
+  "tris": 16310,
+  "budget": 40000,
+  "materials": [
+   "Glass",
+   "GlowWarm",
+   "MAT_ToolShop"
+  ],
+  "objects": 1,
+  "collision": 4,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 6.1
+ },
+ {
+  "id": "street_lamp",
+  "tier": "prop",
+  "tris": 1474,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "GlowWarm",
+   "MAT_StreetLamp"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.4
+ },
+ {
+  "id": "bus_stop",
+  "tier": "prop",
+  "tris": 13064,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "MAT_BusStop"
+  ],
+  "objects": 1,
+  "collision": 6,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.4
+ },
+ {
+  "id": "street",
+  "tier": "env",
+  "tris": 3452,
+  "budget": 60000,
+  "materials": [
+   "MAT_Street"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 6.6
+ },
+ {
+  "id": "lab_pavilion",
+  "tier": "building",
+  "tris": 12168,
+  "budget": 40000,
+  "materials": [
+   "Glass",
+   "GlowWarm",
+   "MAT_LabPavilion"
+  ],
+  "objects": 1,
+  "collision": 7,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.6
+ },
+ {
+  "id": "fence_barrier",
+  "tier": "prop",
+  "tris": 5950,
+  "budget": 15000,
+  "materials": [
+   "MAT_FenceBarrier"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.9
+ },
+ {
+  "id": "ground_grass",
+  "tier": "env",
+  "tris": 10882,
+  "budget": 60000,
+  "materials": [
+   "MAT_GroundGrass"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 8.6
+ },
+ {
+  "id": "ground_shore",
+  "tier": "env",
+  "tris": 6808,
+  "budget": 60000,
+  "materials": [
+   "MAT_GroundShore"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 10.0
+ },
+ {
+  "id": "ground_slope",
+  "tier": "env",
+  "tris": 8692,
+  "budget": 60000,
+  "materials": [
+   "MAT_GroundSlope"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 8.9
+ },
+ {
+  "id": "water_plane",
+  "tier": "env",
+  "tris": 22400,
+  "budget": 60000,
+  "materials": [
+   "Sea"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 0.1
+ },
+ {
+  "id": "ground_cliffs",
+  "tier": "env",
+  "tris": 6940,
+  "budget": 60000,
+  "materials": [
+   "MAT_GroundCliffs"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 9.3
+ },
+ {
+  "id": "ground_caves",
+  "tier": "env",
+  "tris": 3808,
+  "budget": 60000,
+  "materials": [
+   "MAT_GroundCaves"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 9.2
+ },
+ {
+  "id": "ground_reef",
+  "tier": "env",
+  "tris": 12110,
+  "budget": 60000,
+  "materials": [
+   "MAT_GroundReef"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 8.1
+ },
+ {
+  "id": "cliff_meso",
+  "tier": "env",
+  "tris": 7880,
+  "budget": 60000,
+  "materials": [
+   "MAT_CliffMeso"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 11.4
+ },
+ {
+  "id": "cliff_paleo",
+  "tier": "env",
+  "tris": 7664,
+  "budget": 60000,
+  "materials": [
+   "MAT_CliffPaleo"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 12.6
+ },
+ {
+  "id": "cliff_ceno",
+  "tier": "env",
+  "tris": 4620,
+  "budget": 60000,
+  "materials": [
+   "MAT_CliffCeno"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 13.1
+ },
+ {
+  "id": "cave_arch",
+  "tier": "env",
+  "tris": 1888,
+  "budget": 60000,
+  "materials": [
+   "GlowCyan",
+   "GlowWarm",
+   "MAT_CaveArch"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 12.1
+ },
+ {
+  "id": "palm_tree",
+  "tier": "prop",
+  "tris": 3026,
+  "budget": 15000,
+  "materials": [
+   "MAT_PalmTree"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.6
+ },
+ {
+  "id": "fern",
+  "tier": "item",
+  "tris": 3732,
+  "budget": 6000,
+  "materials": [
+   "MAT_Fern"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.6
+ },
+ {
+  "id": "grass_tuft",
+  "tier": "small",
+  "tris": 328,
+  "budget": 3000,
+  "materials": [
+   "MAT_GrassTuft"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.0
+ },
+ {
+  "id": "rock_small",
+  "tier": "item",
+  "tris": 400,
+  "budget": 6000,
+  "materials": [
+   "MAT_RockSmall"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.9
+ },
+ {
+  "id": "rock_large",
+  "tier": "prop",
+  "tris": 1104,
+  "budget": 15000,
+  "materials": [
+   "MAT_RockLarge"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.6
+ },
+ {
+  "id": "driftwood",
+  "tier": "item",
+  "tris": 504,
+  "budget": 6000,
+  "materials": [
+   "MAT_Driftwood"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.8
+ },
+ {
+  "id": "shell_deco",
+  "tier": "small",
+  "tris": 428,
+  "budget": 3000,
+  "materials": [
+   "MAT_ShellDeco"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.9
+ },
+ {
+  "id": "node_sand",
+  "tier": "item",
+  "tris": 584,
+  "budget": 6000,
+  "materials": [
+   "MAT_NodeSand"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.1
+ },
+ {
+  "id": "node_dirt",
+  "tier": "item",
+  "tris": 562,
+  "budget": 6000,
+  "materials": [
+   "MAT_NodeDirt"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.7
+ },
+ {
+  "id": "node_cracked_rock",
+  "tier": "item",
+  "tris": 2108,
+  "budget": 6000,
+  "materials": [
+   "MAT_NodeCrackedRock"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 5.4
+ },
+ {
+  "id": "node_hard_rock",
+  "tier": "item",
+  "tris": 440,
+  "budget": 6000,
+  "materials": [
+   "GlowCyan",
+   "MAT_NodeHardRock"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.2
+ },
+ {
+  "id": "node_deep_rock",
+  "tier": "item",
+  "tris": 1748,
+  "budget": 6000,
+  "materials": [
+   "MAT_NodeDeepRock"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.4
+ },
+ {
+  "id": "node_buried",
+  "tier": "item",
+  "tris": 732,
+  "budget": 6000,
+  "materials": [
+   "MAT_NodeBuried"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.6
+ },
+ {
+  "id": "workbench",
+  "tier": "prop",
+  "tris": 2780,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "GlowWarm",
+   "MAT_Workbench"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.1
+ },
+ {
+  "id": "curator_desk",
+  "tier": "prop",
+  "tris": 4410,
+  "budget": 15000,
+  "materials": [
+   "MAT_CuratorDesk"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.8
+ },
+ {
+  "id": "storage_crate",
+  "tier": "prop",
+  "tris": 2048,
+  "budget": 15000,
+  "materials": [
+   "GlowWarm",
+   "MAT_StorageCrate",
+   "Pack"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 6.4
+ },
+ {
+  "id": "display_case",
+  "tier": "prop",
+  "tris": 2056,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "MAT_DisplayCase"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.9
+ },
+ {
+  "id": "mega_podium",
+  "tier": "hero",
+  "tris": 3172,
+  "budget": 30000,
+  "materials": [
+   "MAT_MegaPodium"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 19.8
+ },
+ {
+  "id": "aquarium",
+  "tier": "hero",
+  "tris": 2692,
+  "budget": 30000,
+  "materials": [
+   "Glass",
+   "GlowCyan",
+   "MAT_Aquarium",
+   "Water"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 6.0
+ },
+ {
+  "id": "dig_pit",
+  "tier": "prop",
+  "tris": 1846,
+  "budget": 15000,
+  "materials": [
+   "MAT_DigPit"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.8
+ },
+ {
+  "id": "gift_shop",
+  "tier": "prop",
+  "tris": 5428,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "MAT_GiftShop",
+   "Screen"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.5
+ },
+ {
+  "id": "holo_theater",
+  "tier": "prop",
+  "tris": 3328,
+  "budget": 15000,
+  "materials": [
+   "GlowCyan",
+   "Holo",
+   "MAT_HoloTheater",
+   "Screen"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 5.7
+ },
+ {
+  "id": "popcorn_stand",
+  "tier": "prop",
+  "tris": 3512,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "MAT_PopcornStand"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.7
+ },
+ {
+  "id": "dinodog_stand",
+  "tier": "prop",
+  "tris": 1612,
+  "budget": 15000,
+  "materials": [
+   "MAT_DinodogStand"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 5.6
+ },
+ {
+  "id": "lemonade_stand",
+  "tier": "prop",
+  "tris": 3560,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "Lemonade",
+   "MAT_LemonadeStand"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.2
+ },
+ {
+  "id": "restroom",
+  "tier": "prop",
+  "tris": 1108,
+  "budget": 15000,
+  "materials": [
+   "MAT_Restroom"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 7.4
+ },
+ {
+  "id": "trash_bin",
+  "tier": "item",
+  "tris": 484,
+  "budget": 6000,
+  "materials": [
+   "MAT_TrashBin"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 5.6
+ },
+ {
+  "id": "bench",
+  "tier": "item",
+  "tris": 2376,
+  "budget": 6000,
+  "materials": [
+   "MAT_Bench"
+  ],
+  "objects": 1,
+  "collision": 2,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.7
+ },
+ {
+  "id": "plant_pot",
+  "tier": "item",
+  "tris": 3516,
+  "budget": 6000,
+  "materials": [
+   "MAT_PlantPot"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.8
+ },
+ {
+  "id": "floor_lamp",
+  "tier": "item",
+  "tris": 1036,
+  "budget": 6000,
+  "materials": [
+   "GlowWarm",
+   "LampShade",
+   "MAT_FloorLamp"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.2
+ },
+ {
+  "id": "banner",
+  "tier": "item",
+  "tris": 1820,
+  "budget": 6000,
+  "materials": [
+   "MAT_Banner"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.8
+ },
+ {
+  "id": "rug",
+  "tier": "item",
+  "tris": 980,
+  "budget": 6000,
+  "materials": [
+   "MAT_Rug"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 12.7
+ },
+ {
+  "id": "dino_statue",
+  "tier": "prop",
+  "tris": 11276,
+  "budget": 15000,
+  "materials": [
+   "MAT_DinoStatue"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 5.0
+ },
+ {
+  "id": "trash",
+  "tier": "small",
+  "tris": 356,
+  "budget": 3000,
+  "materials": [
+   "MAT_Trash"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.0
+ },
+ {
+  "id": "sand_pile",
+  "tier": "small",
+  "tris": 260,
+  "budget": 3000,
+  "materials": [
+   "MAT_SandPile"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.2
+ },
+ {
+  "id": "plushie",
+  "tier": "item",
+  "tris": 5448,
+  "budget": 6000,
+  "materials": [
+   "MAT_Plushie"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.3
+ },
+ {
+  "id": "shovel",
+  "tier": "item",
+  "tris": 2064,
+  "budget": 6000,
+  "materials": [
+   "Blade",
+   "MAT_Shovel"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.5
+ },
+ {
+  "id": "pickaxe",
+  "tier": "item",
+  "tris": 1640,
+  "budget": 6000,
+  "materials": [
+   "Blade",
+   "MAT_Pickaxe"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.4
+ },
+ {
+  "id": "detector",
+  "tier": "item",
+  "tris": 2292,
+  "budget": 6000,
+  "materials": [
+   "Blade",
+   "GlowRed",
+   "MAT_Detector",
+   "Screen"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.4
+ },
+ {
+  "id": "broom",
+  "tier": "item",
+  "tris": 460,
+  "budget": 6000,
+  "materials": [
+   "MAT_Broom"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.0
+ },
+ {
+  "id": "gem",
+  "tier": "small",
+  "tris": 48,
+  "budget": 3000,
+  "materials": [
+   "Gem",
+   "MAT_Gem"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.2
+ },
+ {
+  "id": "ore",
+  "tier": "small",
+  "tris": 240,
+  "budget": 3000,
+  "materials": [
+   "Fleck",
+   "MAT_Ore"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.6
+ },
+ {
+  "id": "geode",
+  "tier": "small",
+  "tris": 448,
+  "budget": 3000,
+  "materials": [
+   "MAT_Geode"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.0
+ },
+ {
+  "id": "geode_open",
+  "tier": "small",
+  "tris": 378,
+  "budget": 3000,
+  "materials": [
+   "GemPurple",
+   "MAT_GeodeOpen"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.0
+ },
+ {
+  "id": "fossil_rock",
+  "tier": "small",
+  "tris": 426,
+  "budget": 3000,
+  "materials": [
+   "MAT_FossilRock"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.6
+ },
+ {
+  "id": "ammonite",
+  "tier": "small",
+  "tris": 2584,
+  "budget": 3000,
+  "materials": [
+   "Fossil",
+   "MAT_Ammonite"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.0
+ },
+ {
+  "id": "trilobite",
+  "tier": "small",
+  "tris": 2306,
+  "budget": 3000,
+  "materials": [
+   "Fossil",
+   "MAT_Trilobite"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.4
+ },
+ {
+  "id": "tooth",
+  "tier": "small",
+  "tris": 220,
+  "budget": 3000,
+  "materials": [
+   "Fossil",
+   "MAT_Tooth"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.9
+ },
+ {
+  "id": "bone",
+  "tier": "small",
+  "tris": 656,
+  "budget": 3000,
+  "materials": [
+   "Fossil"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.0
+ },
+ {
+  "id": "crinoid",
+  "tier": "small",
+  "tris": 758,
+  "budget": 3000,
+  "materials": [
+   "Fossil",
+   "MAT_Crinoid"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.5
+ },
+ {
+  "id": "sand_dollar",
+  "tier": "small",
+  "tris": 404,
+  "budget": 3000,
+  "materials": [
+   "Fossil",
+   "MAT_SandDollar"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.1
+ },
+ {
+  "id": "snail_shell",
+  "tier": "small",
+  "tris": 1668,
+  "budget": 3000,
+  "materials": [
+   "Fossil",
+   "MAT_SnailShell"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.0
+ },
+ {
+  "id": "horseshoe_crab",
+  "tier": "small",
+  "tris": 604,
+  "budget": 3000,
+  "materials": [
+   "MAT_HorseshoeCrab"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.6
+ },
+ {
+  "id": "nautilus",
+  "tier": "small",
+  "tris": 1800,
+  "budget": 3000,
+  "materials": [
+   "MAT_Nautilus"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.1
+ },
+ {
+  "id": "skeleton_ichthyosaur",
+  "tier": "hero",
+  "tris": 8726,
+  "budget": 30000,
+  "materials": [
+   "MAT_SkeletonIchthyosaur"
+  ],
+  "objects": 7,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 8.9
+ },
+ {
+  "id": "skeleton_mosasaur",
+  "tier": "hero",
+  "tris": 6714,
+  "budget": 30000,
+  "materials": [
+   "MAT_SkeletonMosasaur"
+  ],
+  "objects": 8,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 8.3
+ },
+ {
+  "id": "skeleton_apex",
+  "tier": "hero",
+  "tris": 8524,
+  "budget": 30000,
+  "materials": [
+   "MAT_SkeletonApex"
+  ],
+  "objects": 9,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 8.0
+ },
+ {
+  "id": "character",
+  "tier": "character",
+  "tris": 13027,
+  "budget": 60000,
+  "materials": [
+   "Accent",
+   "Coat",
+   "Glass",
+   "Hair",
+   "Hat",
+   "MAT_Character",
+   "Pack",
+   "Pants",
+   "Shirt",
+   "Shoe",
+   "Skin"
+  ],
+  "objects": 20,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 11.8
+ },
+ {
+  "id": "fp_arms",
+  "tier": "prop",
+  "tris": 10224,
+  "budget": 15000,
+  "materials": [
+   "Shirt",
+   "Skin"
+  ],
+  "objects": 2,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.4
+ },
+ {
+  "id": "fx_puff",
+  "tier": "small",
+  "tris": 400,
+  "budget": 3000,
+  "materials": [
+   "MAT_FxPuff"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.2
+ },
+ {
+  "id": "fx_chip",
+  "tier": "small",
+  "tris": 20,
+  "budget": 3000,
+  "materials": [
+   "MAT_FxChip"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 0.9
+ },
+ {
+  "id": "fx_sparkle",
+  "tier": "small",
+  "tris": 28,
+  "budget": 3000,
+  "materials": [
+   "GlowGold"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 0.0
+ },
+ {
+  "id": "fx_gem_glint",
+  "tier": "small",
+  "tris": 28,
+  "budget": 3000,
+  "materials": [
+   "GlowGem"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 0.0
+ },
+ {
+  "id": "fx_droplet",
+  "tier": "small",
+  "tris": 32,
+  "budget": 3000,
+  "materials": [
+   "Water"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 0.0
+ },
+ {
+  "id": "fx_confetti",
+  "tier": "small",
+  "tris": 48,
+  "budget": 3000,
+  "materials": [
+   "Coral",
+   "Pink",
+   "Teal",
+   "Yellow"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 0.0
+ },
+ {
+  "id": "fx_dust",
+  "tier": "small",
+  "tris": 80,
+  "budget": 3000,
+  "materials": [
+   "MAT_FxDust"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.5
+ },
+ {
+  "id": "dress_beach_camp",
+  "tier": "prop",
+  "tris": 812,
+  "budget": 15000,
+  "materials": [
+   "MAT_DressBeachCamp"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.5
+ },
+ {
+  "id": "dress_tidepool",
+  "tier": "prop",
+  "tris": 1768,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "MAT_DressTidepool",
+   "Water"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 5.9
+ },
+ {
+  "id": "dress_rowboat",
+  "tier": "prop",
+  "tris": 2436,
+  "budget": 15000,
+  "materials": [
+   "MAT_DressRowboat"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.7
+ },
+ {
+  "id": "dress_lifeguard",
+  "tier": "prop",
+  "tris": 1676,
+  "budget": 15000,
+  "materials": [
+   "MAT_DressLifeguard"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 4.2
+ },
+ {
+  "id": "dress_signpost",
+  "tier": "item",
+  "tris": 684,
+  "budget": 6000,
+  "materials": [
+   "MAT_DressSignpost"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.5
+ },
+ {
+  "id": "dress_dig_camp",
+  "tier": "prop",
+  "tris": 672,
+  "budget": 15000,
+  "materials": [
+   "MAT_DressDigCamp"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 13.1
+ },
+ {
+  "id": "wall_poster",
+  "tier": "building",
+  "tris": 4704,
+  "budget": 40000,
+  "materials": [
+   "MAT_WallPoster"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.3
+ },
+ {
+  "id": "ground_fill",
+  "tier": "env",
+  "tris": 2208,
+  "budget": 60000,
+  "materials": [
+   "MAT_GroundFill"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 2.0
+ },
+ {
+  "id": "held_cup",
+  "tier": "small",
+  "tris": 320,
+  "budget": 3000,
+  "materials": [
+   "Glass",
+   "Lemonade",
+   "MAT_HeldCup"
+  ],
+  "objects": 2,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.8
+ },
+ {
+  "id": "held_bag",
+  "tier": "small",
+  "tris": 872,
+  "budget": 3000,
+  "materials": [
+   "MAT_HeldBag"
+  ],
+  "objects": 2,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.6
+ },
+ {
+  "id": "held_dog",
+  "tier": "small",
+  "tris": 518,
+  "budget": 3000,
+  "materials": [
+   "MAT_HeldDog"
+  ],
+  "objects": 2,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.4
+ },
+ {
+  "id": "tool_station",
+  "tier": "prop",
+  "tris": 3684,
+  "budget": 15000,
+  "materials": [
+   "MAT_ToolStation"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 3.6
+ },
+ {
+  "id": "plaque_checker",
+  "tier": "prop",
+  "tris": 6416,
+  "budget": 15000,
+  "materials": [
+   "Glass",
+   "Lamp",
+   "MAT_PlaqueChecker"
+  ],
+  "objects": 1,
+  "collision": 1,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 6.3
+ },
+ {
+  "id": "amber",
+  "tier": "small",
+  "tris": 580,
+  "budget": 3000,
+  "materials": [
+   "Amber",
+   "Glass",
+   "MAT_Amber"
+  ],
+  "objects": 1,
+  "collision": 0,
+  "issues": [],
+  "verdict": "SHIP",
+  "seconds": 1.3
+ }
+]

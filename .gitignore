@@ -1,0 +1,16 @@
+# Godot editor cache / imports (regenerated on open)
+game/.godot/
+*.translation
+export_presets.cfg
+# Python / tools
+__pycache__/
+*.pyc
+# Blender autosaves
+*.blend1
+# graphify caches
+graphify-out/cache/
+docs/feedback/graphify-out/cache/
+# OS
+.DS_Store
+Thumbs.db
+**/graphify-out/cache/

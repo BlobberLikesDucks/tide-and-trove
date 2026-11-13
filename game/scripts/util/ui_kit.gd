@@ -1,0 +1,550 @@
+class_name UIKit
+extends RefCounted
+## Theme + builders for the code-constructed UI. Every visual element is a
+## Canva-made texture from res://assets/ui (panels, cards, buttons, pills,
+## bars, sliders, checkboxes, ribbon, icons), 9-sliced so it scales cleanly.
+
+const BG := Color("fff6e6")
+const BG2 := Color("f3e6cc")
+const BORDER := Color("2f8f8f")
+const TEXT := Color("2b2a33")
+const MUTED := Color("6e6658")
+const ACCENT := Color("2f8f8f")
+const CORAL := Color("e0705a")
+const GOLD := Color("ffc93f")
+const GOOD := Color("3fa34d")
+const BAD := Color("d9483b")
+const GREY := Color("8a8478")
+
+## texture name -> [scale, left, top, right, bottom] margins at that scale
+const SLICE := {
+	"panel": [0.8, 37, 37, 37, 37],
+	"card": [0.7, 16, 16, 16, 16],
+	"walkie": [1.0, 110, 62, 20, 20],
+	"pill": [0.5, 31, 15, 31, 15],
+	"btn_teal": [0.6, 20, 12, 20, 15], "btn_coral": [0.6, 20, 12, 20, 15], "btn_green": [0.6, 20, 12, 20, 15],
+	"btn_gold": [0.6, 20, 12, 20, 15], "btn_grey": [0.6, 20, 12, 20, 15],
+	"ui_bar_track": [0.6, 10, 7, 10, 7], "ui_bar_gold": [0.6, 9, 6, 9, 6], "ui_bar_coral": [0.6, 9, 6, 9, 6],
+	"ui_bar_purple": [0.6, 9, 6, 9, 6], "ui_bar_sky": [0.6, 9, 6, 9, 6], "ui_bar_green": [0.6, 9, 6, 9, 6],
+	"ui_slider_track": [0.8, 7, 4, 7, 4],
+}
+
+static var _theme: Theme
+static var _font: Font
+static var _bold: Font
+static var _tex := {}
+
+
+static func font(bold: bool = false) -> Font:
+	if bold and _bold:
+		return _bold
+	if not bold and _font:
+		return _font
+	var sym := SystemFont.new()
+	sym.font_names = PackedStringArray(["Segoe UI Symbol", "Noto Sans Symbols 2", "Noto Sans Symbols", "DejaVu Sans", "Arial Unicode MS"])
+	var f := SystemFont.new()
+	f.font_names = PackedStringArray(["Segoe UI", "Helvetica Neue", "Arial", "Noto Sans", "DejaVu Sans"])
+	f.font_weight = 700 if bold else 500
+	var fb: Array[Font] = [sym]
+	f.fallbacks = fb
+	if bold:
+		_bold = f
+	else:
+		_font = f
+	return f
+
+# ---------------------------------------------------------------- textures --
+static func tex(n: String, k: float = 1.0) -> Texture2D:
+	var key := "%s@%.2f" % [n, k]
+	if _tex.has(key):
+		return _tex[key]
+	var path := "res://assets/ui/%s.png" % n
+	if not ResourceLoader.exists(path):
+		push_warning("Missing UI texture " + path)
+		return null
+	var t: Texture2D = load(path)
+	if absf(k - 1.0) > 0.01:
+		var img := t.get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.resize(maxi(1, int(img.get_width() * k)), maxi(1, int(img.get_height() * k)), Image.INTERPOLATE_LANCZOS)
+		t = ImageTexture.create_from_image(img)
+	_tex[key] = t
+	return t
+
+
+static func icon_tex(n: String, px: int = 28) -> Texture2D:
+	return tex("icon_" + n if not n.begins_with("ui_") else n, float(px) / 128.0 if not n.begins_with("ui_") else 1.0)
+
+
+## 9-sliced Canva texture stylebox.
+static func sbt(n: String, content: Vector4 = Vector4(-1, -1, -1, -1), modulate: Color = Color.WHITE) -> StyleBoxTexture:
+	var info: Array = SLICE.get(n, [1.0, 8, 8, 8, 8])
+	var s := StyleBoxTexture.new()
+	s.texture = tex(n, info[0])
+	s.texture_margin_left = info[1]
+	s.texture_margin_top = info[2]
+	s.texture_margin_right = info[3]
+	s.texture_margin_bottom = info[4]
+	var c := content
+	if c.x < 0:
+		c = Vector4(info[1], info[2], info[3], info[4])
+	s.content_margin_left = c.x
+	s.content_margin_top = c.y
+	s.content_margin_right = c.z
+	s.content_margin_bottom = c.w
+	s.modulate_color = modulate
+	return s
+
+
+## Plain flat stylebox (only used for invisible spacing / dimmers).
+static func sb(bg: Color, border: Color = Color.TRANSPARENT, bw: int = 0, radius: int = 12, pad: int = 10) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(bw)
+	s.set_corner_radius_all(radius)
+	s.content_margin_left = pad + 4
+	s.content_margin_right = pad + 4
+	s.content_margin_top = pad
+	s.content_margin_bottom = pad
+	return s
+
+
+static func btn_name(color: Color) -> String:
+	if color == Color.TRANSPARENT:
+		return "btn_teal"
+	if color.s < 0.25:
+		return "btn_grey"
+	# nearest hue (circular) among the Canva button colours
+	var opts := {"btn_coral": 0.025, "btn_gold": 0.12, "btn_green": 0.35, "btn_teal": 0.5}
+	var best := "btn_teal"
+	var bd := 99.0
+	for k in opts.keys():
+		var d := absf(color.h - float(opts[k]))
+		d = minf(d, 1.0 - d)
+		if d < bd:
+			bd = d
+			best = k
+	return best
+
+
+static func style_button(b: Button, tex_name: String) -> void:
+	var pad := Vector4(18, 8, 18, 11)
+	b.add_theme_stylebox_override("normal", sbt(tex_name, pad))
+	b.add_theme_stylebox_override("hover", sbt(tex_name, pad, Color(1.15, 1.15, 1.15)))
+	b.add_theme_stylebox_override("pressed", sbt(tex_name, pad, Color(0.82, 0.82, 0.82)))
+	b.add_theme_stylebox_override("disabled", sbt("btn_grey", pad, Color(1, 1, 1, 0.85)))
+	b.add_theme_stylebox_override("focus", sbt("btn_gold", pad, Color(1, 1, 1, 0.45)))
+
+
+const THEME_PATH := "res://data/ui/ui_theme.res"
+
+
+## The Canva UI theme. Editor-built UI scenes reference the saved copy
+## (data/ui/ui_theme.res, regenerated by tools/export_ui_theme.gd) so they look
+## right in the editor; code-built widgets use the same resource.
+static func theme() -> Theme:
+	if _theme:
+		return _theme
+	if ResourceLoader.exists(THEME_PATH):
+		_theme = load(THEME_PATH)
+		return _theme
+	_theme = build_theme()
+	return _theme
+
+
+static func build_theme() -> Theme:
+	var t := Theme.new()
+	t.default_font = font()
+	t.default_font_size = 18
+	var panel := sbt("panel", Vector4(50, 34, 50, 36))
+	t.set_stylebox("panel", "PanelContainer", panel)
+	t.set_stylebox("panel", "Panel", panel)
+	var pad := Vector4(18, 8, 18, 11)
+	for cls in ["Button", "OptionButton", "MenuButton"]:
+		t.set_stylebox("normal", cls, sbt("btn_teal", pad))
+		t.set_stylebox("hover", cls, sbt("btn_teal", pad, Color(1.15, 1.15, 1.15)))
+		t.set_stylebox("pressed", cls, sbt("btn_teal", pad, Color(0.82, 0.82, 0.82)))
+		t.set_stylebox("disabled", cls, sbt("btn_grey", pad, Color(1, 1, 1, 0.85)))
+		t.set_stylebox("focus", cls, sbt("btn_gold", pad, Color(1, 1, 1, 0.45)))
+		for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+			t.set_color(c, cls, Color.WHITE)
+		t.set_color("font_disabled_color", cls, Color("f4efe4"))
+		t.set_color("font_outline_color", cls, Color("143c3c"))
+		t.set_constant("outline_size", cls, 5)
+		t.set_font("font", cls, font(true))
+		t.set_constant("h_separation", cls, 8)
+	t.set_icon("arrow", "OptionButton", icon_tex("ui_arrow_right", 0))
+	t.set_color("font_color", "Label", TEXT)
+	for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+		t.set_color(c, "CheckBox", TEXT)
+	var empty := StyleBoxEmpty.new()
+	empty.content_margin_left = 4
+	empty.content_margin_right = 4
+	for st in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		t.set_stylebox(st, "CheckBox", empty)
+	t.set_stylebox("focus", "CheckBox", sbt("pill", Vector4(8, 4, 8, 4), Color(1, 0.85, 0.3, 0.35)))
+	# CheckBox inherits Button's bold outlined font: give it the regular label face
+	t.set_font("font", "CheckBox", font())
+	t.set_constant("outline_size", "CheckBox", 0)
+	t.set_font_size("font_size", "CheckBox", 18)
+	t.set_icon("checked", "CheckBox", tex("ui_check_on", 0.45))
+	t.set_icon("unchecked", "CheckBox", tex("ui_check_off", 0.45))
+	t.set_icon("checked_disabled", "CheckBox", tex("ui_check_on", 0.45))
+	t.set_icon("unchecked_disabled", "CheckBox", tex("ui_check_off", 0.45))
+	t.set_color("default_color", "RichTextLabel", TEXT)
+	t.set_font("bold_font", "RichTextLabel", font(true))
+	t.set_stylebox("slider", "HSlider", sbt("ui_slider_track", Vector4(0, 6, 0, 6)))
+	t.set_stylebox("grabber_area", "HSlider", sbt("ui_bar_sky", Vector4(0, 6, 0, 6)))
+	t.set_stylebox("grabber_area_highlight", "HSlider", sbt("ui_bar_sky", Vector4(0, 6, 0, 6), Color(1.15, 1.15, 1.15)))
+	t.set_stylebox("focus", "HSlider", sbt("pill", Vector4(4, 4, 4, 4), Color(1, 0.85, 0.3, 0.35)))
+	t.set_icon("grabber", "HSlider", tex("ui_knob", 0.4))
+	t.set_icon("grabber_highlight", "HSlider", tex("ui_knob", 0.46))
+	t.set_stylebox("background", "ProgressBar", sbt("ui_bar_track", Vector4(0, 0, 0, 0)))
+	t.set_stylebox("fill", "ProgressBar", sbt("ui_bar_gold", Vector4(0, 0, 0, 0)))
+	t.set_color("font_color", "ProgressBar", Color.WHITE)
+	var tabpad := Vector4(18, 6, 18, 9)
+	t.set_stylebox("panel", "TabContainer", sbt("card", Vector4(16, 14, 16, 14)))
+	t.set_stylebox("tab_selected", "TabContainer", sbt("btn_teal", tabpad))
+	t.set_stylebox("tab_unselected", "TabContainer", sbt("btn_grey", tabpad))
+	t.set_stylebox("tab_hovered", "TabContainer", sbt("btn_teal", tabpad, Color(1.15, 1.15, 1.15)))
+	t.set_stylebox("tab_focus", "TabContainer", sbt("btn_gold", tabpad, Color(1, 1, 1, 0.45)))
+	t.set_stylebox("tabbar_background", "TabContainer", StyleBoxEmpty.new())
+	t.set_color("font_selected_color", "TabContainer", Color.WHITE)
+	t.set_color("font_unselected_color", "TabContainer", Color.WHITE)
+	t.set_color("font_hovered_color", "TabContainer", Color.WHITE)
+	t.set_color("font_outline_color", "TabContainer", Color("143c3c"))
+	t.set_constant("outline_size", "TabContainer", 4)
+	t.set_font("font", "TabContainer", font(true))
+	t.set_stylebox("panel", "PopupMenu", sbt("card", Vector4(12, 10, 12, 10)))
+	t.set_color("font_color", "PopupMenu", TEXT)
+	t.set_color("font_hover_color", "PopupMenu", Color.WHITE)
+	t.set_stylebox("hover", "PopupMenu", sbt("btn_teal", Vector4(8, 4, 8, 4)))
+	t.set_stylebox("panel", "TooltipPanel", sbt("pill", Vector4(22, 10, 22, 10)))
+	t.set_color("font_color", "TooltipLabel", Color.WHITE)
+	t.set_stylebox("panel", "ScrollContainer", StyleBoxEmpty.new())
+	for cls in ["VScrollBar", "HScrollBar"]:
+		t.set_stylebox("scroll", cls, sbt("ui_slider_track", Vector4(4, 4, 4, 4)))
+		t.set_stylebox("grabber", cls, sbt("ui_bar_sky", Vector4(4, 4, 4, 4)))
+		t.set_stylebox("grabber_highlight", cls, sbt("ui_bar_sky", Vector4(4, 4, 4, 4), Color(1.15, 1.15, 1.15)))
+		t.set_stylebox("grabber_pressed", cls, sbt("ui_bar_sky", Vector4(4, 4, 4, 4), Color(0.85, 0.85, 0.85)))
+	t.set_stylebox("separator", "HSeparator", sbt("ui_slider_track", Vector4(0, 2, 0, 2), Color(1, 1, 1, 0.7)))
+	t.set_constant("separation", "HSeparator", 12)
+	# Type variations used by the editor-built UI scenes (theme_type_variation)
+	for v in [["CardPanel", "card", Vector4(16, 12, 16, 12)], ["PillPanel", "pill", Vector4(30, 9, 30, 11)],
+			["WalkiePanel", "walkie", Vector4(118, 66, 24, 22)]]:
+		t.set_type_variation(v[0], "PanelContainer")
+		t.set_stylebox("panel", v[0], sbt(v[1], v[2]))
+	for v in [["GoldBar", "ui_bar_gold"], ["CoralBar", "ui_bar_coral"], ["PurpleBar", "ui_bar_purple"], ["SkyBar", "ui_bar_sky"], ["GreenBar", "ui_bar_green"]]:
+		t.set_type_variation(v[0], "ProgressBar")
+		t.set_stylebox("fill", v[0], sbt(v[1], Vector4(0, 0, 0, 0)))
+	for v in [["CoralButton", "btn_coral"], ["GoldButton", "btn_gold"], ["GreenButton", "btn_green"], ["GreyButton", "btn_grey"]]:
+		t.set_type_variation(v[0], "Button")
+		t.set_stylebox("normal", v[0], sbt(v[1], pad))
+		t.set_stylebox("hover", v[0], sbt(v[1], pad, Color(1.15, 1.15, 1.15)))
+		t.set_stylebox("pressed", v[0], sbt(v[1], pad, Color(0.82, 0.82, 0.82)))
+	t.set_type_variation("BoldLabel", "Label")
+	t.set_font("font", "BoldLabel", font(true))
+	## light, outlined text that sits on the dark pills (objective, prompt, hotbar)
+	t.set_type_variation("PillLabel", "Label")
+	t.set_font("font", "PillLabel", font(true))
+	t.set_color("font_color", "PillLabel", Color("fff6e6"))
+	t.set_color("font_outline_color", "PillLabel", Color("103838"))
+	t.set_constant("outline_size", "PillLabel", 6)
+	t.set_type_variation("MutedLabel", "Label")
+	t.set_color("font_color", "MutedLabel", MUTED)
+	return t
+
+# --------------------------------------------------------------- builders ---
+static func label(text: String, size: int = 18, color: Color = TEXT, bold: bool = false) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	if bold:
+		l.add_theme_font_override("font", font(true))
+	# Only long text wraps; a wrapping label inside an HBox would collapse.
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if text.length() > 48 else TextServer.AUTOWRAP_OFF
+	return l
+
+
+static func rich(bbcode: String, size: int = 17) -> RichTextLabel:
+	var r := RichTextLabel.new()
+	r.bbcode_enabled = true
+	r.fit_content = true
+	r.scroll_active = false
+	r.text = bbcode
+	r.add_theme_font_size_override("normal_font_size", size)
+	r.add_theme_font_size_override("bold_font_size", size)
+	r.custom_minimum_size = Vector2(200, 0)
+	return r
+
+
+static func button(text: String, cb: Callable, min_w: int = 0, color: Color = Color.TRANSPARENT, icon: String = "") -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(min_w, 46)
+	b.focus_mode = Control.FOCUS_ALL
+	if color != Color.TRANSPARENT:
+		style_button(b, btn_name(color))
+	if icon != "":
+		b.icon = icon_tex(icon, 26)
+	if cb.is_valid():
+		b.pressed.connect(_btn_pressed.bind(cb))
+	b.mouse_entered.connect(_hover_pop.bind(b))
+	return b
+
+
+static func _btn_pressed(cb: Callable) -> void:
+	Audio.sfx("click")
+	if cb.is_valid():
+		cb.call()
+
+
+static func _hover_pop(b: Button) -> void:
+	if not is_instance_valid(b) or b.disabled:
+		return
+	b.pivot_offset = b.size * 0.5
+	var tw := b.create_tween()
+	tw.tween_property(b, "scale", Vector2(1.04, 1.04), 0.06)
+	tw.tween_property(b, "scale", Vector2.ONE, 0.1)
+
+
+static func icon(n: String, px: int = 28) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = icon_tex(n, px * 2)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.custom_minimum_size = Vector2(px, px)
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+static func icon_label(n: String, text: String, size: int = 18, color: Color = TEXT, bold: bool = true, px: int = 28) -> HBoxContainer:
+	var h := hbox(8)
+	h.add_child(icon(n, px))
+	var l := label(text, size, color, bold)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	h.add_child(l)
+	return h
+
+
+static func stars_row(half: int, px: int = 30) -> HBoxContainer:
+	var h := hbox(2)
+	for i in range(5):
+		var v := half - i * 2
+		var t := TextureRect.new()
+		t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		t.custom_minimum_size = Vector2(px, px)
+		t.texture = tex("ui_star_full") if v >= 1 else tex("ui_star_empty")
+		if v == 1:
+			t.modulate = Color(1, 1, 1, 0.55)
+		h.add_child(t)
+	return h
+
+
+static func set_stars(row: HBoxContainer, half: int) -> void:
+	var i := 0
+	for t in row.get_children():
+		var v := half - i * 2
+		(t as TextureRect).texture = tex("ui_star_full") if v >= 1 else tex("ui_star_empty")
+		(t as TextureRect).modulate = Color(1, 1, 1, 0.55) if v == 1 else Color.WHITE
+		i += 1
+
+
+static func vbox(sep: int = 8) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", sep)
+	return v
+
+
+static func hbox(sep: int = 8) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", sep)
+	return h
+
+
+static func spacer(h: float = 8.0) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(0, h)
+	return c
+
+
+static func expand(c: Control) -> Control:
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return c
+
+
+static func bar_tex(color: Color) -> String:
+	var opts := {"ui_bar_gold": Color("e0a020"), "ui_bar_coral": CORAL, "ui_bar_purple": Color("8a5cc2"), "ui_bar_sky": Color("3fa3d9"), "ui_bar_green": GOOD}
+	var best := "ui_bar_gold"
+	var bd := 99.0
+	for k in opts.keys():
+		var c: Color = opts[k]
+		var d := Vector3(c.r - color.r, c.g - color.g, c.b - color.b).length()
+		if d < bd:
+			bd = d
+			best = k
+	return best
+
+
+static func bar(color: Color, value: float = 0.0, h: float = 18.0) -> ProgressBar:
+	var p := ProgressBar.new()
+	p.min_value = 0
+	p.max_value = 100
+	p.value = value
+	p.show_percentage = false
+	p.custom_minimum_size = Vector2(80, h)
+	p.add_theme_stylebox_override("fill", sbt(bar_tex(color), Vector4(0, 0, 0, 0)))
+	return p
+
+
+static func card(_bg: Color = BG2, _border: Color = Color()) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", sbt("card", Vector4(16, 12, 16, 12)))
+	return p
+
+
+static func pill_panel() -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", sbt("pill", Vector4(30, 9, 30, 11)))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return p
+
+
+static func clear(n: Node) -> void:
+	for c in n.get_children():
+		c.queue_free()
+
+
+static func focus_first(n: Node) -> void:
+	var b := _first_focusable(n)
+	if b:
+		b.call_deferred("grab_focus")
+
+
+static func _first_focusable(n: Node) -> Control:
+	for c in n.get_children():
+		if c is Control and (c as Control).focus_mode == Control.FOCUS_ALL and (c as Control).is_visible_in_tree():
+			if c is BaseButton and (c as BaseButton).disabled:
+				pass
+			elif c is TextureButton:
+				pass
+			else:
+				return c
+		var r := _first_focusable(c)
+		if r:
+			return r
+	return null
+
+
+## Ribbon title banner (Canva ribbon with the title on it).
+static func ribbon(title: String, w: float = 420.0) -> Control:
+	var holder := Control.new()
+	var t: Texture2D = tex("ribbon", 0.62)
+	var h := w * float(t.get_height()) / float(t.get_width())
+	# The banner hangs over the panel's top frame: only ~58% of it takes layout space.
+	var lift := h * 0.42
+	holder.custom_minimum_size = Vector2(w, h - lift)
+	var tr := TextureRect.new()
+	tr.texture = t
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tr.offset_top = -lift
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(tr)
+	var fs := clampi(int(w * 0.6 / (maxf(1.0, title.length()) * 0.56)), 15, 26)
+	var l := label(title, fs, Color.WHITE, true)
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
+	l.add_theme_color_override("font_outline_color", Color("103838"))
+	l.add_theme_constant_override("outline_size", 7)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# centre the title on the ribbon's cloth band (12%..58% of the texture height)
+	l.offset_top = -lift + h * 0.12
+	l.offset_bottom = -h * 0.42
+	holder.add_child(l)
+	return holder
+
+
+static func close_button(cb: Callable) -> TextureButton:
+	var b := TextureButton.new()
+	b.texture_normal = tex("ui_btn_close", 0.7)
+	b.ignore_texture_size = true
+	b.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	b.custom_minimum_size = Vector2(44, 44)
+	b.focus_mode = Control.FOCUS_NONE
+	b.tooltip_text = "Close"
+	b.pressed.connect(_btn_pressed.bind(cb))
+	return b
+
+
+## Full-screen dimmed modal: instances the editor-built res://scenes/ui/modal.tscn
+## (dim, Canva panel, ribbon title, close button, body) and sizes it.
+## Returns {"root": Control, "body": VBoxContainer, "panel": PanelContainer, "title": Control}
+const MODAL_SCENE := preload("res://scenes/ui/modal.tscn")
+
+
+static func modal(title: String, width: float = 760.0, height: float = 0.0, on_close: Callable = Callable()) -> Dictionary:
+	var root: Control = MODAL_SCENE.instantiate()
+	var panel: PanelContainer = root.get_node("Center/Panel")
+	panel.custom_minimum_size = Vector2(width, height)
+	var rb: Control = root.get_node("Center/Panel/Layout/Header/Ribbon")
+	_fit_ribbon(rb, title, clampf(title.length() * 14.0 + 150.0, 300.0, minf(600.0, width - 120.0)))
+	var close: TextureButton = root.get_node("Center/Panel/Layout/Header/Close")
+	if on_close.is_valid():
+		close.pressed.connect(_btn_pressed.bind(on_close))
+	else:
+		close.visible = false
+	root.modulate.a = 0.0
+	root.ready.connect(_modal_in.bind(root), CONNECT_ONE_SHOT)
+	return {"root": root, "body": root.get_node("Center/Panel/Layout/Body"), "panel": panel, "title": rb}
+
+
+## Sizes the ribbon banner (it hangs over the panel frame) and centres the title on its band.
+static func _fit_ribbon(holder: Control, title: String, w: float) -> void:
+	var banner: TextureRect = holder.get_node("Banner")
+	var t := banner.texture
+	var h := w * float(t.get_height()) / float(t.get_width())
+	var lift := h * 0.42
+	holder.custom_minimum_size = Vector2(w, h - lift)
+	banner.offset_top = -lift
+	var l: Label = holder.get_node("Title")
+	l.text = title
+	l.add_theme_font_size_override("font_size", clampi(int(w * 0.6 / (maxf(1.0, title.length()) * 0.56)), 15, 26))
+	l.offset_top = -lift + h * 0.12
+	l.offset_bottom = -h * 0.42
+
+
+static func _modal_in(root: Control) -> void:
+	var tw := root.create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(root, "modulate:a", 1.0, 0.14)
+
+
+static func scroll(min_h: float = 360.0) -> Dictionary:
+	var s := ScrollContainer.new()
+	s.custom_minimum_size = Vector2(0, min_h)
+	s.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	s.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var v := vbox(6)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	s.add_child(v)
+	return {"scroll": s, "body": v}
+
+
+static func money_text(v: int) -> String:
+	var neg := v < 0
+	var s := str(absi(v))
+	var out := ""
+	var c := 0
+	for i in range(s.length() - 1, -1, -1):
+		out = s[i] + out
+		c += 1
+		if c % 3 == 0 and i > 0:
+			out = "," + out
+	return ("-$" if neg else "$") + out

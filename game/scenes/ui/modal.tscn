@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://b1g4jtrvve7li"]
+
+[ext_resource type="Theme" path="res://data/ui/ui_theme.res" id="1_suix1"]
+[ext_resource type="Texture2D" uid="uid://p8vgdss5uuvq" path="res://assets/ui/ribbon.png" id="2_vhrbh"]
+[ext_resource type="Texture2D" uid="uid://5mub5n6lbrc2" path="res://assets/ui/ui_btn_close.png" id="3_y01wt"]
+
+[node name="Modal" type="Control" unique_id=894543013]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_suix1")
+
+[node name="Dim" type="ColorRect" parent="." unique_id=1549383860]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.050980393, 0.078431375, 0.101960786, 0.55)
+
+[node name="Center" type="CenterContainer" parent="." unique_id=1880700876]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=1743975177]
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+
+[node name="Layout" type="VBoxContainer" parent="Center/Panel" unique_id=684128338]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Center/Panel/Layout" unique_id=1566311871]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SpacerLeft" type="Control" parent="Center/Panel/Layout/Header" unique_id=2122366081]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Ribbon" type="Control" parent="Center/Panel/Layout/Header" unique_id=1015130483]
+custom_minimum_size = Vector2(420, 75)
+layout_mode = 2
+
+[node name="Banner" type="TextureRect" parent="Center/Panel/Layout/Header/Ribbon" unique_id=552561108]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -54.0
+mouse_filter = 2
+texture = ExtResource("2_vhrbh")
+expand_mode = 1
+
+[node name="Title" type="Label" parent="Center/Panel/Layout/Header/Ribbon" unique_id=618878835]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_type_variation = &"PillLabel"
+theme_override_colors/font_outline_color = Color(0.0627451, 0.21960784, 0.21960784, 1)
+theme_override_constants/outline_size = 7
+theme_override_font_sizes/font_size = 24
+text = "Title"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SpacerRight" type="Control" parent="Center/Panel/Layout/Header" unique_id=212535236]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Close" type="TextureButton" parent="Center/Panel/Layout/Header" unique_id=1171894026]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+tooltip_text = "Close"
+focus_mode = 0
+texture_normal = ExtResource("3_y01wt")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="Body" type="VBoxContainer" parent="Center/Panel/Layout" unique_id=1405068280]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8

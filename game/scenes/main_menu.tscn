@@ -1,0 +1,181 @@
+[gd_scene format=3 uid="uid://dyajyxrgrpa1c"]
+
+[ext_resource type="Script" uid="uid://c4p1m6luc2n4c" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Environment" uid="uid://dxt4ftlieka30" path="res://data/menu_environment.tres" id="2_j7ex8"]
+[ext_resource type="PackedScene" uid="uid://bli0viy04dg33" path="res://assets/models/ground_shore.glb" id="3_a8gd2"]
+[ext_resource type="PackedScene" uid="uid://b627f8kdyed5x" path="res://assets/models/ground_grass.glb" id="4_hstxw"]
+[ext_resource type="PackedScene" uid="uid://ddt7duhgkqmf4" path="res://assets/models/water_plane.glb" id="5_8egab"]
+[ext_resource type="Script" uid="uid://byu30kt0r345m" path="res://scripts/components/water_surface.gd" id="6_gw5y6"]
+[ext_resource type="PackedScene" uid="uid://djbpf88tkt6os" path="res://assets/models/mega_podium.glb" id="7_svtp6"]
+[ext_resource type="PackedScene" uid="uid://n08pj0pewapt" path="res://assets/models/skeleton_apex.glb" id="8_1dfpl"]
+[ext_resource type="PackedScene" uid="uid://bqgdbel0x81mn" path="res://assets/models/palm_tree.glb" id="9_qywvv"]
+[ext_resource type="PackedScene" uid="uid://byorsftnaqdpu" path="res://assets/models/museum_sign.glb" id="10_3wgol"]
+[ext_resource type="PackedScene" uid="uid://k32sb4g6pt4e" path="res://assets/models/cliff_meso.glb" id="11_1acrt"]
+[ext_resource type="PackedScene" uid="uid://c2ew68w0v3y71" path="res://assets/models/rock_large.glb" id="12_vr8o3"]
+[ext_resource type="PackedScene" uid="uid://udalgaqnr54e" path="res://assets/models/node_cracked_rock.glb" id="13_1a85y"]
+[ext_resource type="PackedScene" uid="uid://ccg7jwwrwaybt" path="res://assets/models/node_sand.glb" id="14_hl5e0"]
+[ext_resource type="PackedScene" uid="uid://c14qvqvyhvcao" path="res://assets/models/ammonite.glb" id="15_engjn"]
+[ext_resource type="PackedScene" uid="uid://2mkcgydg0nr6" path="res://assets/models/driftwood.glb" id="16_6h3lr"]
+[ext_resource type="PackedScene" uid="uid://diir01qo8l15c" path="res://assets/models/fern.glb" id="17_dj67d"]
+[ext_resource type="Theme" path="res://data/ui/ui_theme.res" id="18_qywvv"]
+[ext_resource type="Texture2D" uid="uid://c2uov44xnttft" path="res://assets/branding/logo_icon_1024.png" id="19_3wgol"]
+[ext_resource type="Texture2D" uid="uid://bhjd8dyq56efo" path="res://assets/ui/icon_check.png" id="20_1acrt"]
+[ext_resource type="Texture2D" uid="uid://pgenb1wmspf0" path="res://assets/ui/icon_shovel.png" id="21_vr8o3"]
+[ext_resource type="Texture2D" uid="uid://8bpqn284nwo8" path="res://assets/ui/icon_save.png" id="22_1a85y"]
+[ext_resource type="Texture2D" uid="uid://dpnrwdbbby47x" path="res://assets/ui/icon_gear.png" id="23_hl5e0"]
+[ext_resource type="Texture2D" uid="uid://7ifq8c8ta0xi" path="res://assets/ui/icon_warning.png" id="24_engjn"]
+
+[node name="MainMenu" type="Node3D" unique_id=1168298972]
+script = ExtResource("1_menu")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=422665047]
+environment = ExtResource("2_j7ex8")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1095232700]
+transform = Transform3D(0.81915206, -0.26927784, 0.50643796, 0, 0.88294756, 0.46947157, -0.57357645, -0.3845686, 0.72326833, 0, 0, 0)
+light_color = Color(1, 0.8862745, 0.72156864, 1)
+light_energy = 1.3
+shadow_enabled = true
+
+[node name="Diorama" type="Node3D" parent="." unique_id=513951056]
+
+[node name="Shore" parent="Diorama" unique_id=1536187453 groups=["no_shadow"] instance=ExtResource("3_a8gd2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -15)
+
+[node name="Grass" parent="Diorama" unique_id=558339205 groups=["no_shadow"] instance=ExtResource("4_hstxw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, -60)
+
+[node name="Sea" parent="Diorama" unique_id=1547569156 instance=ExtResource("5_8egab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12, 83)
+script = ExtResource("6_gw5y6")
+shore_z = 13.0
+
+[node name="Podium" parent="Diorama" unique_id=1838283531 instance=ExtResource("7_svtp6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="ApexSkeleton" parent="Diorama" unique_id=1172585194 instance=ExtResource("8_1dfpl")]
+transform = Transform3D(0.95, 0, 0, 0, 0.95, 0, 0, 0, 0.95, 0, 0.4, -2)
+
+[node name="PalmWest" parent="Diorama" unique_id=458405933 instance=ExtResource("9_qywvv")]
+transform = Transform3D(0.921061, 0, 0.38941833, 0, 1, 0, -0.38941833, 0, 0.921061, -7, 0, -5)
+
+[node name="PalmEast" parent="Diorama" unique_id=1640625813 instance=ExtResource("9_qywvv")]
+transform = Transform3D(0.2039606, 0, 1.1825397, 0, 1.2, 0, -1.1825397, 0, 0.2039606, 8, 0, -7)
+
+[node name="PalmShore" parent="Diorama" unique_id=1832851489 instance=ExtResource("9_qywvv")]
+transform = Transform3D(-0.6636544, 0, 0.60791683, 0, 0.9, 0, -0.60791683, 0, -0.6636544, 11, 0, 1)
+
+[node name="MuseumSign" parent="Diorama" unique_id=1868273552 instance=ExtResource("10_3wgol")]
+transform = Transform3D(0.9553365, 0, 0.29552022, 0, 1, 0, -0.29552022, 0, 0.9553365, -6, 0, -9)
+
+[node name="CliffWest" parent="Diorama" unique_id=1603006490 instance=ExtResource("11_1acrt")]
+transform = Transform3D(1.0729363, 0, 0.7340352, 0, 1.3, 0, -0.7340352, 0, 1.0729363, -14, 0, -14)
+
+[node name="CliffEast" parent="Diorama" unique_id=253239389 instance=ExtResource("11_1acrt")]
+transform = Transform3D(-0.5826056, 0, 1.2730163, 0, 1.4, 0, -1.2730163, 0, -0.5826056, 14, 0, -15)
+
+[node name="Rock" parent="Diorama" unique_id=2144203071 instance=ExtResource("12_vr8o3")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 6, 0, 4)
+
+[node name="CrackedRock" parent="Diorama" unique_id=79134145 instance=ExtResource("13_1a85y")]
+transform = Transform3D(0.5403023, 0, 0.84147096, 0, 1, 0, -0.84147096, 0, 0.5403023, -4, 0, 4)
+
+[node name="SandPatch" parent="Diorama" unique_id=2141642493 instance=ExtResource("14_hl5e0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 6)
+
+[node name="Ammonite" parent="Diorama" unique_id=572181917 instance=ExtResource("15_engjn")]
+transform = Transform3D(2.6327477, 0, 1.4382766, 0, 3, 0, -1.4382766, 0, 2.6327477, -1.5, 0, 5.5)
+
+[node name="Driftwood" parent="Diorama" unique_id=1389255328 instance=ExtResource("16_6h3lr")]
+transform = Transform3D(0.5403023, 0, 0.84147096, 0, 1, 0, -0.84147096, 0, 0.5403023, -8, 0, 7)
+
+[node name="Fern" parent="Diorama" unique_id=1194849577 instance=ExtResource("17_dj67d")]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, -9, 0, -2)
+
+[node name="OrbitCamera" type="Camera3D" parent="." unique_id=242642349]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, 17)
+current = true
+fov = 55.0
+
+[node name="MenuUI" type="CanvasLayer" parent="." unique_id=952030162]
+
+[node name="Root" type="Control" parent="MenuUI" unique_id=994115536]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme = ExtResource("18_qywvv")
+
+[node name="Column" type="VBoxContainer" parent="MenuUI/Root" unique_id=726277099]
+layout_mode = 0
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 60.0
+offset_top = -430.0
+offset_right = 540.0
+offset_bottom = 430.0
+mouse_filter = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="Logo" type="TextureRect" parent="MenuUI/Root/Column" unique_id=785030687]
+custom_minimum_size = Vector2(480, 360)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("19_3wgol")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MenuPanel" type="PanelContainer" parent="MenuUI/Root/Column" unique_id=1392404250]
+layout_mode = 2
+
+[node name="Buttons" type="VBoxContainer" parent="MenuUI/Root/Column/MenuPanel" unique_id=2120040030]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Continue" type="Button" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=1262237293]
+custom_minimum_size = Vector2(400, 46)
+layout_mode = 2
+theme_type_variation = &"GreenButton"
+theme_override_constants/icon_max_width = 26
+text = "Continue"
+icon = ExtResource("20_1acrt")
+
+[node name="NewGame" type="Button" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=19565]
+custom_minimum_size = Vector2(400, 46)
+layout_mode = 2
+theme_override_constants/icon_max_width = 26
+text = "New Game"
+icon = ExtResource("21_vr8o3")
+
+[node name="LoadGame" type="Button" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=567563909]
+custom_minimum_size = Vector2(400, 46)
+layout_mode = 2
+theme_override_constants/icon_max_width = 26
+text = "Load Game"
+icon = ExtResource("22_1a85y")
+
+[node name="Settings" type="Button" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=6102460]
+custom_minimum_size = Vector2(400, 46)
+layout_mode = 2
+theme_type_variation = &"GoldButton"
+theme_override_constants/icon_max_width = 26
+text = "Settings"
+icon = ExtResource("23_hl5e0")
+
+[node name="Quit" type="Button" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=384114570]
+custom_minimum_size = Vector2(400, 46)
+layout_mode = 2
+theme_type_variation = &"CoralButton"
+theme_override_constants/icon_max_width = 26
+text = "Quit"
+icon = ExtResource("24_engjn")
+
+[node name="Tagline" type="Label" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=786292673]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+theme_override_font_sizes/font_size = 14
+text = "Dig, prepare and display prehistoric wonders to save the cove."
+horizontal_alignment = 1
+autowrap_mode = 3
