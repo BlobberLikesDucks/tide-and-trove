@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://pmxrfc3a4bis"
 path.s3tc="res://.godot/imported/museum_roof_0_T_museum_roof_0_BC.png-a5c8549d4b76f1c3e1e511aa7489a034.s3tc.ctex"
+path.etc2="res://.godot/imported/museum_roof_0_T_museum_roof_0_BC.png-a5c8549d4b76f1c3e1e511aa7489a034.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/museum_roof_0_T_museum_roof_0_BC.png"
-dest_files=["res://.godot/imported/museum_roof_0_T_museum_roof_0_BC.png-a5c8549d4b76f1c3e1e511aa7489a034.s3tc.ctex"]
+dest_files=["res://.godot/imported/museum_roof_0_T_museum_roof_0_BC.png-a5c8549d4b76f1c3e1e511aa7489a034.s3tc.ctex", "res://.godot/imported/museum_roof_0_T_museum_roof_0_BC.png-a5c8549d4b76f1c3e1e511aa7489a034.etc2.ctex"]
 
 [params]
 

@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cljeio8xpn6yx"
 path.s3tc="res://.godot/imported/floor_lamp_T_floor_lamp_BC.png-a944737bf0604036fdeb54f1cf7f5cba.s3tc.ctex"
+path.etc2="res://.godot/imported/floor_lamp_T_floor_lamp_BC.png-a944737bf0604036fdeb54f1cf7f5cba.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/floor_lamp_T_floor_lamp_BC.png"
-dest_files=["res://.godot/imported/floor_lamp_T_floor_lamp_BC.png-a944737bf0604036fdeb54f1cf7f5cba.s3tc.ctex"]
+dest_files=["res://.godot/imported/floor_lamp_T_floor_lamp_BC.png-a944737bf0604036fdeb54f1cf7f5cba.s3tc.ctex", "res://.godot/imported/floor_lamp_T_floor_lamp_BC.png-a944737bf0604036fdeb54f1cf7f5cba.etc2.ctex"]
 
 [params]
 

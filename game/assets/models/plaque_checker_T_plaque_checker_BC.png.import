@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cpkd0jh3qn8k7"
 path.s3tc="res://.godot/imported/plaque_checker_T_plaque_checker_BC.png-a3fd383d6a7b6be39f15c69b2262e047.s3tc.ctex"
+path.etc2="res://.godot/imported/plaque_checker_T_plaque_checker_BC.png-a3fd383d6a7b6be39f15c69b2262e047.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/plaque_checker_T_plaque_checker_BC.png"
-dest_files=["res://.godot/imported/plaque_checker_T_plaque_checker_BC.png-a3fd383d6a7b6be39f15c69b2262e047.s3tc.ctex"]
+dest_files=["res://.godot/imported/plaque_checker_T_plaque_checker_BC.png-a3fd383d6a7b6be39f15c69b2262e047.s3tc.ctex", "res://.godot/imported/plaque_checker_T_plaque_checker_BC.png-a3fd383d6a7b6be39f15c69b2262e047.etc2.ctex"]
 
 [params]
 

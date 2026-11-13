@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dd7njw0oq8nfg"
 path.s3tc="res://.godot/imported/node_dirt_T_node_dirt_BC.png-cb53ee65c437284b5b9f621d124eeb02.s3tc.ctex"
+path.etc2="res://.godot/imported/node_dirt_T_node_dirt_BC.png-cb53ee65c437284b5b9f621d124eeb02.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/node_dirt_T_node_dirt_BC.png"
-dest_files=["res://.godot/imported/node_dirt_T_node_dirt_BC.png-cb53ee65c437284b5b9f621d124eeb02.s3tc.ctex"]
+dest_files=["res://.godot/imported/node_dirt_T_node_dirt_BC.png-cb53ee65c437284b5b9f621d124eeb02.s3tc.ctex", "res://.godot/imported/node_dirt_T_node_dirt_BC.png-cb53ee65c437284b5b9f621d124eeb02.etc2.ctex"]
 
 [params]
 

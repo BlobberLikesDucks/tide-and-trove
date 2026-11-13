@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://s2vi4hlq1o5i"
 path.s3tc="res://.godot/imported/ammonite_T_ammonite_BC.png-35e1296745ed6bef03107d4e54e9ba29.s3tc.ctex"
+path.etc2="res://.godot/imported/ammonite_T_ammonite_BC.png-35e1296745ed6bef03107d4e54e9ba29.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/ammonite_T_ammonite_BC.png"
-dest_files=["res://.godot/imported/ammonite_T_ammonite_BC.png-35e1296745ed6bef03107d4e54e9ba29.s3tc.ctex"]
+dest_files=["res://.godot/imported/ammonite_T_ammonite_BC.png-35e1296745ed6bef03107d4e54e9ba29.s3tc.ctex", "res://.godot/imported/ammonite_T_ammonite_BC.png-35e1296745ed6bef03107d4e54e9ba29.etc2.ctex"]
 
 [params]
 

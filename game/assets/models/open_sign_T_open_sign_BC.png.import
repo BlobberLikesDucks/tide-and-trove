@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://rbc5vb8nat4m"
 path.s3tc="res://.godot/imported/open_sign_T_open_sign_BC.png-bbeb4b17a53467bcc79b359b2e2e0792.s3tc.ctex"
+path.etc2="res://.godot/imported/open_sign_T_open_sign_BC.png-bbeb4b17a53467bcc79b359b2e2e0792.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/open_sign_T_open_sign_BC.png"
-dest_files=["res://.godot/imported/open_sign_T_open_sign_BC.png-bbeb4b17a53467bcc79b359b2e2e0792.s3tc.ctex"]
+dest_files=["res://.godot/imported/open_sign_T_open_sign_BC.png-bbeb4b17a53467bcc79b359b2e2e0792.s3tc.ctex", "res://.godot/imported/open_sign_T_open_sign_BC.png-bbeb4b17a53467bcc79b359b2e2e0792.etc2.ctex"]
 
 [params]
 

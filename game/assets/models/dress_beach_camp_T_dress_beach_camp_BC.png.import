@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cq2sd65tikpli"
 path.s3tc="res://.godot/imported/dress_beach_camp_T_dress_beach_camp_BC.png-40477f386b79b63ae580afce2946a0ae.s3tc.ctex"
+path.etc2="res://.godot/imported/dress_beach_camp_T_dress_beach_camp_BC.png-40477f386b79b63ae580afce2946a0ae.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/dress_beach_camp_T_dress_beach_camp_BC.png"
-dest_files=["res://.godot/imported/dress_beach_camp_T_dress_beach_camp_BC.png-40477f386b79b63ae580afce2946a0ae.s3tc.ctex"]
+dest_files=["res://.godot/imported/dress_beach_camp_T_dress_beach_camp_BC.png-40477f386b79b63ae580afce2946a0ae.s3tc.ctex", "res://.godot/imported/dress_beach_camp_T_dress_beach_camp_BC.png-40477f386b79b63ae580afce2946a0ae.etc2.ctex"]
 
 [params]
 

@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://k5sjxiwu5n4d"
 path.s3tc="res://.godot/imported/cliff_paleo_T_cliff_paleo_N.png-50fb2e12fa013c4a9b261519d251fdaf.s3tc.ctex"
+path.etc2="res://.godot/imported/cliff_paleo_T_cliff_paleo_N.png-50fb2e12fa013c4a9b261519d251fdaf.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/cliff_paleo_T_cliff_paleo_N.png"
-dest_files=["res://.godot/imported/cliff_paleo_T_cliff_paleo_N.png-50fb2e12fa013c4a9b261519d251fdaf.s3tc.ctex"]
+dest_files=["res://.godot/imported/cliff_paleo_T_cliff_paleo_N.png-50fb2e12fa013c4a9b261519d251fdaf.s3tc.ctex", "res://.godot/imported/cliff_paleo_T_cliff_paleo_N.png-50fb2e12fa013c4a9b261519d251fdaf.etc2.ctex"]
 
 [params]
 

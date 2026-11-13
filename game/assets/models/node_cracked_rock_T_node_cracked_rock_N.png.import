@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://d35qn78auyar0"
 path.s3tc="res://.godot/imported/node_cracked_rock_T_node_cracked_rock_N.png-61eb19e2d84f48c2ec113e43e203c7dc.s3tc.ctex"
+path.etc2="res://.godot/imported/node_cracked_rock_T_node_cracked_rock_N.png-61eb19e2d84f48c2ec113e43e203c7dc.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/node_cracked_rock_T_node_cracked_rock_N.png"
-dest_files=["res://.godot/imported/node_cracked_rock_T_node_cracked_rock_N.png-61eb19e2d84f48c2ec113e43e203c7dc.s3tc.ctex"]
+dest_files=["res://.godot/imported/node_cracked_rock_T_node_cracked_rock_N.png-61eb19e2d84f48c2ec113e43e203c7dc.s3tc.ctex", "res://.godot/imported/node_cracked_rock_T_node_cracked_rock_N.png-61eb19e2d84f48c2ec113e43e203c7dc.etc2.ctex"]
 
 [params]
 

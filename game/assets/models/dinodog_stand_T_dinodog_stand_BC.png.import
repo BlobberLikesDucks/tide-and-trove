@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://lpf2ugglq2vv"
 path.s3tc="res://.godot/imported/dinodog_stand_T_dinodog_stand_BC.png-e203f97b7273830eb62d28b0d1a31eb6.s3tc.ctex"
+path.etc2="res://.godot/imported/dinodog_stand_T_dinodog_stand_BC.png-e203f97b7273830eb62d28b0d1a31eb6.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/dinodog_stand_T_dinodog_stand_BC.png"
-dest_files=["res://.godot/imported/dinodog_stand_T_dinodog_stand_BC.png-e203f97b7273830eb62d28b0d1a31eb6.s3tc.ctex"]
+dest_files=["res://.godot/imported/dinodog_stand_T_dinodog_stand_BC.png-e203f97b7273830eb62d28b0d1a31eb6.s3tc.ctex", "res://.godot/imported/dinodog_stand_T_dinodog_stand_BC.png-e203f97b7273830eb62d28b0d1a31eb6.etc2.ctex"]
 
 [params]
 

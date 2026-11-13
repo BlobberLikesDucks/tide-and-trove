@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://d2umxam5jftng"
 path.s3tc="res://.godot/imported/gift_shop_T_gift_shop_BC.png-4cede9903c13ed49d24c30d653bf14be.s3tc.ctex"
+path.etc2="res://.godot/imported/gift_shop_T_gift_shop_BC.png-4cede9903c13ed49d24c30d653bf14be.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/gift_shop_T_gift_shop_BC.png"
-dest_files=["res://.godot/imported/gift_shop_T_gift_shop_BC.png-4cede9903c13ed49d24c30d653bf14be.s3tc.ctex"]
+dest_files=["res://.godot/imported/gift_shop_T_gift_shop_BC.png-4cede9903c13ed49d24c30d653bf14be.s3tc.ctex", "res://.godot/imported/gift_shop_T_gift_shop_BC.png-4cede9903c13ed49d24c30d653bf14be.etc2.ctex"]
 
 [params]
 

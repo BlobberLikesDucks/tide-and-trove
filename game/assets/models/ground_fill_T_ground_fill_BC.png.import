@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dlwelfneq7b2c"
 path.s3tc="res://.godot/imported/ground_fill_T_ground_fill_BC.png-5fde9bb8d9c4c9207660509f2bc8e7b0.s3tc.ctex"
+path.etc2="res://.godot/imported/ground_fill_T_ground_fill_BC.png-5fde9bb8d9c4c9207660509f2bc8e7b0.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/ground_fill_T_ground_fill_BC.png"
-dest_files=["res://.godot/imported/ground_fill_T_ground_fill_BC.png-5fde9bb8d9c4c9207660509f2bc8e7b0.s3tc.ctex"]
+dest_files=["res://.godot/imported/ground_fill_T_ground_fill_BC.png-5fde9bb8d9c4c9207660509f2bc8e7b0.s3tc.ctex", "res://.godot/imported/ground_fill_T_ground_fill_BC.png-5fde9bb8d9c4c9207660509f2bc8e7b0.etc2.ctex"]
 
 [params]
 

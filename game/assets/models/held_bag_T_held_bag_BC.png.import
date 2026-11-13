@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bi7ec8nb8818a"
 path.s3tc="res://.godot/imported/held_bag_T_held_bag_BC.png-19979e820ac77e43753cc6d9a470fcc5.s3tc.ctex"
+path.etc2="res://.godot/imported/held_bag_T_held_bag_BC.png-19979e820ac77e43753cc6d9a470fcc5.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/held_bag_T_held_bag_BC.png"
-dest_files=["res://.godot/imported/held_bag_T_held_bag_BC.png-19979e820ac77e43753cc6d9a470fcc5.s3tc.ctex"]
+dest_files=["res://.godot/imported/held_bag_T_held_bag_BC.png-19979e820ac77e43753cc6d9a470fcc5.s3tc.ctex", "res://.godot/imported/held_bag_T_held_bag_BC.png-19979e820ac77e43753cc6d9a470fcc5.etc2.ctex"]
 
 [params]
 

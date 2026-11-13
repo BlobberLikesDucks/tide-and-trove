@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://q67gv47oqwrd"
 path.s3tc="res://.godot/imported/tool_shop_T_tool_shop_BC.png-92c4b1e7a94b7ebb6d7459c1ae2a42a6.s3tc.ctex"
+path.etc2="res://.godot/imported/tool_shop_T_tool_shop_BC.png-92c4b1e7a94b7ebb6d7459c1ae2a42a6.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/tool_shop_T_tool_shop_BC.png"
-dest_files=["res://.godot/imported/tool_shop_T_tool_shop_BC.png-92c4b1e7a94b7ebb6d7459c1ae2a42a6.s3tc.ctex"]
+dest_files=["res://.godot/imported/tool_shop_T_tool_shop_BC.png-92c4b1e7a94b7ebb6d7459c1ae2a42a6.s3tc.ctex", "res://.godot/imported/tool_shop_T_tool_shop_BC.png-92c4b1e7a94b7ebb6d7459c1ae2a42a6.etc2.ctex"]
 
 [params]
 

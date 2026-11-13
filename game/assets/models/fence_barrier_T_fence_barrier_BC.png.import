@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://y53x8u2wdu5r"
 path.s3tc="res://.godot/imported/fence_barrier_T_fence_barrier_BC.png-e3a54b9a2c47c4ca7fdb4075d9013443.s3tc.ctex"
+path.etc2="res://.godot/imported/fence_barrier_T_fence_barrier_BC.png-e3a54b9a2c47c4ca7fdb4075d9013443.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/fence_barrier_T_fence_barrier_BC.png"
-dest_files=["res://.godot/imported/fence_barrier_T_fence_barrier_BC.png-e3a54b9a2c47c4ca7fdb4075d9013443.s3tc.ctex"]
+dest_files=["res://.godot/imported/fence_barrier_T_fence_barrier_BC.png-e3a54b9a2c47c4ca7fdb4075d9013443.s3tc.ctex", "res://.godot/imported/fence_barrier_T_fence_barrier_BC.png-e3a54b9a2c47c4ca7fdb4075d9013443.etc2.ctex"]
 
 [params]
 

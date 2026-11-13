@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bhgee7gh2p726"
 path.s3tc="res://.godot/imported/tool_station_T_tool_station_BC.png-395a830db3cbe73220ca7b5b60c06243.s3tc.ctex"
+path.etc2="res://.godot/imported/tool_station_T_tool_station_BC.png-395a830db3cbe73220ca7b5b60c06243.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/tool_station_T_tool_station_BC.png"
-dest_files=["res://.godot/imported/tool_station_T_tool_station_BC.png-395a830db3cbe73220ca7b5b60c06243.s3tc.ctex"]
+dest_files=["res://.godot/imported/tool_station_T_tool_station_BC.png-395a830db3cbe73220ca7b5b60c06243.s3tc.ctex", "res://.godot/imported/tool_station_T_tool_station_BC.png-395a830db3cbe73220ca7b5b60c06243.etc2.ctex"]
 
 [params]
 

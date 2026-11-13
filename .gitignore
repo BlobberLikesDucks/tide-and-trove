@@ -1,7 +1,6 @@
 # Godot editor cache / imports (regenerated on open)
 game/.godot/
 *.translation
-export_presets.cfg
 # Python / tools
 __pycache__/
 *.pyc
@@ -14,3 +13,6 @@ docs/feedback/graphify-out/cache/
 .DS_Store
 Thumbs.db
 **/graphify-out/cache/
+
+# export output
+build/

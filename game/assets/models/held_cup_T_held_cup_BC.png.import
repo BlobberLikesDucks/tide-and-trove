@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://ha64q7baknxt"
 path.s3tc="res://.godot/imported/held_cup_T_held_cup_BC.png-5dbffb865d0a1de2f9e4e634e87dd89e.s3tc.ctex"
+path.etc2="res://.godot/imported/held_cup_T_held_cup_BC.png-5dbffb865d0a1de2f9e4e634e87dd89e.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/held_cup_T_held_cup_BC.png"
-dest_files=["res://.godot/imported/held_cup_T_held_cup_BC.png-5dbffb865d0a1de2f9e4e634e87dd89e.s3tc.ctex"]
+dest_files=["res://.godot/imported/held_cup_T_held_cup_BC.png-5dbffb865d0a1de2f9e4e634e87dd89e.s3tc.ctex", "res://.godot/imported/held_cup_T_held_cup_BC.png-5dbffb865d0a1de2f9e4e634e87dd89e.etc2.ctex"]
 
 [params]
 

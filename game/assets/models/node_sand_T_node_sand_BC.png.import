@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dktlw5peioswh"
 path.s3tc="res://.godot/imported/node_sand_T_node_sand_BC.png-7e19c0308e863096ac6193133bc185d4.s3tc.ctex"
+path.etc2="res://.godot/imported/node_sand_T_node_sand_BC.png-7e19c0308e863096ac6193133bc185d4.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/node_sand_T_node_sand_BC.png"
-dest_files=["res://.godot/imported/node_sand_T_node_sand_BC.png-7e19c0308e863096ac6193133bc185d4.s3tc.ctex"]
+dest_files=["res://.godot/imported/node_sand_T_node_sand_BC.png-7e19c0308e863096ac6193133bc185d4.s3tc.ctex", "res://.godot/imported/node_sand_T_node_sand_BC.png-7e19c0308e863096ac6193133bc185d4.etc2.ctex"]
 
 [params]
 

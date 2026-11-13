@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cl4c5jiygf1yu"
 path.s3tc="res://.godot/imported/lab_pavilion_T_lab_pavilion_BC.png-a609b7162ffa3f58380cd74cf5831bbe.s3tc.ctex"
+path.etc2="res://.godot/imported/lab_pavilion_T_lab_pavilion_BC.png-a609b7162ffa3f58380cd74cf5831bbe.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/lab_pavilion_T_lab_pavilion_BC.png"
-dest_files=["res://.godot/imported/lab_pavilion_T_lab_pavilion_BC.png-a609b7162ffa3f58380cd74cf5831bbe.s3tc.ctex"]
+dest_files=["res://.godot/imported/lab_pavilion_T_lab_pavilion_BC.png-a609b7162ffa3f58380cd74cf5831bbe.s3tc.ctex", "res://.godot/imported/lab_pavilion_T_lab_pavilion_BC.png-a609b7162ffa3f58380cd74cf5831bbe.etc2.ctex"]
 
 [params]
 

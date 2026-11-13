@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cueh172oyehvw"
 path.s3tc="res://.godot/imported/fp_arms_T_fp_arms_BC.png-46635dc517f95742cbeafd6c2cb93634.s3tc.ctex"
+path.etc2="res://.godot/imported/fp_arms_T_fp_arms_BC.png-46635dc517f95742cbeafd6c2cb93634.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/fp_arms_T_fp_arms_BC.png"
-dest_files=["res://.godot/imported/fp_arms_T_fp_arms_BC.png-46635dc517f95742cbeafd6c2cb93634.s3tc.ctex"]
+dest_files=["res://.godot/imported/fp_arms_T_fp_arms_BC.png-46635dc517f95742cbeafd6c2cb93634.s3tc.ctex", "res://.godot/imported/fp_arms_T_fp_arms_BC.png-46635dc517f95742cbeafd6c2cb93634.etc2.ctex"]
 
 [params]
 

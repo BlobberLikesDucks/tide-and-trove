@@ -28,6 +28,12 @@ var _record_start_time: float = 0.0
 
 
 func _ready() -> void:
+	# Shipped builds must never expose a remote-control debug socket: only run
+	# when the game was launched from the editor.
+	if not OS.has_feature("editor"):
+		set_process(false)
+		queue_free()
+		return
 	# Must keep polling (and stay reachable for game_set_paused(false)) even
 	# while the game itself is paused — a debug bridge that pause locks
 	# itself out is useless.

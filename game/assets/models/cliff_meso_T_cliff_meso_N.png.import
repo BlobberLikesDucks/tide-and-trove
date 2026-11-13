@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://i4bv2nl7gcrv"
 path.s3tc="res://.godot/imported/cliff_meso_T_cliff_meso_N.png-7eb3c36a1e2b5e1ad467f89e7d642f99.s3tc.ctex"
+path.etc2="res://.godot/imported/cliff_meso_T_cliff_meso_N.png-7eb3c36a1e2b5e1ad467f89e7d642f99.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/cliff_meso_T_cliff_meso_N.png"
-dest_files=["res://.godot/imported/cliff_meso_T_cliff_meso_N.png-7eb3c36a1e2b5e1ad467f89e7d642f99.s3tc.ctex"]
+dest_files=["res://.godot/imported/cliff_meso_T_cliff_meso_N.png-7eb3c36a1e2b5e1ad467f89e7d642f99.s3tc.ctex", "res://.godot/imported/cliff_meso_T_cliff_meso_N.png-7eb3c36a1e2b5e1ad467f89e7d642f99.etc2.ctex"]
 
 [params]
 

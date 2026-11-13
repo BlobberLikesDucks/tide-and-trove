@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bwlcocspca1u1"
 path.s3tc="res://.godot/imported/wall_poster_T_wall_poster_BC.png-373d30b6defa1ee161cec0601510cb90.s3tc.ctex"
+path.etc2="res://.godot/imported/wall_poster_T_wall_poster_BC.png-373d30b6defa1ee161cec0601510cb90.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/wall_poster_T_wall_poster_BC.png"
-dest_files=["res://.godot/imported/wall_poster_T_wall_poster_BC.png-373d30b6defa1ee161cec0601510cb90.s3tc.ctex"]
+dest_files=["res://.godot/imported/wall_poster_T_wall_poster_BC.png-373d30b6defa1ee161cec0601510cb90.s3tc.ctex", "res://.godot/imported/wall_poster_T_wall_poster_BC.png-373d30b6defa1ee161cec0601510cb90.etc2.ctex"]
 
 [params]
 
