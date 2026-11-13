@@ -29,8 +29,8 @@ Settings="*res://scripts/autoload/settings.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 Audio="*res://scripts/autoload/audio.gd"
-MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
 GodotMCPRuntimeProbe="*uid://dot7tp860k3nj"
+MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
 
 [display]
 
@@ -57,5 +57,6 @@ enabled=PackedStringArray("res://addons/godot_mcp_bridge/plugin.cfg", "res://add
 
 [rendering]
 
+textures/vram_compression/import_s3tc_bptc=true
 textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_3d=2
