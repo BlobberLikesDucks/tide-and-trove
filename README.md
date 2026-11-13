@@ -7,5 +7,5 @@ Tide and Trove is a simulator museum management game that aims to teach people a
 **A: We use Claude Code for all the coding and modeling. You need a Claude subscription and the one we have (which is the cheapest) is 20$ without tax.**
 # How to play
 It is available for Windows and MacOS. 
-**Windows:** You first need to download the .exe file, then double click it to open the game and play.
-**MacOS:** You first need to download the .
+| Windows 10/11 (x64) | `TideAndTrove-1.0.0-prealpha-windows-x64.zip` | Unzip and run `TideAndTrove.exe`. SmartScreen may warn about an unrecognised app: click **More info → Run anyway**. |
+| macOS 11+ (Apple Silicon & Intel) | `TideAndTrove-1.0.0-prealpha-macos-universal.zip` | Unzip and move the app to Applications. The build is unsigned, so right-click the app → **Open** → **Open** the first time. If macOS says it is damaged, run `xattr -cr "/Applications/Tide & Trove.app"` in Terminal. |
