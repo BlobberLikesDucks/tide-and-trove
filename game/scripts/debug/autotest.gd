@@ -111,6 +111,33 @@ func run() -> void:
 	check(not tp_visible, "body's copy of the held tool is shadow-only (no ghost tool under the player)")
 	check(w.player._use_clip() == "AN_FP_Dig", "shovel uses the dig animation")
 	check(not Settings.ACTIONS.has("shove"), "separate shove key removed (Use shoves)")
+	# --- feedback round 2: keys, loans, matrix names, music
+	check(int(Settings.ACTIONS["interact"]["kb"]["code"]) == KEY_F, "F is Interact")
+	check(int(Settings.ACTIONS["inventory"]["kb"]["code"]) == KEY_E, "E opens the inventory / backpack")
+	check(not GameState.has_method("take_loan"), "loans removed")
+	var nm_era := GameState.item_name({"t": "encased", "f": "ammonite", "m": "shale"})
+	check(not ("Mesozoic" in nm_era or "Cenozoic" in nm_era or "Paleozoic" in nm_era), "find names don't give away the era (%s)" % nm_era)
+	check(ResourceLoader.exists(Audio.MUSIC["open"]) and String(Audio.MUSIC["open"]).ends_with(".ogg"), "recorded music tracks (not code-made)")
+	check(DB.SPECIES.size() >= 60, "many more fossils (%d species)" % DB.SPECIES.size())
+	var mega_n := 0
+	for spk in DB.SPECIES.keys():
+		var c1 := String(DB.SPECIES[spk]["case"])
+		check(DB.CASES.has(c1), "%s fits exactly one case (%s)" % [spk, c1])
+		if c1 == "mega":
+			mega_n += 1
+	check(mega_n >= 6, "mega skeletons: %d" % mega_n)
+	check(DB.SKILLS.size() >= 70, "much bigger upgrade tree (%d nodes)" % DB.SKILLS.size())
+	check(GameState.up == 0, "upgrade points start at 0 (earned by opening)")
+	var gsmall := GameState.lab_grid("sand_dollar")
+	var gbig := GameState.lab_grid("trex:skull")
+	check(gsmall.x * gsmall.y < gbig.x * gbig.y and gsmall.x <= 9, "lab grid scales with fossil size (%s vs %s)" % [gsmall, gbig])
+	check(w.traffic != null and w.traffic.get_child_count() >= 2, "traffic + road tunnels exist")
+	var car: Traffic.Vehicle = w.traffic.spawn("car_sedan", 1, 10.0, Color.RED)
+	check(car.wheels.size() == 4, "cars have 4 spinning wheels")
+	var bus: Traffic.Vehicle = w.traffic.spawn("bus_school", -1, 9.0)
+	check(bus.door != null, "buses have an opening door")
+	car.queue_free()
+	bus.queue_free()
 	w.player.trash_held()
 	check(GameState.held_tool() == "shovel", "vital shovel can't be trashed")
 	w.player.drop_held()
@@ -159,17 +186,18 @@ func run() -> void:
 	var sold := GameState.sell_all_gems()
 	print("[T] sold gems for ", sold, " money=", GameState.money)
 	# --- guarantee some fossils & clean them
-	GameState.storage.append({"t": "encased", "f": "ammonite", "era": "Mesozoic"})
-	GameState.storage.append({"t": "encased", "f": "shark_tooth", "era": "Cenozoic"})
-	GameState.storage.append({"t": "encased", "f": "ichthyosaurus:skull", "era": "Mesozoic"})
-	GameState.storage.append({"t": "encased", "f": "ichthyosaurus:back", "era": "Mesozoic"})
+	GameState.storage.append({"t": "encased", "f": "ammonite", "m": "shale"})
+	GameState.storage.append({"t": "encased", "f": "shark_tooth", "m": "sandstone"})
+	GameState.storage.append({"t": "encased", "f": "ichthyosaurus:skull", "m": "jacket"})
+	GameState.storage.append({"t": "encased", "f": "ichthyosaurus:back", "m": "jacket"})
+	GameState.storage.append({"t": "encased", "f": "megalodon", "m": "sandstone"})
 	if shots:
 		w.ui.open("lab")
 		await _wait(0.3)
 		var first: Dictionary = GameState.encased_items()[0]
 		w.ui.panels._start_lab(first)
 		for i in range(60):
-			w.ui.panels._lab.chip(Vector2i(randi() % LabGame.GW, randi() % LabGame.GH))
+			w.ui.panels._lab.chip(Vector2i(randi() % w.ui.panels._lab.GW, randi() % w.ui.panels._lab.GH))
 		await _wait(0.3)
 		await shot("03_lab_minigame")
 		w.ui.close_panel()
@@ -188,10 +216,13 @@ func run() -> void:
 	check(not GameState.buy_skill("zone_reef"), "tree: can't skip a node's parents")
 	check(not GameState.buy_skill("staff_slot_4"), "tree: 5-star tier locked at 3 stars")
 	var cash0 := GameState.money
-	for id in ["ticket_1", "zone_cliffs", "lic_food", "lic_podium", "equip_1", "backpack_1", "lic_aquarium", "hotbar_1"]:
+	check(not GameState.build_unlocked("display_case_mega"), "Mega case is locked until its blueprint is bought")
+	for id in ["ticket_1", "zone_cliffs", "lic_food", "bp_case_medium", "bp_case_big", "bp_case_mega", "equip_1", "backpack_1", "hotbar_1", "dig_1", "dig_2"]:
 		var ok := GameState.buy_skill(id)
 		check(ok, "bought skill " + id)
-	check(GameState.money == cash0 - 50 - 200 - 400 - 30, "tree nodes charged their cash price")
+	check(GameState.money == cash0 - 50 - 40 - 150 - 300 - 30 - 40, "tree nodes charged their cash price")
+	check(GameState.build_unlocked("display_case_mega"), "blueprint unlocked the Mega case")
+	check(absf(GameState.dig_speed_mult() - 1.24) < 0.01, "Strong Arms upgrades speed up digging")
 	check(GameState.hotbar.size() == 4, "Tool Belt +1 added a hotbar slot")
 	w.beach.refresh_barriers(true)
 	await _wait(1.5)
@@ -204,15 +235,17 @@ func run() -> void:
 	case.refresh_display()
 	check(case.accurate_plaque(), "accurate plaque detected")
 	# expansion + podium first (needs a 3x2 clear area)
-	GameState.skills["expand_1"] = true
-	w.museum.expand()
+	check(GameState.buy_skill("expand_1"), "bought Expansion I in the tree")
 	await _wait(0.3)
-	check(w.museum.W == 7, "museum expanded to %dx%d" % [w.museum.W, w.museum.D])
+	check(w.museum.W == 6 and GameState.museum_level == 1, "tree expansion built the bigger museum (%dx%d)" % [w.museum.W, w.museum.D])
+	check(GameState.buy_skill("expand_2"), "bought Expansion II in the tree")
+	await _wait(0.3)
+	check(w.museum.W == 7, "museum is now %dx%d" % [w.museum.W, w.museum.D])
 	var pod_done := false
 	for y in range(w.museum.D - 1, -1, -1):
 		for x in range(w.museum.W):
-			if not pod_done and w.museum.can_place("mega_podium", Vector2i(x, y), 0) == "":
-				var pod := w.museum.place("mega_podium", Vector2i(x, y), 0)
+			if not pod_done and w.museum.can_place("display_case_mega", Vector2i(x, y), 0) == "":
+				var pod := w.museum.place("display_case_mega", Vector2i(x, y), 0)
 				var nmounted := pod.mount_species("ichthyosaurus")
 				check(nmounted == 2, "mounted 2 ichthyosaur bones on podium")
 				pod_done = true
@@ -315,7 +348,7 @@ func run() -> void:
 	w.museum.load_objects()
 	w.day_cycle.spawn_staff()
 	# --- open the museum and fast-forward
-	Settings.values["day_minutes"] = 2.0
+	Settings.values["day_len"] = 2.0
 	Engine.time_scale = 6.0
 	w.day_cycle.open_museum()
 	check(GameState.phase == GameState.Phase.OPEN, "museum opened")
@@ -367,14 +400,192 @@ func run() -> void:
 		await shot("11_pause")
 		w.ui.close_panel()
 	await _sweep()
+	await _round2()
 	print("[T] DONE failures=%d %s" % [failures.size(), failures])
 	get_tree().quit(1 if failures.size() > 0 else 0)
+
+
+## Feedback round 2: J-Mail + scams + school trip tour, trash throwing, selling,
+## building on people, quality / upgrade points from opening, weathering spots.
+func _round2() -> void:
+	GameState.phase = GameState.Phase.PREP
+	GameState.money = 2000
+	# --- office + J-Mail
+	GameState.half_stars = 6
+	if not GameState.has_skill("expand_3"):
+		GameState.skills.erase("expand_3")
+		GameState.up += 20
+		GameState.money += 5000
+		check(GameState.buy_skill("expand_3"), "bought Expansion III + Office")
+	await _wait(0.3)
+	check(w.office != null, "the 3-star expansion added the office computer")
+	Mail.generate_day()
+	check(not GameState.emails.is_empty(), "J-Mail emails arrive (%d)" % GameState.emails.size())
+	Mail._make("scam")
+	var scam: Dictionary = GameState.emails[0]
+	var m0 := GameState.money
+	Mail.act(scam, "accept")
+	check(GameState.money < m0 * 0.5, "accepting a scam loses a MASSIVE share of cash (%d -> %d)" % [m0, GameState.money])
+	GameState.money = 3000
+	for em in GameState.emails.duplicate():
+		if em["kind"] == "school_trip":
+			GameState.emails.erase(em)
+	var trip_ok := Mail._make("school_trip")
+	check(trip_ok, "school trip email (3+ stars)")
+	var trip_mail: Dictionary = {}
+	for m in GameState.emails:
+		if m["kind"] == "school_trip":
+			trip_mail = m
+	Mail.act(trip_mail, "accept")
+	check(not GameState.events.is_empty(), "school trip booked")
+	if w.office:
+		w.office._on_use()
+		await _wait(0.2)
+		check(w.office.seated and w.player.locked, "sat down at the computer")
+		if shots:
+			await _wait(0.5)
+			await shot("12_jmail")
+		w.office.stand_up()
+		check(not w.office.seated and not w.player.locked, "stood up from the computer")
+	if shots:
+		w.ui.open("factcheck")
+		await _wait(0.4)
+		await shot("13_factcheck")
+		w.ui.open("skills")
+		await _wait(0.4)
+		await shot("14_tree")
+		w.ui.open("pause")
+		await _wait(0.4)
+		await shot("15_pause")
+		w.ui.close_panel()
+	# --- the school trip arrives and the player gives the tour
+	var ev: Dictionary = GameState.events[0]
+	ev["day"] = GameState.day
+	Settings.values["day_len"] = 3.0
+	w.day_cycle.open_museum()
+	w.day_cycle._start_school_trip(ev)
+	var tour: SchoolTour = w.day_cycle.tour
+	Engine.time_scale = 3.0
+	var tries := 0
+	while (tour.teacher == null or tour.students.size() < 3) and tries < 60:
+		await _wait(0.5)
+		tries += 1
+	Engine.time_scale = 1.0
+	check(tour.teacher != null and tour.students.size() >= 3, "school bus dropped off the teacher and %d students" % tour.students.size())
+	if tour.teacher:
+		tour.teacher_talk()
+		w.ui.dialog_queue.clear()
+		w.ui._next_line()
+		check(tour.active, "guided tour started")
+		var stops := 0
+		for o in w.museum.all_objects():
+			if stops >= SchoolTour.STOPS_NEEDED:
+				break
+			var q := tour._question(o)
+			if q.is_empty():
+				continue
+			tour.teacher.global_position = o.global_position + Vector3(1.5, 0, 0)
+			tour.answer(o.get_instance_id(), stops != 1)  # one wrong fact on purpose
+			stops += 1
+		check(tour.done and tour.wrong == 1, "tour finished (%d right, %d wrong)" % [tour.right, tour.wrong])
+		var rv := tour.teacher_review(tour.teacher)
+		check(int(rv["stars"]) == 1 and float(rv["weight"]) >= 3.0, "a wrong fact gets a very negative, heavy review")
+	# --- litter: a guest throws trash; the player throws held trash into a bin
+	var g := w.day_cycle.spawn_guest("tourist", w.museum.cell_center(w.museum.entrance()) + Vector3(0, 0, 2))
+	g.inside = true
+	g.state = Guest.S.DECIDE
+	var mess0 := w.museum.mess.size()
+	var fills0 := 0
+	for b in w.museum.objects_of("trash_bin"):
+		fills0 += b.fill
+	g._drop_trash()
+	await _wait(1.0)
+	var fills1 := 0
+	for b in w.museum.objects_of("trash_bin"):
+		fills1 += b.fill
+	check(w.museum.mess.size() > mess0 or fills1 > fills0, "guest threw trash (floor or bin)")
+	var bin: PlacedObject = w.museum.objects_of("trash_bin")[0]
+	bin.fill = 0
+	GameState.hotbar[GameState.hotbar.size() - 1] = {"t": "trash"}
+	GameState.select_slot(GameState.hotbar.size() - 1)
+	w.player.global_position = bin.global_position + Vector3(0, 0, 2.5)
+	w.player.face(bin.global_position)
+	w.player.cam_pitch = -0.3
+	await _wait(0.2)
+	w.player.throw_trash()
+	await _wait(1.0)
+	check(bin.fill == 1, "thrown trash landed in the bin")
+	# --- build while open, never on a person; selling refunds 25%
+	var cell := w.museum.world_to_cell(g.global_position)
+	check(w.museum.can_place("bench", cell, 0) != "", "can't build on top of a visitor")
+	var spot := Vector2i(-1, -1)
+	for y in range(w.museum.D):
+		for x in range(w.museum.W):
+			if spot.x < 0 and w.museum.can_place("bench", Vector2i(x, y), 0) == "":
+				spot = Vector2i(x, y)
+	w.build.enter()
+	check(w.build.active, "Build Mode works while the museum is open")
+	check(not w.player.fp.visible, "Build Mode hides the first-person arms")
+	w.build._select("bench")
+	w.build.cell = spot
+	w.build.rot = 0
+	var mbefore := GameState.money
+	w.build._place()
+	w.build._remove()
+	check(GameState.money == mbefore - 25 + int(floor(25 * GameState.refund_rate())), "selling refunds only %d%%" % int(GameState.refund_rate() * 100))
+	w.build.exit()
+	check(w.player.fp.visible, "arms back after Build Mode")
+	# --- player gets hit by a car
+	for v in w.traffic.vehicles:
+		if is_instance_valid(v):
+			v.queue_free()
+	await get_tree().process_frame
+	w.player.global_position = Vector3(-20, 0.1, Traffic.EAST_Z)
+	var hit_car: Traffic.Vehicle = w.traffic.spawn("car_hatch", 1, 10.0, Color.BLUE)
+	hit_car.position.x = -26.0
+	var t2 := 0
+	while not w.player.ragdolled and t2 < 120:
+		await get_tree().physics_frame
+		t2 += 1
+	check(w.player.ragdolled, "a car knocked the player over (ragdoll)")
+	if shots:
+		await _wait(0.6)
+		await shot("16_player_ragdoll")
+	var t3 := 0
+	while w.player.ragdolled and t3 < 20:
+		await _wait(0.3)
+		t3 += 1
+	check(not w.player.ragdolled and w.player.camera.current, "player got back up in first person")
+	# --- dig spots weather away and grow back
+	var spot_node: DigNode = null
+	for n in w.beach.nodes_root.get_children():
+		if n is DigNode and not n.hidden and not n.depleted:
+			spot_node = n
+			break
+	if spot_node:
+		spot_node.life = 0.01
+		await _wait(2.0)
+		check(not is_instance_valid(spot_node), "untouched dig spots weather away")
+	var before := w.beach.nodes_root.get_child_count()
+	w.beach._respawn_tick()
+	await get_tree().process_frame
+	check(w.beach.nodes_root.get_child_count() >= before, "dig spots grow back")
+	# --- upgrade points come from opening: a visitor sees a new species
+	GameState.discovered["trilobite"] = {"claimed": false, "pieces": {}}
+	GameState.mark_seen("trilobite")
+	var up0 := GameState.up
+	w.day_cycle.visitors_today = 6
+	var sm := w.day_cycle._review_summary()
+	check(GameState.up > up0 and (sm["seen"] as Array).size() == 1, "opening earned %d Upgrade Points (visitors + new species seen)" % (GameState.up - up0))
+	w.day_cycle._finish_day()
+	w.ui.close_panel()
+	GameState.phase = GameState.Phase.PREP
 
 
 ## Opens every panel, drives build mode, shoving, interactions and the story.
 func _sweep() -> void:
 	var case: PlacedObject = w.museum.objects_of("display_case")[0]
-	var pods := w.museum.objects_of("mega_podium")
+	var pods := w.museum.objects_of("display_case_mega")
 	var staff: Staff = w.day_cycle.staff_nodes[0] if not w.day_cycle.staff_nodes.is_empty() else null
 	if staff:
 		staff.go_rogue()
@@ -504,9 +715,19 @@ func _sweep() -> void:
 	for n in w.beach.nodes_root.get_children():
 		if n is DigNode and not n.hidden and not n.depleted and n.kind == "sand":
 			GameState.backpack.clear()
+			w.player.hold_override = true
 			w.player.start_dig(n)
 			check(w.player.digging, "player started digging")
-			await _wait(3.0)
+			await _wait(1.0)
+			check(w.player.digging and w.player.dig_t > 0.3, "progress fills while holding")
+			w.player.hold_override = false
+			w.player.focus_dig = n
+			w.player._hold_dig_check()
+			check(not w.player.digging and w.player.dig_t == 0.0, "letting go resets the dig")
+			w.player.hold_override = true
+			w.player.start_dig(n)
+			await _wait(6.0)
+			w.player.hold_override = false
 			check(not w.player.digging and GameState.backpack.size() > 0, "player dig completed")
 			break
 	# story: act 2 -> act 3 -> win

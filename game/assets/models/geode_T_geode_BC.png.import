@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxxfdkxhc3sdq"
-path="res://.godot/imported/geode_T_geode_BC.png-2b9051b6ec1558e8131b95eec37cec1f.ctex"
+path.s3tc="res://.godot/imported/geode_T_geode_BC.png-2b9051b6ec1558e8131b95eec37cec1f.s3tc.ctex"
+path.etc2="res://.godot/imported/geode_T_geode_BC.png-2b9051b6ec1558e8131b95eec37cec1f.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "c62dec13d72a2a1f0d7bbbe873037b89"
+"md5": "5be3db924cdd6d3ef7c623977d14216a"
 }
 
 [deps]
 
 source_file="res://assets/models/geode_T_geode_BC.png"
-dest_files=["res://.godot/imported/geode_T_geode_BC.png-2b9051b6ec1558e8131b95eec37cec1f.ctex"]
+dest_files=["res://.godot/imported/geode_T_geode_BC.png-2b9051b6ec1558e8131b95eec37cec1f.s3tc.ctex", "res://.godot/imported/geode_T_geode_BC.png-2b9051b6ec1558e8131b95eec37cec1f.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

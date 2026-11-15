@@ -311,6 +311,7 @@ def build_one(asset_id, lineup=True, spacing=None):
         PT.unwrap(PT.bakeable(meshes))
         if info["sculpt"]:
             nrm = PT.sculpt_normal(meshes, asset_id, res=info["res"], **info["sculpt"])
+        PT.MOSS = info["group"] in ("env", "nature", "nodes", "dress", "traffic")
         bc = PT.bake_paint(meshes, asset_id, res=info["res"])
         PT.finalize(meshes, asset_id, bc, nrm)
     cols = add_collision(root, info["col"], asset_id) if info["col"] else []

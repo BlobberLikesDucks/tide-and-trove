@@ -10,6 +10,10 @@ const PATH := "user://settings.cfg"
 const RESOLUTIONS := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 const WINDOW_MODES := ["Windowed", "Fullscreen", "Exclusive Fullscreen"]
 const SHADOW_LEVELS := ["Off", "Low", "High"]
+## Overall graphics preset (performance): render scale, ambient occlusion, glow,
+## ink outlines and how far small props are drawn.
+const QUALITY_LEVELS := ["Low (fastest)", "Medium", "High"]
+const RENDER_SCALE := [0.67, 0.85, 1.0]
 const PAD_BUTTONS := ["A", "B", "X", "Y", "Back", "Guide", "Start", "L3", "R3", "LB", "RB", "D-Up", "D-Down", "D-Left", "D-Right"]
 const PAD_AXES := ["LS X", "LS Y", "RS X", "RS Y", "LT", "RT"]
 
@@ -25,7 +29,7 @@ var ACTIONS := {
 	"look_down": {"label": "Camera Down", "kb": {"type": "key", "code": KEY_K}, "pad": {"type": "axis", "axis": JOY_AXIS_RIGHT_Y, "dir": 1.0}},
 	"sprint": {"label": "Sprint", "kb": {"type": "key", "code": KEY_SHIFT}, "pad": {"type": "button", "code": JOY_BUTTON_LEFT_SHOULDER}},
 	"jump": {"label": "Jump", "kb": {"type": "key", "code": KEY_SPACE}, "pad": {"type": "button", "code": JOY_BUTTON_A}},
-	"interact": {"label": "Interact / Pick Up", "kb": {"type": "key", "code": KEY_E}, "pad": {"type": "button", "code": JOY_BUTTON_X}},
+	"interact": {"label": "Interact / Pick Up", "kb": {"type": "key", "code": KEY_F}, "pad": {"type": "button", "code": JOY_BUTTON_X}},
 	"use_item": {"label": "Use Held Item / Shove", "kb": {"type": "mouse", "code": MOUSE_BUTTON_LEFT}, "pad": {"type": "axis", "axis": JOY_AXIS_TRIGGER_RIGHT, "dir": 1.0}},
 	"drop_item": {"label": "Drop Held Item", "kb": {"type": "key", "code": KEY_Q}, "pad": {"type": "button", "code": JOY_BUTTON_Y}},
 	"trash_item": {"label": "Trash Held Item", "kb": {"type": "key", "code": KEY_X}, "pad": {"type": "button", "code": JOY_BUTTON_RIGHT_STICK}},
@@ -34,7 +38,7 @@ var ACTIONS := {
 	"build_mode": {"label": "Build Mode", "kb": {"type": "key", "code": KEY_B}, "pad": {"type": "button", "code": JOY_BUTTON_BACK}},
 	"skill_tree": {"label": "Upgrade Tree", "kb": {"type": "key", "code": KEY_T}, "pad": {"type": "button", "code": JOY_BUTTON_DPAD_UP}},
 	"field_guide": {"label": "Guide", "kb": {"type": "key", "code": KEY_G}, "pad": {"type": "button", "code": JOY_BUTTON_DPAD_LEFT}},
-	"inventory": {"label": "Inventory", "kb": {"type": "key", "code": KEY_TAB}, "pad": {"type": "button", "code": JOY_BUTTON_DPAD_DOWN}},
+	"inventory": {"label": "Inventory / Backpack", "kb": {"type": "key", "code": KEY_E}, "kb2": {"type": "key", "code": KEY_TAB}, "pad": {"type": "button", "code": JOY_BUTTON_DPAD_DOWN}},
 	"management": {"label": "Management", "kb": {"type": "key", "code": KEY_M}, "pad": {"type": "button", "code": JOY_BUTTON_DPAD_RIGHT}},
 	"pause": {"label": "Pause", "kb": {"type": "key", "code": KEY_ESCAPE}, "pad": {"type": "button", "code": JOY_BUTTON_START}},
 	"rotate": {"label": "Rotate (Build)", "kb": {"type": "key", "code": KEY_R}, "pad": {"type": "button", "code": JOY_BUTTON_RIGHT_SHOULDER}},
@@ -49,7 +53,7 @@ const REMAPPABLE := ["move_forward", "move_back", "move_left", "move_right", "sp
 
 var values := {
 	"master": 0.8, "music": 0.6, "sfx": 0.8,
-	"auto_clean": false, "auto_deposit": true, "text_speed": 45.0, "day_minutes": 5.0, "sensitivity": 1.0, "invert_y": false,
+	"auto_clean": false, "auto_deposit": true, "text_speed": 45.0, "day_len": 3.0, "quality": 1, "sensitivity": 1.0, "invert_y": false,
 	"resolution": 1, "window_mode": 0, "shadows": 2, "vsync": true,
 }
 var binds := {}  # action -> {"kb": {...}, "pad": {...}} overrides
@@ -141,6 +145,17 @@ func _apply_graphics() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if values["vsync"] else DisplayServer.VSYNC_DISABLED)
 	var lvl := int(values["shadows"])
 	RenderingServer.directional_shadow_atlas_set_size(2048 if lvl == 1 else 4096, true)
+	var q := quality()
+	Art.outlines = q > 0
+	var vp := get_viewport()
+	if vp:
+		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if q < 2 else Viewport.SCALING_3D_MODE_BILINEAR
+		vp.scaling_3d_scale = RENDER_SCALE[q]
+		vp.msaa_3d = Viewport.MSAA_DISABLED if q < 2 else Viewport.MSAA_2X
+
+
+func quality() -> int:
+	return clampi(int(values.get("quality", 1)), 0, QUALITY_LEVELS.size() - 1)
 
 
 func shadows_enabled() -> bool:

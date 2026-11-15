@@ -1,32 +1,39 @@
 class_name LabGame
 extends Control
 ## Precision cleaning mini-game. Chip away the rock matrix to expose every
-## bone cell. The Micro-Brush is gentle; air scribes are fast but crack
-## exposed bone. Damage lowers the Preservation Rating.
+## bone cell. The grid scales with the find: a small common shell is a quick
+## 8x6, a rare skull in a field jacket a bigger job. The Micro-Brush never
+## damages bone; the air scribes are faster but can crack exposed bone, and
+## damage lowers the Preservation Rating.
 
 signal finished(pres: float)
 signal changed
 
-const GW := 18
-const GH := 12
-
+var GW := 18
+var GH := 12
 var bone: Array = []
 var rock: Array = []
 var dmg: Array = []
 var tool := 1
 var hover := Vector2i(-1, -1)
-var cursor := Vector2i(9, 6)
+var cursor := Vector2i(4, 3)
 var dmg_total := 0
 var clicks := 0
 var done := false
 var bone_color := Color("e9dcc0")
+var rock_colors: Array = [Color("b8a98f"), Color("a0907a"), Color("85765f")]
 var rng := RandomNumberGenerator.new()
 var _total_bone := 0
 
 
-func setup(shape: String, color: Color, seed_v: int) -> void:
+func setup(shape: String, color: Color, seed_v: int, grid: Vector2i = Vector2i(18, 12), matrix: String = "sandstone", hardness: int = 1) -> void:
+	GW = grid.x
+	GH = grid.y
+	cursor = Vector2i(GW / 2, GH / 2)
 	rng.seed = seed_v
 	bone_color = color.lightened(0.25)
+	if DB.MATRIX.has(matrix):
+		rock_colors = DB.MATRIX[matrix]["rock"]
 	bone.clear()
 	rock.clear()
 	dmg.clear()
@@ -40,9 +47,13 @@ func setup(shape: String, color: Color, seed_v: int) -> void:
 			if b:
 				_total_bone += 1
 			var r := sqrt(u * u + v * v)
-			rock.append(clampi(1 + int(rng.randf() * 2.2 + (1.0 - r * 0.6)), 1, 3))
+			# layers of rock per cell: thinner on small / common finds
+			rock.append(clampi(int(rng.randf() * (1.2 + hardness * 0.6) + (1.0 - r * 0.6)), 1, 1 + hardness))
 			dmg.append(0)
-	custom_minimum_size = Vector2(GW, GH) * 34.0
+	if _total_bone == 0:  # never an empty puzzle
+		var c := GW / 2 + (GH / 2) * GW
+		bone[c] = true
+		_total_bone = 1
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	queue_redraw()
@@ -67,6 +78,38 @@ func _in_shape(s: String, u: float, v: float) -> bool:
 			return (absf(u) < 0.16 and v > -0.35) or (u * u + (v + 0.55) * (v + 0.55) < 0.22)
 		"skull":
 			return (u + 0.7) * (u + 0.7) + v * v / 0.8 < 0.32 or (u > -0.7 and u < 1.35 and absf(v) < 0.42 * (1.35 - u) / 2.0 + 0.06)
+		"fan":
+			var a := atan2(u, -v + 0.7)
+			var rr := sqrt(u * u + (v - 0.7) * (v - 0.7))
+			return rr < 1.25 and absf(a) < 1.15
+		"crab":
+			return u * u / 0.7 + v * v / 0.35 < 1.0 or (absf(v) < 0.12 and absf(u) < 1.3) or (absf(u) > 0.7 and absf(u) < 1.0 and v < -0.2 and v > -0.6)
+		"egg":
+			return u * u / 0.6 + v * v / 0.85 < 1.0
+		"leaf":
+			return absf(v - u * 0.35) < 0.5 * (1.0 - absf(u) / 1.4) and absf(u) < 1.35
+		"plate":
+			return absf(u) * 0.8 + absf(v) * 0.9 < 0.95
+		"claw":
+			var cx := u + 0.6
+			var rr2 := sqrt(cx * cx + (v + 0.6) * (v + 0.6))
+			return rr2 > 0.75 and rr2 < 1.15 + (1.0 - absf(atan2(v + 0.6, cx) - 0.8)) * 0.1 and atan2(v + 0.6, cx) > 0.0 and atan2(v + 0.6, cx) < 1.6
+		"fish":
+			return (u * u / 0.75 + v * v / 0.22 < 1.0) or (u < -0.75 and u > -1.3 and absf(v) < (-0.75 - u) * 0.9)
+		"tusk":
+			var t := (u + 1.4) / 2.8
+			return t > 0.0 and t < 1.0 and absf(v - (0.5 - (t - 0.5) * (t - 0.5) * 2.0) + 0.3) < 0.28 * (1.0 - t * 0.6)
+		"track":
+			var toe := false
+			for a in [-0.5, 0.0, 0.5]:
+				var dx := u - sin(a) * 0.7
+				var dy := v + cos(a) * 0.7 - 0.2
+				if absf(dx * cos(a) + dy * sin(a)) < 0.14 and dy * cos(a) - dx * sin(a) < 0.0 and dy * cos(a) - dx * sin(a) > -0.75:
+					toe = true
+			return toe or u * u + (v - 0.35) * (v - 0.35) < 0.12
+		"horn":
+			var t2 := (v + 1.0) / 2.0
+			return absf(u - (1.0 - t2) * 0.35) < 0.45 * t2 + 0.06
 	return u * u + v * v < 0.5
 
 
@@ -115,8 +158,11 @@ func chip(c: Vector2i) -> void:
 		return
 	clicks += 1
 	match tool:
-		1:
+		1:  # Micro-Brush: gentle, sweeps a little plus-shape, never damages
 			_hit(c, 1, false, 0.0)
+			for d in [Vector2i(1, 0), Vector2i(-1, 0)]:
+				if rng.randf() < 0.5:
+					_hit(c + d, 1, false, 0.0)
 			Audio.sfx("brush", randf_range(0.9, 1.2), -8.0)
 		2:
 			_hit(c, 2, true, 1.0)
@@ -141,6 +187,7 @@ func _gui_input(event: InputEvent) -> void:
 		var c := Vector2i((event.position / cell_px()).floor())
 		if c != hover:
 			hover = c
+			cursor = c if in_grid(c) else cursor
 			queue_redraw()
 		if event.button_mask & MOUSE_BUTTON_MASK_LEFT and tool == 1:
 			chip(hover)
@@ -159,14 +206,14 @@ func move_cursor(d: Vector2i) -> void:
 func _draw() -> void:
 	var cp := cell_px()
 	draw_rect(Rect2(Vector2.ZERO, size), Color("4a3a2c"))
-	var shades := [Color("5b4a3a"), Color("b8a98f"), Color("a0907a"), Color("85765f")]
+	var shades: Array = [Color("5b4a3a")] + rock_colors
 	for y in range(GH):
 		for x in range(GW):
 			var i := y * GW + x
 			var r := Rect2(Vector2(x, y) * cp, cp)
 			var h := float((x * 73 + y * 151) % 7) / 60.0
 			if rock[i] > 0:
-				draw_rect(r.grow(-1), (shades[rock[i]] as Color).lightened(h))
+				draw_rect(r.grow(-1), (shades[mini(rock[i], shades.size() - 1)] as Color).lightened(h))
 				if rock[i] >= 2:
 					draw_line(r.position + cp * Vector2(0.2, 0.3), r.position + cp * Vector2(0.6, 0.5), Color(0, 0, 0, 0.12), 2)
 			elif bone[i]:

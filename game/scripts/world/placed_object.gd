@@ -60,17 +60,10 @@ func setup(m: Museum, e: Dictionary) -> void:
 	add_child(status)
 	inter = Interactable.attach(self, def["name"], _on_interact, 1.0 + 0.5 * maxf(def["size"].x, def["size"].y), 2.4)
 	inter.text_fn = _prompt
+	# (no floating name text on cases: visitors - and you - read the real plaque)
+	if is_case() or is_mega():
+		refresh_display()
 	match type:
-		"display_case":
-			plaque = Art.label3d("", 20, Color("3a2a10"), false)
-			plaque.outline_size = 0
-			plaque.position = Vector3(0, 0.66, 0.57)
-			plaque.rotation.x = -0.35
-			plaque.pixel_size = 0.004
-			model.add_child(plaque)
-			refresh_display()
-		"mega_podium":
-			refresh_display()
 		"aquarium":
 			_spawn_creatures()
 		"holo_theater":
@@ -86,21 +79,40 @@ func setup(m: Museum, e: Dictionary) -> void:
 func walkable() -> bool:
 	return def.get("walkable", false)
 
+
+## Small / medium / big single-fossil display cases.
+func is_case() -> bool:
+	return type == "display_case" or type == "display_case_medium" or type == "display_case_big"
+
+
+func is_mega() -> bool:
+	return type == "display_case_mega"
+
+
+func is_stand() -> bool:
+	return def.get("cat", "") == "Concessions"
+
+
+func case_size() -> String:
+	return String(DB.CASE_OF_BUILD.get(type, ""))
+
 # ----------------------------------------------------------------- prompts --
 func _prompt() -> String:
 	if sabotaged:
 		return "Repair sabotaged %s ($20)" % def["name"]
+	if is_case():
+		var f := fossil_entry()
+		if f.is_empty():
+			return "Mount a fossil in this %s" % def["name"]
+		return "%s - edit plaque / swap" % GameState.fossil_name(f["f"])
+	if is_mega():
+		var sp: String = data.get("species", "")
+		if sp == "":
+			return "Assemble a skeleton in this Mega Display Case"
+		return "%s skeleton (%d/%d) - add bones" % [DB.SPECIES[sp]["name"].split(" (")[0], mounted_count(), DB.SPECIES[sp]["pieces"].size()]
+	if is_stand():
+		return _stand_prompt()
 	match type:
-		"display_case":
-			var f := fossil_entry()
-			if f.is_empty():
-				return "Mount a fossil in this Display Case"
-			return "%s - edit plaque / swap" % GameState.fossil_name(f["f"])
-		"mega_podium":
-			var sp: String = data.get("species", "")
-			if sp == "":
-				return "Assemble a skeleton on this podium"
-			return "%s skeleton (%d/%d) - add bones" % [DB.SPECIES[sp]["name"].split(" (")[0], mounted_count(), DB.SPECIES[sp]["pieces"].size()]
 		"dig_pit":
 			return "Bury duplicate fossils (stock: %d digs)" % GameState.pit_stock
 		"restroom":
@@ -112,16 +124,34 @@ func _prompt() -> String:
 		"plaque_checker":
 			var bad := museum.wrong_plaques().size()
 			return "Fact-Check Kiosk - %s" % ("all plaques correct" if bad == 0 else "%d display(s) need fixing" % bad)
-		"popcorn_stand", "dinodog_stand", "lemonade_stand":
-			return _stand_prompt()
 		"gift_shop":
 			return "Gift shop - stock info"
 		"aquarium":
 			return "Living Fossil Aquarium - read about the species"
-	return def["name"]
+		"vending_machine":
+			return "Vending machine - buy a Dino Snack ($3)"
+	return "%s - read about it" % def["name"] if INFO.has(type) else String(def["name"])
+
+
+## What the player is told when they look at an attraction (and what it teaches).
+const INFO := {
+	"touch_table": "Fossil casts are exact copies made from moulds of the real thing, so everyone can touch without wearing the original away.",
+	"microscope_station": "Microfossils like foraminifera are smaller than a grain of sand, yet their shells make up whole cliffs of chalk and limestone.",
+	"photo_booth": "Scientists think T. rex could not run fast - about as fast as a quick human jog - because it was so heavy.",
+	"volcano_diorama": "Huge volcanic eruptions in India (the Deccan Traps) were happening when an asteroid hit 66 million years ago, ending the age of non-bird dinosaurs.",
+	"dino_slide": "Sauropods were the biggest land animals ever. Their long necks let them reach food without walking much.",
+	"time_tunnel": "Rock layers stack up over time: the deeper the layer, the older it is. That is the 'law of superposition'.",
+	"fern_garden": "Ferns, cycads and horsetails are plant groups that were already around before the first dinosaurs.",
+	"ammonite_fountain": "Ammonites grew new, bigger chambers as they grew and sealed off the old ones, using them as floats.",
+	"bookshelf": "Mary Anning, a self-taught fossil hunter from Lyme Regis, found the first ichthyosaur skeleton known to science.",
+	"water_fountain": "Visitors who can get a drink stay longer and grumble less.",
+}
 
 
 func _on_interact() -> void:
+	var dc: DayCycle = World.instance.day_cycle if World.instance else null
+	if dc and dc.tour and is_instance_valid(dc.tour) and dc.tour.active and dc.tour.present(self):
+		return
 	if climber and is_instance_valid(climber):
 		climber.call("get_down")
 		return
@@ -135,11 +165,27 @@ func _on_interact() -> void:
 			Events.say("Not enough cash to repair ($20).", UIKit.CORAL)
 			Audio.sfx("error")
 		return
+	if is_case():
+		Events.open_panel.emit("exhibit", self)
+		_update_status()
+		return
+	if is_mega():
+		Events.open_panel.emit("podium", self)
+		_update_status()
+		return
+	if is_stand():
+		_stand_use()
+		_update_status()
+		return
+	if INFO.has(type):
+		Events.dialog_requested.emit([{"name": String(def["name"]), "text": INFO[type]}])
+		return
 	match type:
-		"display_case":
-			Events.open_panel.emit("exhibit", self)
-		"mega_podium":
-			Events.open_panel.emit("podium", self)
+		"vending_machine":
+			if GameState.try_spend(3, "Snacks"):
+				Audio.sfx("register", 1.2, -6.0)
+				Events.say("A Dino Snack! Tasty. (Your own vending machine - the money is yours anyway.)", Color.WHITE)
+				GameState.earn(3, "Vending machine")
 		"dig_pit":
 			Events.open_panel.emit("pit", self)
 		"gift_shop":
@@ -165,8 +211,6 @@ func _on_interact() -> void:
 				Events.say("Trash bin emptied.", UIKit.GOOD)
 		"plaque_checker":
 			Events.open_panel.emit("factcheck", self)
-		"popcorn_stand", "dinodog_stand", "lemonade_stand":
-			_stand_use()
 		"aquarium":
 			var lines: Array = []
 			for k in DB.LIVING.keys():
@@ -194,20 +238,20 @@ func _update_status() -> void:
 	elif type == "trash_bin" and fill >= BIN_CAP:
 		t = "FULL"
 		c = UIKit.CORAL
-	elif type == "display_case" and museum.has_checker() and plaque_status() in ["wrong", "blank"]:
+	elif is_case() and museum.has_checker() and plaque_status() in ["wrong", "blank"]:
 		t = "Plaque %s!" % ("wrong" if plaque_status() == "wrong" else "blank")
 		c = UIKit.BAD
-	elif type in ["popcorn_stand", "dinodog_stand", "lemonade_stand"] and not queue.is_empty():
+	elif is_stand() and not queue.is_empty():
 		t = "%d waiting" % queue.size()
 		c = UIKit.CORAL
-	elif type == "mega_podium" and data.get("species", "") != "":
+	elif is_mega() and data.get("species", "") != "":
 		var sp: String = data["species"]
 		t = "%s  %d/%d" % [DB.SPECIES[sp]["name"].split(" (")[0], mounted_count(), DB.SPECIES[sp]["pieces"].size()]
 		c = Color.WHITE
 	if status:
 		status.text = t
 		status.modulate = c
-		status.position.y = 4.6 if type == "mega_podium" else 2.6
+		status.position.y = 4.8 if is_mega() else 2.6
 
 
 func add_dirt(n: int = 1) -> void:
@@ -233,7 +277,7 @@ func sabotage() -> void:
 
 # ---------------------------------------------------------------- display ---
 func fossil_entry() -> Dictionary:
-	if type != "display_case":
+	if not is_case():
 		return {}
 	var uid := int(data.get("uid", 0))
 	if uid <= 0:
@@ -293,45 +337,37 @@ func mount_species(sp: String) -> int:
 
 
 func release_contents() -> void:
-	match type:
-		"display_case":
-			var old := fossil_entry()
-			if not old.is_empty():
-				old["where"] = ""
-		"mega_podium":
-			for uid in (data.get("pieces", {}) as Dictionary).values():
-				var e := GameState.find_uid(int(uid))
-				if not e.is_empty():
-					e["where"] = ""
-			data["pieces"] = {}
-			data["species"] = ""
+	if is_case():
+		var old := fossil_entry()
+		if not old.is_empty():
+			old["where"] = ""
+	elif is_mega():
+		for uid in (data.get("pieces", {}) as Dictionary).values():
+			var e := GameState.find_uid(int(uid))
+			if not e.is_empty():
+				e["where"] = ""
+		data["pieces"] = {}
+		data["species"] = ""
 
 
 func refresh_display() -> void:
-	if type == "display_case":
+	if is_case():
 		if display_node:
 			display_node.queue_free()
 			display_node = null
 		var f := fossil_entry()
 		if f.is_empty():
-			plaque.text = "(empty)"
 			return
 		var sp := GameState.species_of(f["f"])
 		var sd: Dictionary = DB.SPECIES[sp]
 		display_node = Art.model(sd["model"] if GameState.piece_of(f["f"]) == "" else "bone")
+		Art.strip_collision(display_node)
 		Art.tint(display_node, "Fossil", sd["color"])
-		var s: float = sd.get("scale", 1.0) * 1.6
-		display_node.scale = Vector3.ONE * s
-		display_node.position = Vector3(0, 1.05, 0)
+		var show: Array = DB.CASE_SHOW.get(case_size(), [1.6, 1.05])
+		display_node.scale = Vector3.ONE * float(sd.get("scale", 1.0)) * float(show[0])
+		display_node.position = Vector3(0, float(show[1]), 0)
 		add_child(display_node)
-		var pl: Dictionary = data.get("plaque", {})
-		var txt := GameState.fossil_name(f["f"])
-		if pl.is_empty():
-			txt += "\n(blank plaque)"
-		else:
-			txt += "\n%s | %s | %s" % [pl.get("era", "?"), pl.get("diet", "?"), pl.get("habitat", "?")]
-		plaque.text = txt
-	elif type == "mega_podium":
+	elif is_mega():
 		if skeleton:
 			skeleton.queue_free()
 			skeleton = null
@@ -341,16 +377,16 @@ func refresh_display() -> void:
 			skeleton.rotation.y = rot * PI * 0.5
 			skeleton.position = Vector3(0, 0.4, 0)
 			var b := Art.local_aabb(skeleton)
-			var fit := minf(1.0, 5.3 / maxf(b.size.x, 0.1))
+			var fit := minf(1.0, 5.4 / maxf(maxf(b.size.x, b.size.z), 0.1))
 			skeleton.scale = Vector3.ONE * fit
 			add_child(skeleton)
 			var pieces: Dictionary = data.get("pieces", {})
 			var shown := {}
 			for pc in pieces.keys():
 				shown[DB.PIECE_NODES[pc]] = true
-			if pieces.has("back"):
+			if pieces.has("back") and not (DB.SPECIES[sp]["pieces"] as Array).has("neck"):
 				shown["Neck"] = true
-			for n in ["Skull", "Jaw", "Neck", "Back", "Ribs", "Flippers", "ForeFlipper", "HindFlipper", "Tail"]:
+			for n in ["Skull", "Jaw", "Neck", "Back", "Ribs", "Flippers", "ForeFlipper", "HindFlipper", "Tail", "Arms", "Legs"]:
 				var node := skeleton.find_child(n, true, false)
 				if node is Node3D:
 					(node as Node3D).visible = shown.has(n)
@@ -358,7 +394,7 @@ func refresh_display() -> void:
 
 
 func accurate_plaque() -> bool:
-	if type != "display_case":
+	if not is_case():
 		return false
 	var f := fossil_entry()
 	if f.is_empty():
@@ -372,7 +408,7 @@ func accurate_plaque() -> bool:
 
 ## "" (nothing on display), "blank" (no tags picked), "wrong" or "ok".
 func plaque_status() -> String:
-	if type != "display_case":
+	if not is_case():
 		return ""
 	var f := fossil_entry()
 	if f.is_empty():
@@ -458,30 +494,33 @@ func leave_queue(g: Node) -> void:
 
 
 func species_shown() -> String:
-	if type == "display_case":
+	if is_case():
 		var f := fossil_entry()
 		return "" if f.is_empty() else GameState.species_of(f["f"])
-	if type == "mega_podium":
-		return data.get("species", "")
+	if is_mega():
+		return data.get("species", "") if mounted_count() > 0 else ""
 	return ""
+
+
+const CASE_FUN := {"small": 1.0, "medium": 1.5, "big": 2.3}
 
 
 func fun_points() -> float:
 	if sabotaged:
 		return 0.0
+	if is_case():
+		var f := fossil_entry()
+		if f.is_empty():
+			return 0.0
+		var v := float(DB.RARITY_VALUE[GameState.fossil_rarity(f["f"])]) * (0.5 + 0.5 * float(f["pres"])) * float(CASE_FUN.get(case_size(), 1.0))
+		return v * (1.2 if accurate_plaque() else 1.0)
+	if is_mega():
+		var sp: String = data.get("species", "")
+		if sp == "":
+			return 0.0
+		var per := 12.0 if sp == "apex" or sp == "trex" else 6.0
+		return mounted_count() * per + ((70.0 if sp == "apex" or sp == "trex" else 30.0) if skeleton_complete() else 0.0)
 	match type:
-		"display_case":
-			var f := fossil_entry()
-			if f.is_empty():
-				return 0.0
-			var v := float(DB.RARITY_VALUE[GameState.fossil_rarity(f["f"])]) * (0.5 + 0.5 * float(f["pres"]))
-			return v * (1.2 if accurate_plaque() else 1.0)
-		"mega_podium":
-			var sp: String = data.get("species", "")
-			if sp == "":
-				return 0.0
-			var per := 12.0 if sp == "apex" else 6.0
-			return mounted_count() * per + ((70.0 if sp == "apex" else 30.0) if skeleton_complete() else 0.0)
 		"dig_pit":
 			return 12.0 + (4.0 if GameState.pit_stock > 0 else 0.0)
 		"holo_theater":
@@ -495,11 +534,13 @@ func decor_points() -> float:
 
 func view_value() -> float:
 	## Mood boost a guest gets from viewing this.
+	if is_case() or is_mega():
+		return 3.0 + fun_points() * 0.6
 	match type:
-		"display_case", "mega_podium", "holo_theater", "aquarium", "dig_pit":
+		"holo_theater", "aquarium", "dig_pit", "touch_table", "microscope_station", "volcano_diorama", "dino_slide", "time_tunnel", "photo_booth":
 			return 3.0 + fun_points() * 0.6
-		"dino_statue", "banner", "plant_pot", "floor_lamp":
-			return 2.0
+		"dino_statue", "banner", "plant_pot", "floor_lamp", "fern_garden", "ammonite_fountain", "bookshelf":
+			return 2.0 + float(def.get("decor", 0)) * 0.15
 	return 1.0
 
 # -------------------------------------------------------------- animation ---
@@ -526,7 +567,7 @@ func _process(delta: float) -> void:
 		_check_t = 1.0
 		if type == "plaque_checker":
 			Art.tint(model, "Lamp", UIKit.GOOD if museum.wrong_plaques().is_empty() else UIKit.BAD, 1.5)
-		elif type == "display_case" or not queue.is_empty():
+		elif is_case() or not queue.is_empty():
 			queue = queue.filter(func(g): return is_instance_valid(g))
 			_update_status()
 	if display_node:

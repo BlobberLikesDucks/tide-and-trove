@@ -1,4 +1,4 @@
-// Tide & Trove cel shader (godot-shader skill): hard-banded diffuse, a warm/cool
+// Tide & Trove "Stylistic" shader (godot-shader skill): soft painterly light bands, a warm/cool
 // shadow tint, a crisp toon specular blob and a fresnel rim. Every Blender-painted
 // material is converted to this at load (Art.toon), so the hand-painted textures
 // keep their detail while lighting snaps into clean stylized steps.
@@ -14,13 +14,13 @@ uniform sampler2D normal_texture : hint_roughness_normal, filter_linear_mipmap, 
 uniform bool use_normal_map = false;
 uniform float normal_strength : hint_range(0.0, 2.0) = 0.6;
 /** Number of light bands (2 = classic cel, 3-4 = softer anime look). */
-uniform float bands : hint_range(1.0, 6.0, 1.0) = 3.0;
+uniform float bands : hint_range(1.0, 6.0, 1.0) = 4.0;
 /** Width of the soft edge between bands (0 = razor sharp). */
-uniform float band_softness : hint_range(0.0, 0.2) = 0.03;
+uniform float band_softness : hint_range(0.0, 0.25) = 0.16;
 /** Colour shadows are pushed toward (cool sea-blue keeps it sunny, never grey). */
-uniform vec4 shadow_tint : source_color = vec4(0.42, 0.48, 0.72, 1.0);
+uniform vec4 shadow_tint : source_color = vec4(0.5, 0.48, 0.78, 1.0);
 /** How dark the darkest band gets (1 = no shadow). */
-uniform float shadow_floor : hint_range(0.0, 1.0) = 0.38;
+uniform float shadow_floor : hint_range(0.0, 1.0) = 0.46;
 uniform float specular_size : hint_range(0.0, 1.0) = 0.14;
 uniform float specular_strength : hint_range(0.0, 2.0) = 0.35;
 uniform vec4 rim_color : source_color = vec4(1.0, 0.95, 0.85, 1.0);

@@ -967,9 +967,6 @@ transform = Transform3D(0.10035063, 0, -1.0954131, 0, 1.1, 0, 1.0954131, 0, 0.10
 [node name="TownEdge2" parent="Beach/TownEdge" unique_id=1869539189 instance=ExtResource("39_oexs8")]
 transform = Transform3D(-0.4495873, 0, 1.003928, 0, 1.1, 0, -1.003928, 0, -0.4495873, -31, 0, -24)
 
-[node name="TownEdge3" parent="Beach/TownEdge" unique_id=443534261 instance=ExtResource("39_oexs8")]
-transform = Transform3D(-0.18958038, 0, -1.0835402, 0, 1.1, 0, 1.0835402, 0, -0.18958038, -31, 0, -32)
-
 [node name="TownEdge4" parent="Beach/TownEdge" unique_id=2069549090 instance=ExtResource("39_oexs8")]
 transform = Transform3D(-0.65738803, 0, -0.88195294, 0, 1.1, 0, 0.88195294, 0, -0.65738803, -31, 0, -40)
 
@@ -984,9 +981,6 @@ transform = Transform3D(-0.10910259, 0, 1.094576, 0, 1.1, 0, -1.094576, 0, -0.10
 
 [node name="TownEdge8" parent="Beach/TownEdge" unique_id=1227177076 instance=ExtResource("39_oexs8")]
 transform = Transform3D(0.7233781, 0, -0.82868826, 0, 1.1, 0, 0.82868826, 0, 0.7233781, 31, 0, -24)
-
-[node name="TownEdge9" parent="Beach/TownEdge" unique_id=1442376467 instance=ExtResource("39_oexs8")]
-transform = Transform3D(-0.2177494, 0, 1.0782325, 0, 1.1, 0, -1.0782325, 0, -0.2177494, 31, 0, -32)
 
 [node name="TownEdge10" parent="Beach/TownEdge" unique_id=653053319 instance=ExtResource("39_oexs8")]
 transform = Transform3D(-0.15655223, 0, -1.0888027, 0, 1.1, 0, 1.0888027, 0, -0.15655223, 31, 0, -40)

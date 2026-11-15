@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://mr5rx6qvqqfd"
-path="res://.godot/imported/sand_dollar_T_sand_dollar_BC.png-35231b17b344b3221ee8bf500182b9c8.ctex"
+path.s3tc="res://.godot/imported/sand_dollar_T_sand_dollar_BC.png-35231b17b344b3221ee8bf500182b9c8.s3tc.ctex"
+path.etc2="res://.godot/imported/sand_dollar_T_sand_dollar_BC.png-35231b17b344b3221ee8bf500182b9c8.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "9963046d1a43662620cc11169544f9be"
+"md5": "e8aeaf99c43a40d1499c8fb1c79303b8"
 }
 
 [deps]
 
 source_file="res://assets/models/sand_dollar_T_sand_dollar_BC.png"
-dest_files=["res://.godot/imported/sand_dollar_T_sand_dollar_BC.png-35231b17b344b3221ee8bf500182b9c8.ctex"]
+dest_files=["res://.godot/imported/sand_dollar_T_sand_dollar_BC.png-35231b17b344b3221ee8bf500182b9c8.s3tc.ctex", "res://.godot/imported/sand_dollar_T_sand_dollar_BC.png-35231b17b344b3221ee8bf500182b9c8.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

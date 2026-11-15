@@ -223,7 +223,7 @@ def _paint_material(src, lo, hi, white=False):
     L(pos, sep.inputs[0])
     # 1. painted top-light gradient
     t = remap(sep.outputs[2], lo.z, hi.z, 0.0, 1.0)
-    grad = remap(t, 0.0, 1.0, 0.80, 1.06)
+    grad = remap(t, 0.0, 1.0, 0.74, 1.08)
     # facing-up faces catch sky light, overhangs go cool
     dz = N("ShaderNodeSeparateXYZ")
     L(geo.outputs["Normal"], dz.inputs[0])
@@ -301,17 +301,66 @@ def _paint_material(src, lo, hi, white=False):
         bw = N("ShaderNodeRGBToBW")
         L(ck.outputs["Color"], bw.inputs[0])
         mott = math_("MULTIPLY", mott, bw.outputs[0])
-    # combine: colour * shade * mottling, cool shadows from AO, warm edge lift
-    lum = math_("MULTIPLY", shade, mott)
-    base = mix(col, (1, 1, 1), 0.0)
-    lit = mix(base, lum, 1.0, "MULTIPLY")
-    cool = mix(lit, (0.62, 0.68, 0.86), 1.0, "MULTIPLY")
-    aofac = remap(aof, 0.25, 1.0, 1.0, 0.0)
+    # 6. "Stylistic" painterly pass (concept-art look): broad directional brush
+    #    strokes that swap between a warm-light and a cool-shadow version of the
+    #    colour (multi-tone paint, not just brightness noise), hue-shifted light
+    #    (warm tops, cool violet undersides) and soft moss on outdoor stone.
+    strokes = N("ShaderNodeTexNoise")
+    sm = N("ShaderNodeMapping")
+    L(tc.outputs["Object"], sm.inputs["Vector"])
+    sm.inputs["Scale"].default_value = (1.0, 1.0, 3.2)  # stretched: reads as vertical brush strokes
+    sm.inputs["Rotation"].default_value = (0.35, 0.2, 0.6)
+    L(sm.outputs[0], strokes.inputs["Vector"])
+    strokes.inputs["Scale"].default_value = 3.4 / max(0.15, min(size, 6.0))
+    strokes.inputs["Detail"].default_value = 3.0
+    strokes.inputs["Roughness"].default_value = 0.62
+    stroke_f = remap(strokes.outputs["Fac"], 0.38, 0.66, 0.0, 1.0)
+    fine = N("ShaderNodeTexNoise")
+    L(tc.outputs["Object"], fine.inputs["Vector"])
+    fine.inputs["Scale"].default_value = 14.0 / max(0.15, min(size, 6.0))
+    fine.inputs["Detail"].default_value = 1.0
+    fine_f = remap(fine.outputs["Fac"], 0.35, 0.65, 0.95, 1.06)
+    hsv_w = N("ShaderNodeHueSaturation")
+    hsv_w.inputs["Hue"].default_value = 0.515
+    hsv_w.inputs["Saturation"].default_value = 1.12
+    hsv_w.inputs["Value"].default_value = 1.13
+    hsv_w.inputs["Color"].default_value = (*col, 1.0)
+    hsv_c = N("ShaderNodeHueSaturation")
+    hsv_c.inputs["Hue"].default_value = 0.485
+    hsv_c.inputs["Saturation"].default_value = 1.18
+    hsv_c.inputs["Value"].default_value = 0.86
+    hsv_c.inputs["Color"].default_value = (*col, 1.0)
+    painted = mix(hsv_c.outputs[0], hsv_w.outputs[0], stroke_f)
+    if MOSS and _stroke(src.name) in ("rock", "bands") and not white:
+        up = remap(dz.outputs[2], 0.45, 0.9, 0.0, 1.0)
+        mn = N("ShaderNodeTexNoise")
+        L(tc.outputs["Object"], mn.inputs["Vector"])
+        mn.inputs["Scale"].default_value = 1.6 / max(0.15, min(size, 8.0))
+        mn.inputs["Detail"].default_value = 4.0
+        mm = remap(mn.outputs["Fac"], 0.42, 0.56, 0.0, 1.0)
+        moss_f = math_("MULTIPLY", up, mm, clamp=True)
+        mossc = mix((0.20, 0.36, 0.09), (0.40, 0.55, 0.15), stroke_f)
+        painted = mix(painted, mossc, math_("MULTIPLY", moss_f, 0.85))
+    # combine: colour * shade * mottling, cool violet shadows, warm light + edge lift
+    lum = math_("MULTIPLY", math_("MULTIPLY", shade, mott), fine_f)
+    lit = mix(painted, lum, 1.0, "MULTIPLY")
+    lo_t = remap(t, 0.0, 0.55, 1.0, 0.0)
+    cool_low = mix(lit, (0.66, 0.66, 0.92), 1.0, "MULTIPLY")
+    lit = mix(lit, cool_low, math_("MULTIPLY", lo_t, 0.45))
+    cool = mix(lit, (0.55, 0.58, 0.88), 1.0, "MULTIPLY")
+    aofac = remap(aof, 0.2, 1.0, 1.0, 0.0)
     shadowed = mix(lit, cool, aofac)
-    warm = mix(shadowed, (1.0, 0.93, 0.80), 1.0, "SCREEN")
-    edged = mix(shadowed, warm, math_("MULTIPLY", edge, 0.28))
+    sun = mix(shadowed, (1.0, 0.86, 0.62), 1.0, "SOFT_LIGHT")
+    hi_t = remap(t, 0.5, 1.0, 0.0, 0.55)
+    shadowed = mix(shadowed, sun, hi_t)
+    warm = mix(shadowed, (1.0, 0.9, 0.72), 1.0, "SCREEN")
+    edged = mix(shadowed, warm, math_("MULTIPLY", edge, 0.42))
     L(edged, emi.inputs["Color"])
     return m
+
+
+## Set by the pipeline per asset: outdoor stone (env / nature / nodes / dress) gets moss.
+MOSS = False
 
 
 def bake_paint(objs, asset_id, res=512):

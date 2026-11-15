@@ -1,8 +1,9 @@
 class_name DayCycle
 extends Node
-## Daily state machine:  PREP (time paused) -> OPEN (time flows, guests) ->
-## REVIEWS (daily customer reviews move Quality) -> LEDGER (wages, loans,
-## upkeep, bankruptcy check) -> next day PREP.
+## Daily state machine:  PREP (time paused) -> OPEN (time flows, guests arrive
+## by car) -> REVIEWS (reviews move Quality; Upgrade Points are EARNED here, from
+## visitors and the new species they saw) -> LEDGER (wages, upkeep, bankruptcy
+## check) -> next day PREP.
 
 const OPEN_H := 9.0
 const CLOSE_H := 18.0
@@ -24,6 +25,9 @@ var _scheduled: Array = []
 var commendations := 0
 var publicity := 0
 var summary := {}
+var tour: SchoolTour
+var _pending: Array = []
+var _car_t := 0.0
 
 
 func setup(w: Node, m: Museum) -> void:
@@ -99,7 +103,7 @@ func autofill_plaques() -> void:
 	if not has_staff("intern"):
 		return
 	var n := 0
-	for o in museum.objects_of("display_case"):
+	for o in museum.cases():
 		var f: Dictionary = o.fossil_entry()
 		if f.is_empty() or o.accurate_plaque():
 			continue
@@ -122,6 +126,7 @@ func open_museum() -> void:
 	visitors_today = 0
 	commendations = 0
 	publicity = 0
+	_pending.clear()
 	_spawn_acc = 0.6
 	_schedule_events()
 	museum.set_sign_open(true)
@@ -149,13 +154,26 @@ func _schedule_events() -> void:
 	if int(GameState.flags.get("act", 1)) >= 3:
 		for i in range(randi_range(1, 2)):
 			_scheduled.append({"t": randf_range(10.0, 16.0), "what": "spy"})
+	# booked over J-Mail: school trips arrive mid-morning on their day
+	for ev in GameState.events.duplicate():
+		if int(ev.get("day", 0)) < GameState.day:
+			GameState.events.erase(ev)  # missed (the museum stayed closed that day)
+			continue
+		if int(ev.get("day", 0)) != GameState.day:
+			continue
+		match String(ev.get("what", "")):
+			"school_trip":
+				_scheduled.append({"t": randf_range(9.6, 10.6), "what": "school_trip", "ev": ev})
+			"celebrity", "critic":
+				GameState.events.erase(ev)
+				_scheduled.append({"t": randf_range(10.5, 13.5), "what": ev["what"]})
 
 
 func _process(delta: float) -> void:
 	if GameState.phase != GameState.Phase.OPEN:
 		return
 	GameState.playtime += delta
-	var rate := (CLOSE_H - OPEN_H) / (maxf(1.0, float(Settings.get_v("day_minutes"))) * 60.0)
+	var rate := (CLOSE_H - OPEN_H) / (maxf(1.0, float(Settings.get_v("day_len"))) * 60.0)
 	var dh := delta * rate
 	clock += dh
 	Events.clock_changed.emit(clock)
@@ -165,21 +183,65 @@ func _process(delta: float) -> void:
 	for e in _scheduled.duplicate():
 		if clock >= float(e["t"]):
 			_scheduled.erase(e)
-			_trigger(e["what"])
+			if e["what"] == "school_trip":
+				_start_school_trip(e["ev"])
+			else:
+				_trigger(e["what"])
 	if clock < LAST_ENTRY and not closing:
 		var per_hour := (2.6 + float(GameState.pillars["fun_points"]) * 0.12 + GameState.half_stars * 1.3) * (0.35 + 0.65 * GameState.reputation())
+		if GameState.has_skill("press_kit"):
+			per_hour *= 1.25
+		if GameState.has_skill("ticket_5"):
+			per_hour *= 1.1
 		_spawn_acc += per_hour * dh
 		while _spawn_acc >= 1.0:
 			_spawn_acc -= 1.0
-			if _count_inside() < MAX_GUESTS:
-				spawn_guest(_roll_kind())
+			if _count_inside() + _pending.size() < MAX_GUESTS:
+				_pending.append(_roll_kind())
+	# visitors come by car: one car every couple of seconds carries 1-3 of them
+	_car_t -= delta
+	if not _pending.is_empty() and _car_t <= 0.0:
+		_car_t = randf_range(1.5, 3.0)
+		var n := mini(_pending.size(), randi_range(1, 3))
+		var group: Array = _pending.slice(0, n)
+		_pending = _pending.slice(n)
+		arrive_by_car(group)
 	if clock >= CLOSE_H and not closing:
 		_begin_closing()
 	if closing:
 		_close_wait += delta
 		_prune()
-		if guests.is_empty() or _close_wait > 25.0:
+		if guests.is_empty() or _close_wait > 40.0:
 			_finish_day()
+
+
+## Bring visitors in a car (falls back to walking in if there is no traffic).
+func arrive_by_car(kinds: Array) -> void:
+	if world.traffic == null:
+		for k in kinds:
+			spawn_guest(k)
+		return
+	world.traffic.drop_off(kinds, func(kind: String, p: Vector3) -> Guest:
+		if GameState.phase != GameState.Phase.OPEN:
+			return null
+		var g := spawn_guest(kind, p)
+		if kind == "celebrity" and g.personality == "crowd":
+			pass
+		return g)
+
+
+## A class booked over J-Mail arrives in the yellow school bus.
+func _start_school_trip(ev: Dictionary) -> void:
+	GameState.events.erase(ev)
+	tour = SchoolTour.new()
+	world.add_child(tour)
+	tour.setup(self, ev)
+	if world.traffic:
+		world.traffic.school_trip(int(ev.get("kids", 8)), tour.make_member)
+	else:
+		var t: Guest = tour.make_member("teacher", Vector3(0, 0, -29.5), null)
+		for i in range(int(ev.get("kids", 8))):
+			tour.make_member("student", Vector3(randf_range(-2, 2), 0, -29.5), t)
 
 
 func _count_inside() -> int:
@@ -233,19 +295,8 @@ func spawn_fans(celeb: Guest) -> void:
 
 func _trigger(what: String) -> void:
 	match what:
-		"critic":
-			spawn_guest("critic")
-		"celebrity":
-			spawn_guest("celebrity")
-		"spy":
-			spawn_guest("spy")
-		"trip":
-			var t := spawn_guest("teacher")
-			for i in range(6):
-				var k := spawn_guest("kid", t.global_position + Vector3(randf_range(-2.5, 2.5), 0, -randf_range(1.0, 4.0)))
-				k.will_tantrum = false
-				k.leader = t
-			Events.radio("A school field trip has arrived! Trivia after their tour.", "vip", t.global_position)
+		"critic", "celebrity", "spy":
+			arrive_by_car([what])
 
 
 func _hourly() -> void:
@@ -268,8 +319,11 @@ func _begin_closing() -> void:
 	Events.radio("Sunset! The museum is closing - guests are heading out.", "info", Vector3.ZERO)
 	Audio.play_music("closing")
 	museum.set_sign_open(false)
+	_pending.clear()
+	if tour:
+		tour.finish_day()
 	for g in guests:
-		if is_instance_valid(g) and g.state != Guest.S.LEAVE and g.state != Guest.S.KNOCKED:
+		if is_instance_valid(g) and g.state != Guest.S.LEAVE and g.state != Guest.S.KNOCKED and g.state != Guest.S.WAIT_BUS and g.state != Guest.S.BOARD:
 			if g.state == Guest.S.CLIMB:
 				g.get_down()
 			g._leave()
@@ -292,17 +346,23 @@ func guest_left(g: Guest) -> void:
 		GameState.quality = minf(99.0, GameState.quality + 3.0)
 		publicity += bonus
 		Events.say("%s posted about your museum! +%s publicity" % [g.gname, UIKit.money_text(bonus)], UIKit.GOLD)
-	if g.kind == "teacher":
-		world.on_field_trip_done()
+
 
 
 # ---------------------------------------------------------------- closing ---
 func _finish_day() -> void:
 	for g in guests.duplicate():
 		if is_instance_valid(g):
+			if world.traffic:
+				world.traffic.leave_stop(g)
 			guest_left(g)
 			g.queue_free()
 	guests.clear()
+	if tour and is_instance_valid(tour):
+		tour.queue_free()
+	tour = null
+	if world.traffic:
+		world.traffic.school_bus_leave()
 	GameState.phase = GameState.Phase.REVIEWS
 	Events.phase_changed.emit(GameState.phase)
 	for s in staff_nodes:
@@ -325,14 +385,30 @@ func _review_summary() -> Dictionary:
 	var old_h := GameState.half_stars
 	var delta := 0.0
 	if n > 0:
-		var tier := 1.0 / (1.0 + 0.1 * GameState.half_stars)
-		delta = (avg - 2.6) * 26.0 * tier * minf(1.0, n / 4.0)
+		# early days are generous: even a small, decent museum climbs toward its first star
+		var tier := 1.0 / (1.0 + 0.12 * GameState.half_stars)
+		delta = (avg - 2.2) * 30.0 * tier * minf(1.0, n / 3.0) + minf(8.0, visitors_today * 0.5)
+		if GameState.has_skill("membership"):
+			delta += 4.0
 	else:
-		delta = -4.0
+		delta = -2.0
+	# Upgrade Points come from OPENING: visitors, good reviews and new species they saw
 	var up_gain := commendations
+	var up_visitors := visitors_today / 5 + (1 if visitors_today > 0 else 0)
+	up_gain += up_visitors
 	var five_star := n >= 4 and avg >= 4.5
 	if five_star:
+		up_gain += 2
+	elif n >= 3 and avg >= 3.5:
 		up_gain += 1
+	var seen: Array = []
+	for sp in GameState.discovered.keys():
+		var dd: Dictionary = GameState.discovered[sp]
+		if dd.get("seen", false) and not dd.get("claimed", false):
+			var pts := GameState.discovery_points(sp)
+			dd["claimed"] = true
+			up_gain += pts
+			seen.append(DB.SPECIES[sp]["name"])
 	GameState.quality = maxf(0.0, GameState.quality + delta)
 	var gained := 0
 	while GameState.quality >= 100.0 and GameState.half_stars < 10:
@@ -356,6 +432,7 @@ func _review_summary() -> Dictionary:
 		"old_q": old_q, "new_q": GameState.quality, "delta": delta, "gained": gained,
 		"old_h": old_h, "new_h": GameState.half_stars, "up": up_gain, "five_star": five_star,
 		"visitors": visitors_today, "commend": commendations, "publicity": publicity,
+		"up_visitors": up_visitors, "seen": seen,
 	}
 
 
@@ -367,17 +444,9 @@ func to_ledger() -> void:
 		wages += GameState.staff_wage(d)
 	if wages > 0:
 		GameState.charge(wages, "Staff wages")
-	var loan_pay := 0
-	var keep: Array = []
-	for l in GameState.loans:
-		var pay := mini(int(l["per_day"]), int(l["left"]))
-		l["left"] = int(l["left"]) - pay
-		loan_pay += pay
-		if int(l["left"]) > 0:
-			keep.append(l)
-	GameState.loans = keep
-	if loan_pay > 0:
-		GameState.charge(loan_pay, "Loan repayments")
+	var bills := Mail.unpaid_bills()
+	if bills > 0:
+		GameState.charge(bills, "Unpaid bills + late fees")
 	var upkeep := GameState.museum_level * 20
 	for o in museum.all_objects():
 		if o.def.get("cat", "") == "Concessions":
@@ -394,7 +463,7 @@ func to_ledger() -> void:
 		spent += int(v)
 	var data := {
 		"day": GameState.day, "income": GameState.ledger["income"].duplicate(), "expense": GameState.ledger["expense"].duplicate(),
-		"net": inc - spent, "money": GameState.money, "debt": GameState.debt_total(), "loans": GameState.loans.duplicate(true),
+		"net": inc - spent, "money": GameState.money, "debt": GameState.debt_total(),
 		"warn": GameState.money < -GameState.DEBT_WARN, "bankrupt": GameState.money < -GameState.DEBT_LIMIT,
 	}
 	if inc - spent > int(GameState.stats["best_day"]):

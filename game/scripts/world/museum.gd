@@ -161,8 +161,26 @@ func load_objects() -> void:
 	for c in objects.get_children():
 		c.queue_free()
 	grid.clear()
+	var keep: Array = []
 	for e in GameState.placed:
+		# old saves: a converted podium may no longer fit - drop it (contents go back to storage)
+		var ok := DB.BUILD.has(String(e.get("type", "")))
+		if ok:
+			for c in footprint(e["type"], Vector2i(int(e["cell"][0]), int(e["cell"][1])), int(e["rot"])):
+				if not in_bounds(c) or grid.has(c):
+					ok = false
+		if not ok:
+			for uid in (e.get("data", {}).get("pieces", {}) as Dictionary).values():
+				var fe := GameState.find_uid(int(uid))
+				if not fe.is_empty():
+					fe["where"] = ""
+			var fe2 := GameState.find_uid(int(e.get("data", {}).get("uid", 0)))
+			if not fe2.is_empty():
+				fe2["where"] = ""
+			continue
+		keep.append(e)
 		_spawn(e)
+	GameState.placed = keep
 	rebuild_astar()
 
 
@@ -191,6 +209,35 @@ func objects_of(t: String) -> Array:
 	return out
 
 
+## Every single-fossil display case (small, medium and big).
+func cases() -> Array:
+	var out: Array = []
+	for o in all_objects():
+		if o.is_case():
+			out.append(o)
+	return out
+
+
+## Cells a guest, staff member or the player is standing on right now (you
+## can build while the museum is open, but never on top of someone).
+func occupied_cells() -> Dictionary:
+	var out := {}
+	if World.instance == null:
+		return out
+	var pts: Array = []
+	for a in World.instance.actors():
+		pts.append((a as Node3D).global_position)
+	if World.instance.player:
+		pts.append(World.instance.player.global_position)
+	for p: Vector3 in pts:
+		if not contains(p, 0.4):
+			continue
+		for dx in [-0.45, 0.45]:
+			for dz in [-0.45, 0.45]:
+				out[world_to_cell(p + Vector3(dx, 0, dz))] = true
+	return out
+
+
 static func footprint(type: String, cell: Vector2i, rot: int) -> Array[Vector2i]:
 	var s: Vector2i = DB.BUILD[type]["size"]
 	if rot % 2 == 1:
@@ -211,6 +258,7 @@ func footprint_center(cells: Array[Vector2i]) -> Vector3:
 
 func can_place(type: String, cell: Vector2i, rot: int, ignore: PlacedObject = null) -> String:
 	var cells := footprint(type, cell, rot)
+	var people := occupied_cells()
 	for c in cells:
 		if not in_bounds(c):
 			return "Out of bounds"
@@ -218,6 +266,8 @@ func can_place(type: String, cell: Vector2i, rot: int, ignore: PlacedObject = nu
 			return "Keep the entrance clear"
 		if grid.has(c) and grid[c] != ignore:
 			return "Space occupied"
+		if people.has(c):
+			return "Someone is standing there"
 	if DB.BUILD[type].get("walkable", false):
 		return ""
 	var solid := {}
@@ -282,10 +332,10 @@ func object_at(c: Vector2i) -> PlacedObject:
 	return grid.get(c)
 
 
-func expand() -> void:
+func expand(level: int = -1) -> void:
 	## Grow the floor plan; shift existing objects so the entrance stays centred.
 	var old_w := W
-	GameState.museum_level += 1
+	GameState.museum_level = clampi(level if level >= 0 else GameState.museum_level + 1, 0, DB.MUSEUM_SIZES.size() - 1)
 	var sz := GameState.museum_size()
 	var dx := (sz.x - old_w) / 2
 	for e in GameState.placed:
@@ -397,7 +447,7 @@ func has_checker() -> bool:
 ## Display cases with a blank or wrong plaque.
 func wrong_plaques() -> Array:
 	var out: Array = []
-	for o in objects_of("display_case"):
+	for o in cases():
 		var st: String = o.plaque_status()
 		if st == "wrong" or st == "blank":
 			out.append(o)
@@ -468,6 +518,8 @@ func compute_pillars() -> void:
 		if o.sabotaged:
 			penalty += 5
 	fun += species.size() * 2.0
+	if int(GameState.flags.get("loan_exhibit_until", 0)) >= GameState.day:
+		fun += 15.0  # the borrowed "Age of Giants" display (J-Mail)
 	for m in mess:
 		penalty += 6.0 if m["kind"] == "trash" else 4.0
 	var h := GameState.half_stars
@@ -481,14 +533,14 @@ func compute_pillars() -> void:
 
 
 func has_complete_skeleton_near(p: Vector3, r: float) -> bool:
-	for o in objects_of("mega_podium"):
+	for o in objects_of("display_case_mega"):
 		if o.skeleton_complete() and o.global_position.distance_to(p) < r:
 			return true
 	return false
 
 
 func apex_complete() -> bool:
-	for o in objects_of("mega_podium"):
+	for o in objects_of("display_case_mega"):
 		if o.data.get("species", "") == "apex" and o.skeleton_complete():
 			return true
 	return false

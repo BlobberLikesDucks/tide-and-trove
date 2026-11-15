@@ -1,11 +1,15 @@
 extends Node
 ## Phase-driven music with crossfades, plus a pooled SFX player.
 
+## Recorded CC0 tracks from OpenGameArt.org, crossfade-looped with ffmpeg (credits in README).
 const MUSIC := {
-	"prep": "res://assets/audio/music_prep.wav",
-	"open": "res://assets/audio/music_open.wav",
-	"closing": "res://assets/audio/music_closing.wav",
+	"menu": "res://assets/audio/music_menu.ogg",  # "Happy Clappy Loop" - OwlishMedia
+	"prep": "res://assets/audio/music_prep.ogg",  # "vintage hawaii" - Tarush Singhal
+	"open": "res://assets/audio/music_open.ogg",  # "Hot Springs Town" - Kistol
+	"closing": "res://assets/audio/music_closing.ogg",  # "Another August" - cynicmusic
 }
+## Per-track gain (dB) so the four recordings sit at the same loudness.
+const MUSIC_GAIN := {"menu": 2.5, "prep": -3.0, "open": -1.5, "closing": 2.5}
 
 var _a: AudioStreamPlayer
 var _b: AudioStreamPlayer
@@ -37,7 +41,9 @@ func _load(path: String, loop: bool) -> AudioStream:
 	if not ResourceLoader.exists(path):
 		return null
 	var s = load(path)
-	if s is AudioStreamWAV and loop:
+	if s is AudioStreamOggVorbis:
+		s.loop = loop
+	elif s is AudioStreamWAV and loop:
 		s.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		s.loop_begin = 0
 		# frames = bytes / (2 bytes per sample * channels); the v2 score is stereo 16-bit
@@ -61,7 +67,7 @@ func play_music(key: String, fade: float = 1.6) -> void:
 	if _tween and _tween.is_valid():
 		_tween.kill()
 	_tween = create_tween().set_parallel(true)
-	_tween.tween_property(incoming, "volume_db", 0.0, fade)
+	_tween.tween_property(incoming, "volume_db", float(MUSIC_GAIN.get(key, 0.0)), fade)
 	if outgoing.playing:
 		_tween.tween_property(outgoing, "volume_db", -40.0, fade)
 		_tween.chain().tween_callback(outgoing.stop)

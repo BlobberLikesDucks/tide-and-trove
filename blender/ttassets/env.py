@@ -137,9 +137,21 @@ def wall_door():
             ang = sx * -72
             cx, cy = sx * 1.0, -0.43
             rbox(p, TEAL, (0.66, 0.07, 2.3), loc=(cx, cy, 1.17), rot=(0, 0, ang), r=0.02)
-            for k in range(3):
-                rbox(p, SIDING3, (0.48, 0.03, 0.56), loc=(cx, cy, 0.5 + k * 0.7), rot=(0, 0, ang), r=0.012)
-            sph(p, BRASS, 0.04, loc=(sx * 0.8, -0.72, 1.1), u=8, v=6)
+            a = math.radians(ang)
+            ax = Vector((math.cos(a), math.sin(a), 0))     # along the swung door
+            nrm = Vector((-math.sin(a), math.cos(a), 0))   # door face normal
+            c0 = Vector((cx, cy, 0))
+            for k in range(3):  # raised panels ON both faces of the leaf
+                for side in (-1, 1):
+                    q = c0 + nrm * side * 0.042
+                    rbox(p, SIDING3, (0.48, 0.03, 0.56), loc=(q.x, q.y, 0.5 + k * 0.7), rot=(0, 0, ang), r=0.012)
+            # knobs mounted on the free edge of the leaf, one per face, on a short stem
+            for side in (-1, 1):
+                base = c0 + ax * (sx * 0.25) + nrm * side * 0.035
+                tip = c0 + ax * (sx * 0.25) + nrm * side * 0.075
+                cyl(p, BRASS, 0.012, 0.05, loc=((base.x + tip.x) / 2, (base.y + tip.y) / 2, 1.1), rot=(90, 0, ang), seg=8)
+                sph(p, BRASS, 0.034, loc=(tip.x, tip.y, 1.1), u=10, v=8)
+                cyl(p, BRASS, 0.04, 0.012, loc=(base.x, base.y, 1.1), rot=(90, 0, ang), seg=12)
         # hanging "MUSEUM" plaque over the door
         rbox(p, TEAL, (0.95, 0.05, 0.34), loc=(0, -0.2, 2.86), r=0.04)
         rbox(p, BRASS, (1.0, 0.035, 0.38), loc=(0, -0.18, 2.86), r=0.04)
@@ -254,10 +266,10 @@ def _roof(W, D):
     return root
 
 
-for _lvl, (_w, _d) in enumerate(((5, 4), (7, 5), (9, 6), (11, 7))):
+for _lvl, (_w, _d) in enumerate(((5, 4), (6, 5), (7, 6), (9, 6), (11, 7))):
     def _mk(w=_w, d=_d):
         return _roof(w, d)
-    asset("museum_roof_%d" % _lvl, tier="building", res=1024, group="env")(_mk)
+    asset("museum_roof_%d" % _lvl, tier="building", res=2048 if _w >= 9 else 1024, group="env")(_mk)
 
 
 @asset("porch", tier="prop", group="env",
@@ -473,14 +485,16 @@ def bus_stop():
         rbox(p, CORAL, (0.9, 0.02, 0.78), loc=(1.75, 0.85, 1.52), r=0.01)
         spiral(p, [CREAM], turns=2.2, a=0.012, growth=0.24, tube_k=0.3, center=(1.75, 0.835, 1.6), seg=6, centered=True)
         text3d(p, CREAM, "VISIT THE MUSEUM", size=0.07, loc=(1.75, 0.84, 1.25), depth=0.003, max_w=0.8)
-        cyl(p, METAL_DK, 0.04, 2.8, loc=(-0.3, -0.1, 1.4), seg=10)
-        rbox(p, BLUE, (0.72, 0.07, 0.52), loc=(-0.3, -0.1, 2.6), r=0.05)
-        rbox(p, TRIM, (0.62, 0.075, 0.42), loc=(-0.3, -0.1, 2.6), r=0.04)
-        rbox(p, BLUE, (0.56, 0.08, 0.36), loc=(-0.3, -0.1, 2.6), r=0.035)
-        text3d(p, CREAM, "BUS", size=0.2, loc=(-0.3, -0.142, 2.6), depth=0.008, max_w=0.46, max_h=0.24)
-        text3d(p, CREAM, "BUS", size=0.2, loc=(-0.3, -0.058, 2.6), rot=(90, 0, 180), depth=0.008, max_w=0.46, max_h=0.24)
-        lathe(p, METAL_DK, [(0.0, 0.0), (0.18, 0.0), (0.2, 0.6), (0.0, 0.6)], seg=12, loc=(-0.85, 0.45, 0))
-        cyl(p, DARK, 0.17, 0.02, loc=(-0.85, 0.45, 0.6), seg=12)
+        # free-standing BUS sign: its own post well clear of the shelter (roof starts at x=-0.2)
+        SX = -1.15
+        cyl(p, METAL_DK, 0.04, 2.8, loc=(SX, -0.1, 1.4), seg=10)
+        rbox(p, BLUE, (0.72, 0.07, 0.52), loc=(SX, -0.1, 2.56), r=0.05)
+        rbox(p, TRIM, (0.62, 0.075, 0.42), loc=(SX, -0.1, 2.56), r=0.04)
+        rbox(p, BLUE, (0.56, 0.08, 0.36), loc=(SX, -0.1, 2.56), r=0.035)
+        text3d(p, CREAM, "BUS", size=0.2, loc=(SX, -0.142, 2.56), depth=0.008, max_w=0.46, max_h=0.24)
+        text3d(p, CREAM, "BUS", size=0.2, loc=(SX, -0.058, 2.56), rot=(90, 0, 180), depth=0.008, max_w=0.46, max_h=0.24)
+        lathe(p, METAL_DK, [(0.0, 0.0), (0.18, 0.0), (0.2, 0.6), (0.0, 0.6)], seg=12, loc=(-0.6, 0.55, 0))
+        cyl(p, DARK, 0.17, 0.02, loc=(-0.6, 0.55, 0.6), seg=12)
     return single("SM_BusStop", f)
 
 
@@ -818,21 +832,32 @@ def cave_arch():
     return single("SM_CaveArch", f, smooth=42)
 
 
-@asset("fence_barrier", tier="prop", group="env", col=[("box", (0, 0, 0.8), (4.0, 0.3, 1.6))])
+@asset("fence_barrier", tier="prop", group="env", col=[("box", (0, 0, 1.45), (4.0, 0.3, 2.9))])
 def fence_barrier():
+    """Permit hoarding: a solid 4 m plank wall that starts AT the ground (no gap to
+    peek under) and stands 2.9 m tall, so the locked strata behind it stay hidden.
+    Segments butt together edge to edge along the whole zone border."""
     def f(p):
-        for x in (-1.9, 0, 1.9):
-            cyl(p, WOOD_DK, 0.085, 1.4, loc=(x, 0, 0.7), seg=10)
-            cyl(p, WOOD_DK, 0.085, 0.16, loc=(x, 0, 1.48), r2=0.0, seg=10)
-        for x0, x1 in ((-1.9, 0), (0, 1.9)):
-            tube(p, ROPE, curve_pts((x0, 0, 1.25), (x1, 0, 1.25), (0, 0, -0.2), 8), 0.027, seg=6)
-        rbox(p, WOOD, (4.0, 0.09, 0.17), loc=(0, 0, 0.5), r=0.025)
-        rbox(p, STRIPE_Y, (1.35, 0.065, 0.62), loc=(0, -0.08, 0.85), r=0.035)
-        text3d(p, DARK, "PERMIT\nREQUIRED", size=0.2, loc=(0, -0.113, 0.86), depth=0.006, max_w=1.15, max_h=0.5, res=1)
-        text3d(p, DARK, "PERMIT\nREQUIRED", size=0.2, loc=(0, -0.047, 0.86), rot=(90, 0, 180), depth=0.006, max_w=1.15, max_h=0.5, res=1)
-        tube(p, WOOD_DK, [(1.9, 0, 1.5), (1.9, 0, 2.0)], 0.022, seg=6)
-        prism(p, RED, [(0, 0), (0.35, -0.1), (0, -0.2)], 0.012, plane="XZ", loc=(1.9, 0, 2.0))
-        # padlock: "permit required"
-        rbox(p, BRASS, (0.12, 0.05, 0.12), loc=(0.0, -0.13, 0.42), r=0.02)
-        tube(p, METAL, [(-0.035, -0.13, 0.47), (-0.035, -0.13, 0.53), (0.035, -0.13, 0.53), (0.035, -0.13, 0.47)], 0.01, seg=5)
+        rnd = random.Random(14)
+        x = -2.0
+        while x < 1.99:  # vertical boards, slightly uneven tops, from the sand up
+            w = 0.25
+            h = 2.62 + rnd.uniform(-0.06, 0.06)
+            rbox(p, WOOD if int((x + 2.0) / w) % 2 else WOOD_LT, (w - 0.012, 0.1, h), loc=(x + w / 2, 0, h / 2 - 0.02), r=0.012)
+            x += w
+        for z in (0.5, 2.15):  # rails on the back
+            rbox(p, WOOD_DK, (4.0, 0.08, 0.16), loc=(0, 0.09, z), r=0.02)
+        for xx in (-1.95, 1.95):
+            rbox(p, WOOD_DK, (0.16, 0.16, 2.9), loc=(xx, 0.06, 1.45), r=0.025)
+        for k in range(8):  # hazard stripe skirt along the bottom
+            rbox(p, STRIPE_Y if k % 2 == 0 else DARK, (0.5, 0.03, 0.3), loc=(-1.75 + k * 0.5, -0.065, 0.17), r=0.006)
+        rbox(p, STRIPE_Y, (1.6, 0.06, 0.78), loc=(0, -0.08, 1.45), r=0.035)
+        text3d(p, DARK, "PERMIT\nREQUIRED", size=0.24, loc=(0, -0.113, 1.46), depth=0.006, max_w=1.4, max_h=0.62, res=1)
+        rbox(p, STRIPE_Y, (1.6, 0.06, 0.78), loc=(0, 0.14, 1.45), r=0.035)
+        text3d(p, DARK, "PERMIT\nREQUIRED", size=0.24, loc=(0, 0.173, 1.46), rot=(90, 0, 180), depth=0.006, max_w=1.4, max_h=0.62, res=1)
+        # padlocked hasp + little red pennant on top
+        rbox(p, BRASS, (0.12, 0.05, 0.12), loc=(0.95, -0.09, 1.05), r=0.02)
+        tube(p, METAL, [(0.915, -0.09, 1.1), (0.915, -0.09, 1.16), (0.985, -0.09, 1.16), (0.985, -0.09, 1.1)], 0.01, seg=5)
+        tube(p, WOOD_DK, [(1.95, 0.06, 2.9), (1.95, 0.06, 3.35)], 0.022, seg=6)
+        prism(p, RED, [(0, 0), (0.35, -0.1), (0, -0.2)], 0.012, plane="XZ", loc=(1.95, 0.06, 3.35))
     return single("SM_FenceBarrier", f)

@@ -19,9 +19,9 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_build_scene()
 	_build_ui()
-	Audio.play_music("prep")
+	Audio.play_music("menu")
 	var args := OS.get_cmdline_user_args()
-	if args.has("--autotest") or args.has("--shots"):
+	if args.has("--autotest") or args.has("--shots") or args.has("--look"):
 		call_deferred("_start_new", 9)
 	elif args.has("--menushot"):
 		_menushot(args)

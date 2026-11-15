@@ -30,8 +30,13 @@ var placed: Array = []
 var staff: Array = []
 var discovered := {}
 var flags := {}
-var loans: Array = []
+var loans: Array = []  # unused since loans were removed; kept so old saves load
 var plushies := 0
+## J-Mail inbox: [{"id", "kind", "from", "subject", "body", "day", "read", "done", ...}]
+var emails: Array = []
+## Scheduled things from emails: [{"what": "school_trip", "day": n, ...}]
+var events: Array = []
+var next_mail := 1
 var pit_stock := 0
 var stats := {"visitors": 0, "earned": 0, "digs": 0, "cleaned": 0, "best_day": 0}
 var playtime := 0.0
@@ -74,6 +79,9 @@ func reset() -> void:
 	discovered = {}
 	flags = {"act": 1, "intro": false, "tut": 0}
 	loans = []
+	emails = []
+	events = []
+	next_mail = 1
 	plushies = 0
 	pit_stock = 0
 	stats = {"visitors": 0, "earned": 0, "digs": 0, "cleaned": 0, "best_day": 0}
@@ -98,12 +106,15 @@ func earn(amount: int, category: String) -> void:
 	ledger["income"][category] = int(ledger["income"].get(category, 0)) + amount
 	stats["earned"] = int(stats["earned"]) + amount
 	changed.emit()
+	Events.money_delta.emit(amount)
 
 
 func charge(amount: int, category: String) -> void:
 	money -= amount
 	ledger["expense"][category] = int(ledger["expense"].get(category, 0)) + amount
 	changed.emit()
+	if amount != 0:
+		Events.money_delta.emit(-amount)
 
 
 func try_spend(amount: int, category: String) -> bool:
@@ -113,18 +124,8 @@ func try_spend(amount: int, category: String) -> bool:
 	return true
 
 
-func take_loan(amount: int, days: int, label: String) -> void:
-	var total := int(round(amount * 1.15))
-	loans.append({"left": total, "per_day": int(ceil(float(total) / days)), "label": label})
-	money += amount
-	changed.emit()
-
-
 func debt_total() -> int:
-	var t := 0
-	for l in loans:
-		t += int(l["left"])
-	return t + maxi(0, -money)
+	return maxi(0, -money)
 
 # --------------------------------------------------------------- progress ---
 func stars() -> float:
@@ -187,6 +188,8 @@ func buy_skill(id: String) -> bool:
 	skills[id] = true
 	if id.begins_with("hotbar_"):
 		_fit_hotbar()
+	if id.begins_with("expand_"):
+		Events.expansion_bought.emit(int(id.substr(7)))
 	changed.emit()
 	backpack_changed.emit()
 	Events.museum_changed.emit()
@@ -210,10 +213,33 @@ func speed_mult() -> float:
 	return 1.0 + GameConfig.get_cfg().speed_bonus_per_upgrade * count_skills("speed_")
 
 
+## Hold-to-dig speed: the "Strong Arms" upgrades (one per star tier).
+func dig_speed_mult() -> float:
+	return 1.0 + 0.12 * count_skills("dig_")
+
+
+## Share of the price you get back when selling a build in Build Mode.
+func refund_rate() -> float:
+	return 0.25 + 0.15 * count_skills("refund_")
+
+
+func fossil_bonus() -> float:
+	return 0.15 * mini(2, count_skills("lucky_"))
+
+
+func build_unlocked(id: String) -> bool:
+	var lic := String(DB.BUILD[id].get("lic", ""))
+	return lic == "" or has_skill(lic)
+
+
+func has_office() -> bool:
+	return museum_level >= DB.OFFICE_LEVEL
+
+
 func ticket_base() -> int:
 	var b := 2
-	var add := [2, 3, 4, 6]
-	for i in range(4):
+	var add := [2, 3, 4, 6, 8]
+	for i in range(5):
 		if has_skill("ticket_%d" % (i + 1)):
 			b += add[i]
 	return b
@@ -287,7 +313,7 @@ func item_name(it: Dictionary) -> String:
 		"geode":
 			return "Sealed Geode"
 		"encased":
-			return "Encased Fossil (%s)" % it.get("era", "?")
+			return String(DB.MATRIX.get(matrix_of(it), {"name": "Rock-Encased Find"})["name"])
 	return "?"
 
 
@@ -300,7 +326,17 @@ func item_value(it: Dictionary) -> int:
 			v = DB.GEODE_VALUE
 	if has_skill("haggle"):
 		v = int(round(v * 1.2))
+	if has_skill("haggle_2"):
+		v = int(round(v * 1.2))
 	return v
+
+
+## What rock a find is wrapped in (old saves stored only the era).
+func matrix_of(it: Dictionary) -> String:
+	if it.has("m"):
+		return String(it["m"])
+	var sp := species_of(String(it.get("f", "")))
+	return String(DB.SPECIES.get(sp, {}).get("matrix", "sandstone"))
 
 
 func backpack_full() -> bool:
@@ -542,6 +578,17 @@ func fossil_name(fid: String) -> String:
 	return d["name"]
 
 
+## Which display case size a fossil fits (exactly one).
+func fossil_case(fid: String) -> String:
+	return String(DB.SPECIES[species_of(fid)].get("case", "small"))
+
+
+func lab_grid(fid: String) -> Vector2i:
+	var g: Vector2i = DB.LAB_GRID[fossil_case(fid)]
+	var r := DB.RARITY_ORDER.find(fossil_rarity(fid))
+	return g + Vector2i(r, r / 2)
+
+
 func fossil_rarity(fid: String) -> String:
 	return "rare" if piece_of(fid) != "" and species_of(fid) != "apex" else String(DB.SPECIES[species_of(fid)]["rarity"])
 
@@ -573,16 +620,23 @@ func unclaimed_count() -> int:
 	return n
 
 
+## Discovery rewards are earned by OPENING: the first day visitors see a new
+## species on display it pays Upgrade Points (in the end-of-day reviews).
+func mark_seen(sp: String) -> void:
+	if discovered.has(sp) and not discovered[sp]["claimed"]:
+		discovered[sp]["seen"] = true
+
+
+func discovery_points(sp: String) -> int:
+	var r: String = DB.SPECIES[sp]["rarity"]
+	return {"common": 1, "uncommon": 1, "rare": 2, "epic": 3}.get(r, 1)
+
+
 func claim(sp: String) -> int:
 	if not discovered.has(sp) or discovered[sp]["claimed"]:
 		return 0
 	discovered[sp]["claimed"] = true
-	var pts := 1
-	var r: String = DB.SPECIES[sp]["rarity"]
-	if r == "rare":
-		pts = 2
-	elif r == "epic":
-		pts = 3
+	var pts := discovery_points(sp)
 	up += pts
 	changed.emit()
 	return pts
@@ -627,13 +681,15 @@ func owned_pieces(sp: String) -> Dictionary:
 
 # ----------------------------------------------------------- serialisation --
 const SAVE_KEYS := ["day", "money", "up", "half_stars", "quality", "museum_level", "backpack", "storage", "collection", "next_uid",
-	"tools", "skills", "placed", "staff", "discovered", "flags", "loans", "plushies", "pit_stock", "stats", "playtime", "last_reviews", "hotbar", "hotbar_sel"]
+	"tools", "skills", "placed", "staff", "discovered", "flags", "plushies", "pit_stock", "stats", "playtime", "last_reviews", "hotbar", "hotbar_sel",
+	"emails", "events", "next_mail"]
 
 
 func to_dict() -> Dictionary:
 	var d := {}
 	for k in SAVE_KEYS:
 		d[k] = get(k)
+	d["saved_phase"] = phase
 	return d
 
 
@@ -659,18 +715,46 @@ func from_dict(d: Dictionary) -> void:
 	for e in collection:
 		e["uid"] = int(e["uid"])
 	hotbar_sel = int(hotbar_sel)
-	# amber used to be a gem; it is a fossil now
+	next_mail = int(next_mail)
+	# amber used to be a gem; it is a fossil now. Finds now carry their matrix.
 	for arr in [backpack, storage, hotbar]:
 		for i in range(arr.size()):
 			var it: Dictionary = arr[i]
 			if it.get("t", "") == "gem" and it.get("id", "") == "amber":
-				arr[i] = {"t": "encased", "f": "amber", "era": "Cenozoic"}
+				arr[i] = {"t": "encased", "f": "amber", "m": "amber"}
 			elif it.get("t", "") == "serve":
 				arr[i] = {}
+			elif it.get("t", "") == "encased":
+				if not DB.SPECIES.has(species_of(String(it.get("f", "")))):
+					arr[i] = {}
+				elif not it.has("m"):
+					it["m"] = matrix_of(it)
+	collection = collection.filter(func(e): return DB.SPECIES.has(species_of(String(e.get("f", "")))))
+	for sp in discovered.keys().duplicate():
+		if not DB.SPECIES.has(sp):
+			discovered.erase(sp)
+	if (d.get("skills", {}) as Dictionary).has("lic_podium"):
+		skills["bp_case_medium"] = true
+		skills["bp_case_big"] = true
+		skills["bp_case_mega"] = true
+	for k in skills.keys().duplicate():  # renamed / removed tree nodes
+		if not DB.SKILLS.has(k):
+			skills.erase(k)
+	museum_level = clampi(museum_level, 0, DB.MUSEUM_SIZES.size() - 1)
+	for i in range(1, museum_level + 1):  # old saves bought floors in Build Mode
+		skills["expand_%d" % i] = true
+	for p in placed:  # podiums became Mega Display Cases
+		if p.get("type", "") == "mega_podium":
+			p["type"] = "display_case_mega"
+	placed = placed.filter(func(p): return DB.BUILD.has(String(p.get("type", ""))))
 	backpack = backpack.filter(func(x): return not (x as Dictionary).is_empty())
 	_fit_hotbar()
 	if not has_tool_item("shovel"):
 		issue_tool("shovel")
+	# Saved during an open day (or the reviews / ledger): that day is over - you
+	# wake up on the next morning's prep phase with what you earned so far.
+	if int(d.get("saved_phase", Phase.PREP)) != Phase.PREP:
+		day += 1
 	phase = Phase.PREP
 	reset_ledger()
 	changed.emit()

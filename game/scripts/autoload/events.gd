@@ -17,6 +17,12 @@ signal half_star_gained(half_stars: int)
 signal game_won
 signal game_over(reason: String)
 signal story_beat(beat: String)
+## An "Expansion" node was bought in the Upgrade Tree (new museum level).
+signal expansion_bought(level: int)
+## Money went up / down (for the HUD's AnimationPlayer pop).
+signal money_delta(amount: int)
+## New J-Mail arrived.
+signal mail_arrived(count: int)
 
 
 func say(text: String, color: Color = Color.WHITE) -> void:

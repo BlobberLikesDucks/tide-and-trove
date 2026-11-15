@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cjq2sdlb247c1"
-path="res://.godot/imported/dino_statue_T_dino_statue_BC.png-f63212c3599538f46e2fd81439d518e3.ctex"
+path.s3tc="res://.godot/imported/dino_statue_T_dino_statue_BC.png-f63212c3599538f46e2fd81439d518e3.s3tc.ctex"
+path.etc2="res://.godot/imported/dino_statue_T_dino_statue_BC.png-f63212c3599538f46e2fd81439d518e3.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "114b67f8d2c37e6df34a633c9ace100f"
+"md5": "281008855fffddc5845f629023aff2f3"
 }
 
 [deps]
 
 source_file="res://assets/models/dino_statue_T_dino_statue_BC.png"
-dest_files=["res://.godot/imported/dino_statue_T_dino_statue_BC.png-f63212c3599538f46e2fd81439d518e3.ctex"]
+dest_files=["res://.godot/imported/dino_statue_T_dino_statue_BC.png-f63212c3599538f46e2fd81439d518e3.s3tc.ctex", "res://.godot/imported/dino_statue_T_dino_statue_BC.png-f63212c3599538f46e2fd81439d518e3.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

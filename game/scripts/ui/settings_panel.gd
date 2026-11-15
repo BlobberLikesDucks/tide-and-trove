@@ -128,7 +128,7 @@ func _gameplay_tab() -> void:
 	_check_row(v, "Auto-unload backpack", "auto_deposit", "Unload your backpack automatically when you enter the museum or Prep Lab.")
 	_check_row(v, "Invert camera Y", "invert_y", "Flip vertical camera look.")
 	_slider_row(v, "Text speed (chars/sec)", "text_speed", 10.0, 120.0, 5.0, "%.0f")
-	_slider_row(v, "Open-phase length (minutes)", "day_minutes", 2.0, 12.0, 0.5, "%.1f")
+	_slider_row(v, "Open-phase length (minutes)", "day_len", 1.5, 8.0, 0.5, "%.1f")
 	_slider_row(v, "Camera sensitivity", "sensitivity", 0.3, 2.5, 0.1, "%.1f")
 
 
@@ -140,6 +140,11 @@ func _graphics_tab() -> void:
 		res.append("%d x %d" % [r.x, r.y])
 	_option_row(v, "Resolution", "resolution", res)
 	_option_row(v, "Window mode", "window_mode", Settings.WINDOW_MODES)
+	_option_row(v, "Graphics quality", "quality", Settings.QUALITY_LEVELS)
+	var qn := UIKit.label("Low = lower render resolution, no ambient occlusion, glow or ink outlines (outlines change after a restart). Use it if the game lags.", 14, UIKit.MUTED)
+	qn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	qn.custom_minimum_size = Vector2(560, 0)
+	v.add_child(qn)
 	_option_row(v, "Shadow quality", "shadows", Settings.SHADOW_LEVELS)
 	_check_row(v, "V-Sync", "vsync", "Synchronise frames with your monitor.")
 

@@ -344,7 +344,8 @@ def build_hair(rig, name="SM_Char_Hair", style="short"):
     kill = [v for v in t.verts if v.co.z < -0.035 or (v.co.y < -0.09 and v.co.z < 0.1) or (v.co.y < 0.0 and v.co.z < 0.0)
             or (style == "sides" and v.co.z > 0.06)]
     bmesh.ops.delete(t, geom=kill, context="VERTS")
-    _xf(t, loc=HEAD_C + Vector((0, 0.008, 0.012)), scale=(0.97, 1.02, 1.04))
+    # sits clear of the head everywhere (head radii 0.157/0.165/0.177) so no scalp shows through
+    _xf(t, loc=HEAD_C + Vector((0, 0.004, 0.012)), scale=(1.0, 1.035, 1.06))
     _merge(p, t, C_HAIR)
     c = HEAD_C + Vector((0, 0.01, 0.02))
     if style == "short":
@@ -358,12 +359,12 @@ def build_hair(rig, name="SM_Char_Hair", style="short"):
             _clump(p, C_HAIR, (x, -0.12, 1.83), (x + 0.05, -0.17, 1.76), 0.042, bend=(0, -0.02, 0.01))
         for sx in (1, -1):  # sideburns
             _clump(p, C_HAIR, (sx * 0.145, -0.04, 1.75), (sx * 0.15, -0.05, 1.66), 0.028)
-    elif style == "sides":  # worn under hats: no crown volume, only nape + sides
-        for k in range(10):
+    elif style == "sides":  # worn under hats: no crown volume, only nape + sides, kept
+        for k in range(10):  # inside every hat's brim radius (>= 0.175) so nothing pokes out
             th = math.pi + (k - 4.5) / 4.5 * 1.9
-            root = c + _scalp_dir(th, 1.05) * 0.17
-            tip = c + _scalp_dir(th, 1.35) * 0.19 + Vector((0, 0.0, -0.05))
-            _clump(p, C_HAIR, root, tip, 0.045, bend=(0, 0, 0.01))
+            root = c + _scalp_dir(th, 1.45) * 0.174   # below every hat's band (z < 1.73)
+            tip = c + _scalp_dir(th, 1.85) * 0.18 + Vector((0, 0.0, -0.03))
+            _clump(p, C_HAIR, root, tip, 0.04, bend=(0, 0, 0.004), thick=0.34)
     elif style == "long":
         for k in range(16):
             th = math.pi + (k - 7.5) / 7.5 * 2.6
@@ -595,22 +596,36 @@ def fp_dig(t):
     return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["tool"])}
 
 
+## Pickaxe: carried UPRIGHT on the shoulder side (shaft rises forward from the
+## fists, head up top, spike pointing forward-down) - never like a shovel.
+PICK_READY = ((0.22, 0.38, -0.16), (122, 0, 16))
+
+
 def fp_hold_pick(t):
     b = math.sin(t * math.tau) * 0.006
-    r = ((0.21, 0.4, -0.1 + b), (25, 0, 22))
+    r = ((PICK_READY[0][0], PICK_READY[0][1], PICK_READY[0][2] + b), (PICK_READY[1][0] + math.sin(t * math.tau) * 2.0, 0, 16))
     return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"])}
 
 
 def fp_mine(t):
-    keys = [(0.0, ((0.21, 0.4, -0.1), (25, 0, 22))), (0.35, ((0.22, 0.4, 0.02), (-12, 0, 18))),
-            (0.55, ((0.13, 0.6, -0.24), (95, 0, 24))), (0.72, ((0.15, 0.55, -0.22), (85, 0, 24))), (1.0, ((0.21, 0.4, -0.1), (25, 0, 22)))]
+    """Overhead swing: wind the head up and back over the shoulder, chop it down
+    in front so the spike strikes the rock, a small recoil, then back to ready."""
+    keys = [(0.0, PICK_READY),
+            (0.38, ((0.2, 0.3, 0.04), (168, 0, 10))),     # wind-up: head high behind the hands
+            (0.58, ((0.12, 0.62, -0.26), (68, 0, 20))),   # strike: head down in front
+            (0.7, ((0.13, 0.6, -0.23), (76, 0, 20))),     # recoil off the stone
+            (1.0, PICK_READY)]
     r = _fp_keys(keys, t)
     return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"])}
 
 
 def fp_detector(t):
+    """Metal-detector sweep: one hand on the grip, arm out, the coil low in front of
+    you (visible at the bottom of the screen) swinging left-right over the sand."""
     s = math.sin(t * math.tau)
-    return {"R": ((0.19 + s * 0.03, 0.46, -0.18), (30, s * 6, 10 + s * 16)), "L": _fp_rest("L", t, low=0.03)}
+    c = math.cos(t * math.tau)
+    return {"R": ((0.13 + s * 0.05, 0.42, -0.15 + abs(c) * 0.012), (68, 0, 8 + s * 28)),
+            "L": _fp_rest("L", t, low=0.05)}
 
 
 def fp_hold_item(t):

@@ -42,6 +42,12 @@ var _hotbar_key := ""
 @onready var hint_lbl: Label = $HUD/HotbarArea/Hints
 @onready var crosshair: TextureRect = $HUD/Crosshair
 var _hud_t := 0.0
+## Money counter: animated with the HUD's MoneyAnim AnimationPlayer + floating
+## MoneyPopup scenes (their own AnimationPlayer), and counts up smoothly.
+const MONEY_POPUP := preload("res://scenes/ui/money_popup.tscn")
+@onready var money_anim: AnimationPlayer = $HUD/StatusCard/Rows/Money/MoneyAnim
+var _shown_money := 0.0
+var _pop_n := 0
 var _detector := -1.0
 var _last_half := -1
 
@@ -57,6 +63,8 @@ func _ready() -> void:
 	Events.dialog_requested.connect(_dialog)
 	Events.game_over.connect(_on_game_over)
 	Events.detector_ping.connect(_on_ping)
+	Events.money_delta.connect(_on_money)
+	_shown_money = GameState.money
 	Settings.device_changed.connect(_on_device)
 	_refresh_hints()
 	refresh_hud()
@@ -153,9 +161,8 @@ func refresh_hud() -> void:
 		3:
 			phase_txt = "SUNSET  -  ledger"
 	day_lbl.text = "Day %d  |  %s" % [gs.day, phase_txt]
-	money_lbl.text = UIKit.money_text(gs.money)
 	money_lbl.add_theme_color_override("font_color", UIKit.GOOD if gs.money >= 0 else UIKit.BAD)
-	up_lbl.text = "Upgrade Points: %d%s" % [gs.up, ("   (%d to claim at desk)" % gs.unclaimed_count()) if gs.unclaimed_count() > 0 else ""]
+	up_lbl.text = "Upgrade Points: %d" % gs.up
 	var debt: int = gs.debt_total()
 	bag_lbl.text = "Bag %d/%d   Stored %d   Plushies %d%s" % [gs.backpack.size(), gs.backpack_capacity(), gs.storage.size(), gs.plushies,
 		("   Debt %s" % UIKit.money_text(debt)) if debt > 0 else ""]
@@ -181,12 +188,37 @@ func _process(delta: float) -> void:
 		_refresh_hotbar()
 	if detector_bar:
 		detector_bar.value = maxf(0.0, _detector) * 100.0
+	# smooth count toward the real balance
+	var target := float(GameState.money)
+	if absf(_shown_money - target) > 0.5:
+		_shown_money = lerpf(_shown_money, target, minf(1.0, delta * 6.0))
+		if absf(_shown_money - target) < 1.0:
+			_shown_money = target
+	else:
+		_shown_money = target
+	money_lbl.text = UIKit.money_text(int(round(_shown_money)))
 	if crosshair:
 		var w := world()
-		crosshair.visible = current == null and not dialog_panel.visible and not (w != null and w.build != null and w.build.active)
+		crosshair.visible = current == null and not dialog_panel.visible and not (w != null and w.build != null and w.build.active) and not (w != null and (w.office != null and w.office.seated or w.player.ragdolled))
 	if dialog_panel.visible and dialog_text.visible_ratio < 1.0:
 		dialog_chars += delta * float(Settings.get_v("text_speed"))
 		dialog_text.visible_characters = int(dialog_chars)
+
+
+func _on_money(amount: int) -> void:
+	if amount == 0 or DisplayServer.get_name() == "headless":
+		return
+	money_lbl.pivot_offset = money_lbl.size * Vector2(0.0, 0.5)
+	if money_anim:
+		money_anim.stop()
+		money_anim.play("gain" if amount > 0 else "loss")
+	var pop: MoneyPopup = MONEY_POPUP.instantiate()
+	hud.add_child(pop)
+	_pop_n = (_pop_n + 1) % 4
+	pop.global_position = money_lbl.global_position + Vector2(money_lbl.size.x + 14.0 + _pop_n * 8.0, -6.0)
+	pop.show_amount(amount)
+	if amount >= 10:
+		Audio.sfx("coin", 1.0 + minf(0.4, amount / 500.0), -10.0)
 
 
 func _on_prompt(t: String) -> void:
@@ -307,7 +339,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			close_panel()
 			get_viewport().set_input_as_handled()
 		return
-	if world() and world().build.active:
+	if world() and (world().build.active or (world().office and world().office.seated) or world().player.ragdolled):
 		return
 	var map := {"pause": "pause", "skill_tree": "skills", "field_guide": "guide", "inventory": "inventory", "management": "management"}
 	for a in map.keys():
@@ -367,5 +399,5 @@ func refresh_mouse() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
 	var w := world()
-	var free := current != null or dialog_panel.visible or (w != null and w.build != null and w.build.active)
+	var free := current != null or dialog_panel.visible or (w != null and w.build != null and w.build.active) or (w != null and w.office != null and w.office.seated)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if free else Input.MOUSE_MODE_CAPTURED

@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bmt2oso037uw2"
-path="res://.godot/imported/trilobite_T_trilobite_BC.png-2837d0a3999277fe23dc85eef33fbde6.ctex"
+path.s3tc="res://.godot/imported/trilobite_T_trilobite_BC.png-2837d0a3999277fe23dc85eef33fbde6.s3tc.ctex"
+path.etc2="res://.godot/imported/trilobite_T_trilobite_BC.png-2837d0a3999277fe23dc85eef33fbde6.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "c02ce16f543c554f4e21c7b593c82cfb"
+"md5": "9974238f590a7d49fe06929eeb0a1c8c"
 }
 
 [deps]
 
 source_file="res://assets/models/trilobite_T_trilobite_BC.png"
-dest_files=["res://.godot/imported/trilobite_T_trilobite_BC.png-2837d0a3999277fe23dc85eef33fbde6.ctex"]
+dest_files=["res://.godot/imported/trilobite_T_trilobite_BC.png-2837d0a3999277fe23dc85eef33fbde6.s3tc.ctex", "res://.godot/imported/trilobite_T_trilobite_BC.png-2837d0a3999277fe23dc85eef33fbde6.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://jvthdpj2f0ir"
-path="res://.godot/imported/bone_T_bone_BC.png-c9abad95ed7a148c07be1d06473776e4.ctex"
+path.s3tc="res://.godot/imported/bone_T_bone_BC.png-c9abad95ed7a148c07be1d06473776e4.s3tc.ctex"
+path.etc2="res://.godot/imported/bone_T_bone_BC.png-c9abad95ed7a148c07be1d06473776e4.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "c5f22cb94a78f31f88e78d15aac35c34"
+"md5": "7d80e8c5177419893f85503c1f555aea"
 }
 
 [deps]
 
 source_file="res://assets/models/bone_T_bone_BC.png"
-dest_files=["res://.godot/imported/bone_T_bone_BC.png-c9abad95ed7a148c07be1d06473776e4.ctex"]
+dest_files=["res://.godot/imported/bone_T_bone_BC.png-c9abad95ed7a148c07be1d06473776e4.s3tc.ctex", "res://.godot/imported/bone_T_bone_BC.png-c9abad95ed7a148c07be1d06473776e4.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

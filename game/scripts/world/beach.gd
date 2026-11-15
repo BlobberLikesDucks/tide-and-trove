@@ -7,11 +7,16 @@ extends Node3D
 const GROUND := {"shore": Color("f2d49b"), "cliffs": Color("efc78e"), "caves": Color("cdb68f"), "reef": Color("d3cab8")}
 const BARRIER_X := {"cliffs": 25.0, "caves": 65.0, "reef": -25.0}
 
+## Seconds between respawn checks: depleted / weathered spots grow back quickly.
+const RESPAWN_EVERY := 5.0
+
 var nodes_root: Node3D
 var barriers := {}
 var _zone_nodes := {}
 var _cur_zone := ""
 var _zone_t := 0.0
+var _respawn_t := RESPAWN_EVERY
+var _rng := RandomNumberGenerator.new()
 
 
 ## Zone grounds, cliffs, palms, rocks, driftwood, cave arches, set dressing and the
@@ -20,6 +25,7 @@ var _zone_t := 0.0
 func _ready() -> void:
 	nodes_root = Node3D.new()
 	add_child(nodes_root)
+	_rng.randomize()
 	refresh_barriers(false)
 	spawn_nodes()
 
@@ -58,8 +64,10 @@ func _make_barrier(zid: String) -> Node3D:
 		if z["id"] == zid:
 			zname = z["name"]
 			skill = z["skill"]
-	var zz := -13.0
-	while zz < 51.0:
+	# a solid plank hoarding from the backdrop cliffs right down into the surf, so
+	# there is no gap to look (or walk) through anywhere along the zone border
+	var zz := -21.0
+	while zz < 62.0:
 		var f := Art.model("fence_barrier")
 		f.position = Vector3(x, 0, zz + 2.0)
 		f.rotation.y = PI * 0.5
@@ -70,10 +78,14 @@ func _make_barrier(zid: String) -> Node3D:
 	for f in root.get_children():
 		var it := Interactable.attach(f, info, func() -> void: Events.say(info, UIKit.GOLD))
 		it.prio = 0
-	Art.box_collider(root, Vector3(0.6, 4, 66), Vector3(x, 2, 19))
+	Art.box_collider(root, Vector3(0.6, 4, 84), Vector3(x, 2, 20.5))
 	return root
 
 func _process(delta: float) -> void:
+	_respawn_t -= delta
+	if _respawn_t <= 0.0:
+		_respawn_t = RESPAWN_EVERY
+		_respawn_tick()
 	_zone_t -= delta
 	if _zone_t > 0.0 or World.instance == null or World.instance.player == null:
 		return
@@ -99,34 +111,85 @@ func spawn_nodes() -> void:
 
 
 func _spawn_zone(zid: String) -> void:
-	var zd: Dictionary = {}
-	for z in DB.ZONES:
-		if z["id"] == zid:
-			zd = z
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash("%s-%d-%d" % [zid, GameState.day, GameState.slot]) + randi()
-	var taken: Array[Vector3] = []
 	var counts: Dictionary = DB.ZONE_NODES[zid]
 	for kind in counts.keys():
+		var big: bool = DB.NODE_TYPES[kind].get("big", false)
 		for i in range(int(counts[kind])):
-			var p := Vector3.ZERO
-			var ok := false
-			for attempt in range(30):
-				p = Vector3(rng.randf_range(float(zd["x0"]) + 3.0, float(zd["x1"]) - 3.0), 0, rng.randf_range(-5.0, 40.0))
-				ok = true
-				for q in taken:
-					if q.distance_to(p) < 3.6:
-						ok = false
-						break
-				if ok:
-					break
-			if not ok:
+			if big and _rng.randf() > _big_chance():
 				continue
-			taken.append(p)
-			var n := DigNode.new()
-			nodes_root.add_child(n)
-			n.position = p
-			n.setup(kind, zid, kind == "buried", rng)
+			_spawn_one(zid, kind)
+
+
+func _big_chance() -> float:
+	var k := 2.0 if GameState.has_skill("lucky_3") else 1.0
+	if int(GameState.flags.get("storm_day", -1)) == GameState.day:
+		k *= 2.5  # the storm (J-Mail warning) washed fresh rock out of the cliffs
+	return clampf(DB.BIG_SPAWN_CHANCE * k, 0.0, 1.0)
+
+
+func _zone_def(zid: String) -> Dictionary:
+	for z in DB.ZONES:
+		if z["id"] == zid:
+			return z
+	return {}
+
+
+## Spot a new dig node in a free place of the zone (away from other spots and the player).
+func _spawn_one(zid: String, kind: String) -> DigNode:
+	var zd := _zone_def(zid)
+	var big: bool = DB.NODE_TYPES[kind].get("big", false)
+	var gap := 3.6 if not big else 6.0
+	var player_p := World.instance.player.global_position if World.instance and World.instance.player else Vector3(0, 0, -100)
+	var p := Vector3.ZERO
+	var ok := false
+	for attempt in range(30):
+		p = Vector3(_rng.randf_range(float(zd["x0"]) + 3.0, float(zd["x1"]) - 3.0), 0, _rng.randf_range(-5.0, 40.0))
+		ok = p.distance_to(Vector3(player_p.x, 0, player_p.z)) > 4.0
+		if ok:
+			for c in nodes_root.get_children():
+				if c is DigNode and not c.is_queued_for_deletion() and (c as Node3D).position.distance_to(p) < gap:
+					ok = false
+					break
+		if ok:
+			break
+	if not ok:
+		return null
+	var n := DigNode.new()
+	nodes_root.add_child(n)
+	n.position = p
+	n.setup(kind, zid, kind == "buried", _rng)
+	return n
+
+
+## Keep every unlocked zone stocked: one missing spot per zone grows back every
+## few seconds (big rare spots only now and then).
+func _respawn_tick() -> void:
+	if World.instance == null:
+		return
+	for z in DB.ZONES:
+		var zid: String = z["id"]
+		if not GameState.zone_unlocked(zid) or barriers.has(zid):
+			continue
+		var have := {}
+		for c in nodes_root.get_children():
+			if c is DigNode and not c.is_queued_for_deletion() and not c.depleted and c.zone == zid:
+				have[c.kind] = int(have.get(c.kind, 0)) + 1
+		var counts: Dictionary = DB.ZONE_NODES[zid]
+		var missing: Array = []
+		for kind in counts.keys():
+			if int(have.get(kind, 0)) < int(counts[kind]):
+				missing.append(kind)
+		if missing.is_empty():
+			continue
+		var kind: String = missing[_rng.randi() % missing.size()]
+		if DB.NODE_TYPES[kind].get("big", false):
+			if _rng.randf() > _big_chance() * 0.35:
+				continue
+			var n := _spawn_one(zid, kind)
+			if n and zid == _cur_zone:
+				Events.radio("A rare %s has appeared in the %s!" % [DB.NODE_TYPES[kind]["name"], z["name"]], "info", n.global_position)
+		else:
+			_spawn_one(zid, kind)
 
 
 func hidden_nodes() -> Array[DigNode]:

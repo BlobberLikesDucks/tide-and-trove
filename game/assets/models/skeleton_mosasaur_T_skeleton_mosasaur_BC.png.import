@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bq5rxhp6pohfv"
-path="res://.godot/imported/skeleton_mosasaur_T_skeleton_mosasaur_BC.png-f56de45022714b171915d8f6daca8730.ctex"
+path.s3tc="res://.godot/imported/skeleton_mosasaur_T_skeleton_mosasaur_BC.png-f56de45022714b171915d8f6daca8730.s3tc.ctex"
+path.etc2="res://.godot/imported/skeleton_mosasaur_T_skeleton_mosasaur_BC.png-f56de45022714b171915d8f6daca8730.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "9017ee0eb4a6b5eedac0af4951988a57"
+"md5": "23678073b1d32e0d8a79e09f53eead2c"
 }
 
 [deps]
 
 source_file="res://assets/models/skeleton_mosasaur_T_skeleton_mosasaur_BC.png"
-dest_files=["res://.godot/imported/skeleton_mosasaur_T_skeleton_mosasaur_BC.png-f56de45022714b171915d8f6daca8730.ctex"]
+dest_files=["res://.godot/imported/skeleton_mosasaur_T_skeleton_mosasaur_BC.png-f56de45022714b171915d8f6daca8730.s3tc.ctex", "res://.godot/imported/skeleton_mosasaur_T_skeleton_mosasaur_BC.png-f56de45022714b171915d8f6daca8730.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

@@ -58,6 +58,11 @@ func setup(look: Dictionary) -> void:
 	for h in HATS:
 		if acc.has(h):
 			hatted = true
+	if hatted:  # long hair and buns would push through the crown of any hat
+		for n in ["Hair_Long", "Hair_Bun"]:
+			var hn := model.find_child(n, true, false)
+			if hn is Node3D:
+				(hn as Node3D).visible = false
 	var hair := model.find_child("SM_Char_Hair", true, false)
 	if hair is Node3D:
 		(hair as Node3D).visible = not hatted and not acc.has("Hair_Long")

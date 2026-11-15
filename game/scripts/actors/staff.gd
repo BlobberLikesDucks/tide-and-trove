@@ -311,7 +311,7 @@ func _find_job() -> void:
 					state = "walk"
 					return
 		"intern":
-			var cases := museum.objects_of("display_case")
+			var cases := museum.cases()
 			if not cases.is_empty() and randf() < 0.02:
 				var o: PlacedObject = cases[randi() % cases.size()]
 				var sc := museum.stand_cell(o, museum.world_to_cell(global_position))

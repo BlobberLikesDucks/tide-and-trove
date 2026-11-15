@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cx666dnsa1wm2"
-path="res://.godot/imported/trash_T_trash_BC.png-4abad2ffc2693ba4b0decd31ee657205.ctex"
+path.s3tc="res://.godot/imported/trash_T_trash_BC.png-4abad2ffc2693ba4b0decd31ee657205.s3tc.ctex"
+path.etc2="res://.godot/imported/trash_T_trash_BC.png-4abad2ffc2693ba4b0decd31ee657205.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "5cf86fd6bcb6d92559ed58e6ad40a515"
+"md5": "003041c6077899169af9c0d7e5688acb"
 }
 
 [deps]
 
 source_file="res://assets/models/trash_T_trash_BC.png"
-dest_files=["res://.godot/imported/trash_T_trash_BC.png-4abad2ffc2693ba4b0decd31ee657205.ctex"]
+dest_files=["res://.godot/imported/trash_T_trash_BC.png-4abad2ffc2693ba4b0decd31ee657205.s3tc.ctex", "res://.godot/imported/trash_T_trash_BC.png-4abad2ffc2693ba4b0decd31ee657205.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

@@ -3,22 +3,24 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c36727j3mxqmw"
-path="res://.godot/imported/rug_T_rug_BC.png-d7e8c5ed15bb8fd02a13ce2aa25b4451.ctex"
+path.s3tc="res://.godot/imported/rug_T_rug_BC.png-d7e8c5ed15bb8fd02a13ce2aa25b4451.s3tc.ctex"
+path.etc2="res://.godot/imported/rug_T_rug_BC.png-d7e8c5ed15bb8fd02a13ce2aa25b4451.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
-"md5": "fda11ffa6e905e2f2b0d3e331fd7d722"
+"md5": "a613d97d291a7919343094f8221dff42"
 }
 
 [deps]
 
 source_file="res://assets/models/rug_T_rug_BC.png"
-dest_files=["res://.godot/imported/rug_T_rug_BC.png-d7e8c5ed15bb8fd02a13ce2aa25b4451.ctex"]
+dest_files=["res://.godot/imported/rug_T_rug_BC.png-d7e8c5ed15bb8fd02a13ce2aa25b4451.s3tc.ctex", "res://.godot/imported/rug_T_rug_BC.png-d7e8c5ed15bb8fd02a13ce2aa25b4451.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

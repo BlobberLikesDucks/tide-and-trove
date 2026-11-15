@@ -7,6 +7,8 @@ static var _scenes := {}
 const CEL_SHADER := preload("res://assets/shaders/cel.gdshader")
 const OUTLINE_SHADER := preload("res://assets/shaders/cel_outline.gdshader")
 static var _outline: ShaderMaterial
+## Ink outlines (an extra draw per mesh). Off on the "Low" graphics preset.
+static var outlines := true
 static var _toon := {}
 static var _tint := {}
 static var _ghost := {}
@@ -159,7 +161,7 @@ static func toon(m: Material) -> Material:
 		if b.emission_enabled:
 			sm.set_shader_parameter("emission_color", b.emission)
 			sm.set_shader_parameter("emission_energy", b.emission_energy_multiplier)
-		sm.next_pass = outline_material()
+		sm.next_pass = outline_material() if outlines else null
 		out = sm
 	_toon[m] = out
 	return out

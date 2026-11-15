@@ -2,10 +2,11 @@ class_name Player
 extends CharacterBody3D
 ## First-person paleontologist. Eye-height camera with Blender view-model arms
 ## (AN_FP_* clips) that hold whatever is selected in the hotbar. Tools are used
-## with the Use button (LMB): shovel / pickaxe dig the node you look at, the
-## detector scans while held. Interact (E) is for objects; Q drops the held item,
-## X trashes it (never the vital tools). A look ray (not a fat sphere) picks the
-## object under the crosshair, so prompts only show when you face the thing.
+## with the Use button (LMB): HOLD it with the shovel / pickaxe on a dig spot (the
+## bar resets if you let go), the detector scans while held, held trash is thrown.
+## Interact (F) is for objects; Q drops the held item, X trashes it (never the vital
+## tools). A look ray picks the object under the crosshair. Cars and buses can
+## knock you over: you ragdoll in third person until you get back up.
 
 # Movement tuning lives in GameConfig (res://data/game_config.tres).
 var WALK: float:
@@ -57,6 +58,11 @@ var _step_t := 0.0
 var _bob := 0.0
 var _equip_t := 0.0
 var _clip := ""
+var ragdolled := false
+var _rd := {}
+var _rag_t := 0.0
+var _rag_cam: Camera3D
+var seated := false  # at the office computer
 
 
 func _ready() -> void:
@@ -85,7 +91,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if locked:
+	if locked or ragdolled:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var sens: float = 0.0024 * float(Settings.get_v("sensitivity"))
@@ -119,6 +125,9 @@ func forward() -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
+	if ragdolled:
+		_update_ragdoll(delta)
+		return
 	_shove_cd = maxf(0.0, _shove_cd - delta)
 	var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	if not locked and look.length() > 0.05:
@@ -141,6 +150,7 @@ func _physics_process(delta: float) -> void:
 	visual.rotation.y = cam_yaw
 	var hv := Vector2(velocity.x, velocity.z)
 	var moving := hv.length() > 0.3 and is_on_floor()
+	_hold_dig_check()
 	if digging:
 		_update_dig(delta)
 	elif moving:
@@ -372,7 +382,8 @@ func use_held() -> void:
 		_:
 			var h := GameState.held()
 			if h.get("t", "") == "trash":
-				Events.say("Throw trash in a trash bin (%s while looking at a bin)." % Settings.prompt("interact"), Color.WHITE)
+				throw_trash()
+				return
 			Audio.sfx("whoosh", 1.4, -12.0)
 	_play_use()
 
@@ -436,24 +447,48 @@ func trash_held() -> void:
 	_refresh_held()
 
 # -------------------------------------------------------------------- dig ---
-func start_dig(node: DigNode) -> void:
+## HOLD Use on a dig spot: progress fills while the button is held and you keep
+## looking at the spot; let go (or look away) and it resets to 0%.
+func start_dig(node: DigNode, quiet: bool = false) -> void:
 	var err := node.requirement_error()
 	if err != "":
-		Events.say(err, UIKit.CORAL)
-		Audio.sfx("error")
+		if not quiet:
+			Events.say(err, UIKit.CORAL)
+			Audio.sfx("error")
 		return
 	if GameState.backpack_full():
-		Events.say("Backpack full! Unload at the Prep Lab storage crates.", UIKit.CORAL)
-		Audio.sfx("error")
+		if not quiet:
+			Events.say("Backpack full! Unload at the Prep Lab storage crates.", UIKit.CORAL)
+			Audio.sfx("error")
 		return
-	var def: Dictionary = DB.NODE_TYPES[node.kind]
-	var td := GameState.tool_def(def["tool"])
 	digging = true
 	dig_node = node
 	dig_t = 0.0
-	dig_total = float(def["time"]) / float(td.get("speed", 1.0))
+	dig_total = node.dig_time()
 	visual.anim = "dig"
 	_dig_sfx_t = 0.0
+
+
+## Keeps the hold-to-dig honest: releasing Use or looking away cancels and resets.
+func _hold_dig_check() -> void:
+	if hold_override:
+		return
+	var held := Input.is_action_pressed("use_item") and not locked
+	if digging:
+		if not held or focus_dig != dig_node or not is_instance_valid(dig_node):
+			var pct := int(100.0 * dig_t / maxf(dig_total, 0.01))
+			cancel_dig()
+			if pct > 5:
+				Events.prompt.emit("Dig cancelled - progress reset")
+		return
+	if held and _shove_cd <= 0.0 and focus_dig and not focus_dig.depleted and _shove_target() == null:
+		var need: String = "shovel" if DB.NODE_TYPES[focus_dig.kind]["tool"] == "shovel" else "pick"
+		if GameState.held_tool() == need:
+			start_dig(focus_dig, true)
+
+
+## Tests (and the autotest) dig without a physical button: they set this.
+var hold_override := false
 
 
 func _update_dig(delta: float) -> void:
@@ -466,7 +501,11 @@ func _update_dig(delta: float) -> void:
 		_dig_sfx_t = 0.4
 		Audio.sfx(String(DB.NODE_TYPES[dig_node.kind]["sfx"]))
 		FX.burst(dig_node.get_parent(), dig_node.global_position + Vector3(0, 0.35, 0), "rock" if String(DB.NODE_TYPES[dig_node.kind]["tool"]) == "pick" else "sand")
-	Events.prompt.emit("Digging... %d%%" % int(100.0 * dig_t / maxf(dig_total, 0.01)))
+	var pct := int(100.0 * dig_t / maxf(dig_total, 0.01))
+	var bar := ""
+	for i in range(10):
+		bar += "|" if i < pct / 10 else "."
+	Events.prompt.emit("%s %s  %d%%  (keep holding %s)" % ["Mining" if String(DB.NODE_TYPES[dig_node.kind]["tool"]) == "pick" else "Digging", bar, pct, Settings.prompt("use_item")])
 	if dig_t >= dig_total:
 		digging = false
 		visual.anim = "idle"
@@ -477,7 +516,110 @@ func _update_dig(delta: float) -> void:
 func cancel_dig() -> void:
 	digging = false
 	dig_node = null
+	dig_t = 0.0
 	visual.anim = "idle"
+
+
+# ------------------------------------------------------------------ trash ---
+## Use with trash in your hand throws it. Aim at a bin and it goes in (if the
+## bin has room); otherwise it lands on the floor as litter.
+func throw_trash() -> void:
+	var bin: PlacedObject = null
+	if focus and focus.owner_node is PlacedObject and (focus.owner_node as PlacedObject).type == "trash_bin":
+		bin = focus.owner_node
+	else:
+		var best := 7.0
+		var fwd := forward()
+		for o in World.instance.museum.objects_of("trash_bin"):
+			var d: Vector3 = o.global_position + Vector3(0, 0.8, 0) - camera.global_position
+			if d.length() < best and fwd.dot(d.normalized()) > 0.93:
+				best = d.length()
+				bin = o
+	GameState.take_held()
+	_play("AN_FP_Throw", true)
+	Audio.sfx("whoosh", 1.1, -6.0)
+	var from := camera.global_position + forward() * 0.5 + Vector3(0, -0.2, 0)
+	if bin and bin.fill < PlacedObject.BIN_CAP:
+		var b := bin
+		Throw.arc(get_parent(), from, b.global_position + Vector3(0, 1.0, 0), "trash", 0.55, func() -> void:
+			if is_instance_valid(b) and b.add_fill():
+				Audio.sfx("brush", 1.3)
+				Events.say("Nice shot! Trash in the bin (%d/%d)." % [b.fill, PlacedObject.BIN_CAP], UIKit.GOOD)
+			else:
+				World.instance.museum.add_mess("trash", from))
+	else:
+		var land := global_position + Vector3(forward().x, 0, forward().z).normalized() * 3.2
+		Throw.arc(get_parent(), from, land + Vector3(0, 0.05, 0), "trash", 0.6, func() -> void:
+			World.instance.museum.add_mess("trash", land))
+		if bin:
+			Events.say("That bin is full - empty it first.", UIKit.CORAL)
+		else:
+			Events.say("Missed! Aim at a trash bin to throw trash in.", UIKit.CORAL)
+	_refresh_held()
+
+
+# ------------------------------------------------------------ build view ---
+## In Build Mode the top-down camera must not see the first-person arms; show
+## the real body instead (in first person it is only a shadow caster).
+func set_build_view(on: bool) -> void:
+	fp.visible = not on
+	visual.set_shadow_only(not on)
+	if visual.tool_node:
+		for mi in Art.meshes(visual.tool_node):
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on else GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+
+
+# --------------------------------------------------------------- ragdoll ---
+## Hit by a car or bus: ragdoll, watched from a third-person camera, then get up.
+func knockback(v: Vector3, _by_player: bool = false) -> void:
+	if ragdolled:
+		return
+	if digging:
+		cancel_dig()
+	ragdolled = true
+	_rag_t = 0.0
+	velocity = Vector3.ZERO
+	fp.visible = false
+	visual.set_shadow_only(false)
+	_rd = Ragdoll.knock(self, visual, v)
+	if _rag_cam == null:
+		_rag_cam = Camera3D.new()
+		_rag_cam.fov = 70.0
+		_rag_cam.far = 600.0
+		get_parent().add_child(_rag_cam)
+	_rag_cam.global_position = camera.global_position
+	_rag_cam.current = true
+	Events.prompt.emit("")
+	Audio.sfx("bonk", 0.8)
+	Events.say("Ouch! Look both ways before crossing the road...", UIKit.CORAL)
+
+
+func _update_ragdoll(delta: float) -> void:
+	_rag_t += delta
+	var target := global_position + Vector3(0, 1.0, 0)
+	var bodies: Dictionary = _rd.get("bodies", {})
+	if bodies.has("Hips") and is_instance_valid(bodies["Hips"]):
+		target = (bodies["Hips"] as Node3D).global_position
+	var behind := Vector3(sin(cam_yaw), 0, cos(cam_yaw)) * 4.2 + Vector3(0, 2.6, 0)
+	_rag_cam.global_position = _rag_cam.global_position.lerp(target + behind, minf(1.0, delta * 4.0))
+	if _rag_cam.global_position.distance_to(target) > 0.1:
+		_rag_cam.look_at(target, Vector3.UP)
+	if _rag_t > 1.4 and (Ragdoll.settled(_rd) or _rag_t > 4.0):
+		_get_up()
+
+
+func _get_up() -> void:
+	Ragdoll.recover(self, visual, _rd)
+	_rd = {}
+	ragdolled = false
+	global_position.y = maxf(global_position.y, 0.05)
+	visual.position = Vector3.ZERO
+	visual.set_shadow_only(true)
+	fp.visible = true
+	if _rag_cam:
+		_rag_cam.current = false
+	camera.current = true
+	velocity = Vector3.ZERO
 
 # ------------------------------------------------------------------ shove ---
 ## Nearest guest / staff member in front of you within arm's (or tool's) reach.

@@ -21,7 +21,7 @@ if HERE not in sys.path:
 
 import tt  # noqa: E402
 
-MODULES = ["env", "nature", "props", "specimens", "characters", "fxdress"]
+MODULES = ["env", "nature", "props", "specimens", "characters", "fxdress", "vehicles", "builds", "finds"]
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 groups = [a for a in argv if not a.startswith("--") and a in MODULES] or MODULES

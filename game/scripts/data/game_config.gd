@@ -10,8 +10,8 @@ static var _cfg: GameConfig
 @export_group("Rendering")
 ## Cel shader + ink outlines on every painted model (off = Godot's built-in toon mode).
 @export var cel_shading: bool = true
-@export_range(0.0, 0.05, 0.001) var outline_width: float = 0.006
-@export var outline_color: Color = Color(0.16, 0.12, 0.14)
+@export_range(0.0, 0.05, 0.001) var outline_width: float = 0.0045
+@export var outline_color: Color = Color(0.24, 0.17, 0.14)
 
 @export_group("Player")
 @export var walk_speed: float = 5.0

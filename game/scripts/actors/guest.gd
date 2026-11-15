@@ -1,10 +1,12 @@
 class_name Guest
 extends Node3D
 ## Museum visitor. Archetypes: tourist, kid, nerd (enthusiast), celebrity,
-## critic, shoplifter, spy, teacher, fan. Walks the museum grid, views
-## exhibits, buys snacks, makes mess, reacts to incidents and writes a review.
+## critic, shoplifter, spy, teacher, student, fan. Arrives by car (or school
+## bus), walks the museum grid, views exhibits, buys snacks, THROWS litter,
+## reacts to incidents, writes a review, then waits at the bus stop and rides
+## the bus away. School classes follow the player on a guided tour.
 
-enum S { ARRIVE, DECIDE, WALK, VIEW, BUY, RESTROOM, TANTRUM, CLIMB, STEAL, SABOTAGE, LEAVE, KNOCKED }
+enum S { ARRIVE, DECIDE, WALK, VIEW, BUY, RESTROOM, TANTRUM, CLIMB, STEAL, SABOTAGE, LEAVE, KNOCKED, WAIT_BUS, BOARD, FOLLOW }
 
 var kind := "tourist"
 var gname := ""
@@ -44,6 +46,13 @@ var trash_timer := -1.0
 ## Set when a fossil enthusiast spots a wrong plaque: {"fossil": name, "wrong": "Era: Mesozoic"}.
 var harsh := {}
 var queued_at: PlacedObject
+## Something to throw away later (wrapper, can, ticket stub...) - from day one.
+var has_litter := false
+## School trips: the class follows this node (the teacher, or the player on a tour).
+var follow_node: Node3D
+var trip: Dictionary = {}
+var _follow_t := 0.0
+var _bus_spot := Vector3.ZERO
 var _arrive_cb := ""
 var _perceive_t := 0.0
 var _rd := {}
@@ -111,6 +120,14 @@ func setup(p_kind: String, m: Museum, c: DayCycle, spawn: Vector3) -> void:
 			look["acc"] = ["Glasses", "Hair_Bun"]
 			look["Shirt"] = Color("8a5cc2")
 			visits_left = 4
+		"student":
+			look["scale"] = 0.62
+			look["acc"] = ["Hat_Cap"] if rng.randf() < 0.3 else []
+			look["cap_back"] = true
+			look["Shirt"] = [Color("f4b82a"), Color("e05a4a"), Color("3f7fd9")][rng.randi() % 3]
+			speed = 2.6
+			visits_left = 3
+			will_tantrum = rng.randf() < 0.22
 	visual = CharVisual.new()
 	add_child(visual)
 	visual.setup(look)
@@ -122,6 +139,9 @@ func setup(p_kind: String, m: Museum, c: DayCycle, spawn: Vector3) -> void:
 	var to_door: Array[Vector3] = [Vector3(spawn.x * 0.3, 0, -27.0), museum.door_outside(), museum.cell_center(museum.entrance())]
 	path = to_door
 	state = S.ARRIVE
+	has_litter = kind != "spy" and rng.randf() < (0.45 if kind in ["kid", "student"] else 0.3)
+	if has_litter:
+		trash_timer = rng.randf_range(12.0, 50.0)
 
 # ------------------------------------------------------------------- tick ---
 func _process(delta: float) -> void:
@@ -130,12 +150,28 @@ func _process(delta: float) -> void:
 		if _knock_t <= 0.0 and (Ragdoll.settled(_rd) or _knock_t < -2.5):
 			_get_up()
 		return
+	if state == S.WAIT_BUS:
+		if not visual.anim == "sit":
+			_face(_bus_spot + Vector3(0, 0, -3))
+		return
+	if state == S.BOARD:
+		if _move(delta):
+			_board()
+		return
+	if state == S.FOLLOW:
+		_update_follow(delta)
+		if inside:
+			_perceive_t -= delta
+			if _perceive_t <= 0.0:
+				_perceive_t = 1.0
+				_perceive()
+		return
 	if inside and state != S.LEAVE:
 		_perceive_t -= delta
 		if _perceive_t <= 0.0:
 			_perceive_t = 1.0
 			_perceive()
-		if trash_timer > 0.0:
+		if trash_timer > 0.0 and state != S.TANTRUM and state != S.CLIMB:
 			trash_timer -= delta
 			if trash_timer <= 0.0:
 				_drop_trash()
@@ -178,13 +214,23 @@ func _process(delta: float) -> void:
 				get_down()
 		S.LEAVE:
 			if _move(delta):
-				_despawn()
+				if trip.is_empty() and cycle.world.traffic and not kicked_out:
+					_arrive_at_stop()
+				elif not trip.is_empty() and cycle.world.traffic:
+					_arrive_at_stop()
+				else:
+					_despawn()
 
 
 func _move(delta: float) -> bool:
 	if path.is_empty():
 		visual.anim = "idle"
 		return true
+	# something was built on our route (you can build while open): re-plan
+	if inside and state == S.WALK and museum.astar.region.has_point(museum.world_to_cell(path[0])) and museum.astar.is_point_solid(museum.world_to_cell(path[0])):
+		state = S.DECIDE
+		path.clear()
+		return false
 	var tgt := path[0] + (offset if inside else Vector3.ZERO)
 	var d := tgt - global_position
 	d.y = 0
@@ -255,6 +301,16 @@ func _decide() -> void:
 	if kind == "fan" and is_instance_valid(leader) and leader.inside and leader.state != S.LEAVE and leader.target:
 		if _go_to(leader.target):
 			return
+	if (kind == "student" or kind == "teacher") and is_instance_valid(follow_node):
+		state = S.FOLLOW
+		return
+	if kind == "teacher" and not trip.is_empty():
+		# waits just inside the door for the player to start the guided tour
+		visual.anim = "idle"
+		if randf() < 0.004:
+			visual.play_once("wave")
+		visual.set_bubble("?" if cycle.tour and not cycle.tour.done else "", UIKit.GOLD)
+		return
 	if bladder > 85.0:
 		var rr := museum.objects_of("restroom")
 		if rr.is_empty():
@@ -276,20 +332,20 @@ func _decide() -> void:
 			_start_tantrum()
 			return
 		if will_climb:
-			for o in museum.objects_of("mega_podium"):
+			for o in museum.objects_of("display_case_mega"):
 				if o.mounted_count() > 0 and o.climber == null:
 					will_climb = false
 					if _go_to(o, S.CLIMB):
 						return
 	if kind == "shoplifter" and stolen.is_empty() and not thief_active:
 		var gs := museum.objects_of("gift_shop")
-		var cand: Array = gs if not gs.is_empty() else museum.objects_of("display_case")
+		var cand: Array = gs if not gs.is_empty() else museum.cases()
 		if not cand.is_empty() and _go_to(cand[randi() % cand.size()], S.STEAL):
 			return
 	if kind == "spy" and not resolved:
 		var ex: Array = []
 		for o in museum.all_objects():
-			if (o.type == "display_case" and not o.fossil_entry().is_empty()) or (o.type == "mega_podium" and o.mounted_count() > 0):
+			if (o.is_case() and not o.fossil_entry().is_empty()) or (o.is_mega() and o.mounted_count() > 0):
 				if not o.sabotaged:
 					ex.append(o)
 		if not ex.is_empty() and _go_to(ex[randi() % ex.size()], S.SABOTAGE):
@@ -311,13 +367,33 @@ func _pick_target() -> PlacedObject:
 	var opts: Array = []
 	for o in museum.all_objects():
 		var w := 0.0
+		if o.is_case():
+			w = (3.0 + (1.0 if o.case_size() != "small" else 0.0)) if not o.fossil_entry().is_empty() else 0.0
+			if kind == "nerd" or kind == "critic":
+				w *= 2.0
+		elif o.is_mega():
+			w = 2.0 + o.mounted_count() if o.mounted_count() > 0 else 0.0
 		match o.type:
-			"display_case":
-				w = 3.0 if not o.fossil_entry().is_empty() else 0.0
-				if kind == "nerd" or kind == "critic":
-					w *= 2.0
-			"mega_podium":
-				w = 2.0 + o.mounted_count() if o.mounted_count() > 0 else 0.0
+			"touch_table":
+				w = 6.0 if kind in ["kid", "student"] else 2.0
+			"microscope_station":
+				w = 6.0 if kind == "nerd" or kind == "critic" else 1.5
+			"volcano_diorama":
+				w = 6.0
+			"dino_slide":
+				w = 8.0 if kind in ["kid", "student"] else 0.3
+			"time_tunnel":
+				w = 5.0
+			"photo_booth":
+				w = 4.0 if kind == "tourist" or kind == "fan" else 2.0
+			"water_fountain":
+				w = 0.9
+			"vending_machine":
+				w = 1.6 if hunger > 40.0 else 0.4
+			"bookshelf":
+				w = 2.5 if kind == "nerd" else 0.5
+			"fern_garden", "ammonite_fountain":
+				w = 0.8
 			"aquarium":
 				w = 5.0
 			"holo_theater":
@@ -382,7 +458,11 @@ func _arrived() -> void:
 					timer = 6.5
 				"dig_pit":
 					timer = 9.0 if kind == "kid" else 4.0
-			visual.anim = "inspect" if target.type == "display_case" else ("dig" if target.type == "dig_pit" and kind == "kid" else ("sit" if target.type == "bench" else "idle"))
+			if target.type in ["volcano_diorama", "time_tunnel", "touch_table"]:
+				timer = 7.0
+			elif target.type == "dino_slide":
+				timer = 8.0
+			visual.anim = "inspect" if (target.is_case() or target.type in ["microscope_station", "touch_table", "bookshelf"]) else ("dig" if target.type == "dig_pit" and kind in ["kid", "student"] else ("sit" if target.type == "bench" else ("cheer" if target.type in ["dino_slide", "photo_booth"] else "idle")))
 			if kind == "critic":
 				visual.anim = "inspect"
 		S.BUY:
@@ -484,9 +564,52 @@ func _quit_queue(angry: bool) -> void:
 
 func _view_effects(o: PlacedObject) -> void:
 	var k := 0.6 + float(GameState.pillars["decor"]) / 250.0
+	if GameState.has_skill("audio_guide"):
+		k += 0.2
 	mood += o.view_value() * k
+	var shown_sp: String = o.species_shown()
+	if shown_sp != "":
+		GameState.mark_seen(shown_sp)  # first time a visitor sees a new species: Upgrade Points tonight
+	if o.is_mega():
+		_note("apex" if o.data.get("species", "") == "apex" and o.skeleton_complete() else "skeleton", 1.0 + o.mounted_count() * 0.3)
 	match o.type:
-		"display_case":
+		"touch_table":
+			_note("touch", 1.4)
+			if kind in ["kid", "student"]:
+				mood += 6.0
+		"microscope_station":
+			_note("microscope", 1.2)
+			if kind == "nerd":
+				mood += 8.0
+				if randf() < 0.5:
+					GameState.earn(randi_range(3, 8), "Tips & donations")
+		"volcano_diorama":
+			_note("volcano", 1.8)
+		"dino_slide":
+			_note("slide", 1.8 if kind in ["kid", "student"] else 0.4)
+			if state == S.DECIDE and kind in ["kid", "student"]:
+				mood += 8.0
+		"time_tunnel":
+			_note("tunnel", 1.6)
+		"photo_booth":
+			_note("photo", 1.0)
+			if randf() < 0.3:
+				GameState.earn(6, "Publicity")
+		"water_fountain":
+			mood += 4.0
+			bladder += 6.0
+		"vending_machine":
+			if hunger > 30.0:
+				hunger = 0.0
+				GameState.earn(3, "Vending machine")
+				Audio.sfx("coin", 1.2, -10.0)
+				has_litter = true
+				trash_timer = randf_range(6.0, 20.0)
+		"bookshelf":
+			if kind == "nerd":
+				mood += 5.0
+				_note("intern", 0.4)
+		"display_case", "display_case_medium", "display_case_big":
 			_note("exhibits", 0.5 + o.fun_points() * 0.1)
 			_plaque_reaction(o)
 			if kind == "nerd":
@@ -500,8 +623,6 @@ func _view_effects(o: PlacedObject) -> void:
 				if cycle.has_staff("intern"):
 					mood += 3.0
 					_note("intern", 1.0)
-		"mega_podium":
-			_note("apex" if o.data.get("species", "") == "apex" and o.skeleton_complete() else "skeleton", 1.0 + o.mounted_count() * 0.3)
 		"aquarium":
 			_note("aquarium", 1.5)
 			if randf() < 0.3:
@@ -509,7 +630,7 @@ func _view_effects(o: PlacedObject) -> void:
 		"holo_theater":
 			_note("holo", 2.5)
 		"dig_pit":
-			if kind == "kid":
+			if kind == "kid" or kind == "student":
 				if GameState.pit_stock > 0:
 					GameState.pit_stock -= 1
 					GameState.earn(5, "Dig pit")
@@ -576,11 +697,31 @@ func _buy_souvenir() -> void:
 	mood += 4.0
 
 
+## Throw away whatever we are carrying: an arc into a nearby bin (good guest)
+## or onto the floor (litter the player can pick up and throw in a bin).
 func _drop_trash() -> void:
+	has_litter = false
+	var from := global_position + Vector3(0, 1.3 * visual.body_scale, 0)
+	visual.play_once("wave")
 	for b in museum.objects_of("trash_bin"):
-		if b.global_position.distance_to(global_position) < 6.5 and b.add_fill():
+		if b.global_position.distance_to(global_position) < 7.0 and b.fill < PlacedObject.BIN_CAP:
+			_face(b.global_position)
+			var bin: PlacedObject = b
+			Throw.arc(get_parent(), from, b.global_position + Vector3(0, 1.0, 0), "trash", 0.6, func() -> void:
+				if is_instance_valid(bin) and bin.add_fill():
+					Audio.sfx("brush", 1.4, -10.0)
+				elif is_instance_valid(museum):
+					museum.add_mess("trash", bin.global_position + Vector3(0.8, 0, 0)))
 			return
-	museum.add_mess("trash", global_position)
+	var fwd := Vector3(-sin(visual.rotation.y), 0, -cos(visual.rotation.y))
+	var land := global_position + fwd * randf_range(1.2, 2.4) + Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6))
+	if inside and not museum.contains(land, -0.3):
+		land = global_position
+	Throw.arc(get_parent(), from, land + Vector3(0, 0.03, 0), "trash", 0.55, func() -> void:
+		if is_instance_valid(museum):
+			museum.add_mess("trash", land))
+	if randf() < 0.35:
+		Events.radio("A visitor just threw trash on the floor!", "mess", land)
 
 
 ## Incident penalty capped per guest so one problem can't sink every review.
@@ -739,6 +880,12 @@ func catch_thief() -> void:
 
 # ------------------------------------------------------------- player I/O ---
 func _prompt() -> String:
+	if kind == "teacher" and not trip.is_empty() and cycle.tour:
+		if cycle.tour.done:
+			return "%s - the tour is over" % gname
+		return ("%s - tour: %d/%d stops" % [gname, cycle.tour.presented.size(), SchoolTour.STOPS_NEEDED]) if cycle.tour.active else "Start the guided tour for %s's class" % gname
+	if kind == "student" and state == S.FOLLOW and not is_instance_valid(follow_node):
+		return gname
 	if state == S.TANTRUM:
 		return "Calm %s down (%s)" % [gname, "give a plushie" if GameState.plushies > 0 else "escort out"]
 	if state == S.CLIMB:
@@ -758,6 +905,9 @@ func _prompt() -> String:
 
 func _on_player_interact() -> void:
 	if state == S.KNOCKED:
+		return
+	if kind == "teacher" and not trip.is_empty() and cycle.tour:
+		cycle.tour.teacher_talk()
 		return
 	if state == S.TANTRUM:
 		if GameState.plushies > 0:
@@ -798,14 +948,19 @@ func _on_player_interact() -> void:
 
 
 func knockback(v: Vector3, by_player: bool) -> void:
-	if state == S.KNOCKED:
+	if state == S.KNOCKED or state == S.BOARD:
 		return
 	if state == S.CLIMB and _climb_obj and is_instance_valid(_climb_obj):
 		_climb_obj.climber = null
 	if state == S.RESTROOM:
 		visual.visible = true
+	if state == S.WAIT_BUS and is_instance_valid(cycle) and cycle.world.traffic:
+		cycle.world.traffic.leave_stop(self)
 	if by_player:
 		_on_hit()
+	elif not inside:
+		mood -= 15.0
+		_note("hit_by_car", -3.0)
 	path.clear()
 	state = S.KNOCKED
 	_knock_t = 1.6
@@ -850,8 +1005,8 @@ func _get_up() -> void:
 		var c := cur_cell()
 		if not museum.reachable.has(c):
 			global_position = museum.cell_center(museum.nearest_free(c))
-	if assaulted or kicked_out:
-		speed = 3.0
+	if assaulted or kicked_out or not inside:
+		speed = 3.0 if (assaulted or kicked_out) else speed
 		_leave()
 	else:
 		state = S.DECIDE
@@ -870,9 +1025,42 @@ func _leave() -> void:
 		p = museum.path_points(cur_cell(), museum.entrance())
 	p.append(museum.door_outside())
 	p.append(Vector3(-3, 0, -27.5))
-	p.append(Vector3(-16 + randf_range(-2, 2), 0, -29.0))
+	# school classes go back to their bus; everyone else takes the city bus home
+	if kind in ["teacher", "student"] and not trip.is_empty():
+		_bus_spot = Vector3(-1.0 + randf_range(-1.5, 1.5), 0, -28.9)
+	else:
+		_bus_spot = cycle.world.traffic.stop_spot(self) if cycle.world.traffic else Vector3(-16 + randf_range(-2, 2), 0, -29.0)
+	p.append(_bus_spot)
 	path = p
 	inside = false
+
+
+## Reached the bus stop: sit on the bench (or stand nearby) and wait for the bus.
+func _arrive_at_stop() -> void:
+	state = S.WAIT_BUS
+	visual.set_bubble("")
+	if cycle.world.traffic and cycle.world.traffic.is_seat(_bus_spot):
+		visual.anim = "sit"
+		visual.rotation.y = 0.0  # face the road
+	else:
+		visual.anim = "idle"
+	if cycle.world.traffic:
+		cycle.world.traffic.waiting(self)
+
+
+## The bus is here: walk to its door.
+func board_bus(door: Vector3) -> void:
+	if state != S.WAIT_BUS:
+		return
+	state = S.BOARD
+	var p: Array[Vector3] = [Vector3(door.x, 0, -29.6), door]
+	path = p
+	visual.anim = "walk"
+
+
+func _board() -> void:
+	visible = false
+	_despawn()
 
 
 func _despawn() -> void:
@@ -891,6 +1079,8 @@ func _despawn() -> void:
 
 
 func make_review() -> Dictionary:
+	if kind == "teacher" and not trip.is_empty() and cycle.tour:
+		return cycle.tour.teacher_review(self)
 	var stars := clampi(int(round(mood / 20.0)), 1, 5)
 	if assaulted:
 		stars = 1
@@ -922,3 +1112,55 @@ func make_review() -> Dictionary:
 		text = ["Nice little museum.", "Pleasant visit.", "Cute spot by the beach."][randi() % 3] if good else ["Meh.", "Expected more.", "Not my cup of tea."][randi() % 3]
 	text = text.replace("{place}", String(notes.get("_place", "gift shop"))).replace("{stand}", String(notes.get("_stand", "snack stand")))
 	return {"name": gname, "kind": kind, "stars": stars, "text": text, "weight": weight, "key": best_k}
+
+
+# ---------------------------------------------------------- school trips ---
+## Follow the teacher (or, during a guided tour, the player) through the museum,
+## staying a couple of metres behind in a loose group.
+func _update_follow(delta: float) -> void:
+	var leader_gone: bool = follow_node is Guest and (follow_node as Guest).state in [S.LEAVE, S.WAIT_BUS, S.BOARD]
+	if not is_instance_valid(follow_node) or cycle.closing or leader_gone:
+		follow_node = null
+		state = S.DECIDE
+		_leave()
+		return
+	_follow_t -= delta
+	var goal := follow_node.global_position
+	var d := goal - global_position
+	d.y = 0.0
+	if _follow_t <= 0.0:
+		_follow_t = 0.7
+		if d.length() > 2.2:
+			var stand := goal - d.normalized() * 1.6 + offset * 1.4
+			var direct: Array[Vector3] = [stand]
+			if museum.contains(global_position, 0.2) and museum.contains(stand, -0.2):
+				var p := museum.path_points(cur_cell(), museum.world_to_cell(stand))
+				path = p if not p.is_empty() else direct
+			else:
+				path = direct
+				if not inside and museum.contains(stand, -0.3):
+					inside = true
+		else:
+			path.clear()
+	if path.is_empty():
+		visual.anim = "idle"
+		_face(goal)
+	else:
+		var was := speed
+		speed = maxf(speed, 2.4 if d.length() < 5.0 else 3.4)
+		_move(delta)
+		speed = was
+
+
+## A student reacts to what the tour guide (the player) just told the class.
+func tour_react(correct: bool) -> void:
+	if correct:
+		mood = minf(100.0, mood + 10.0)
+		_note("tour", 2.0)
+		visual.play_once("cheer")
+		visual.set_bubble("!", UIKit.GOOD)
+	else:
+		mood = maxf(0.0, mood - 25.0)
+		_note("bad_tour", -6.0)
+		visual.set_bubble("?!", UIKit.BAD)
+	get_tree().create_timer(1.8).timeout.connect(_clear_bubble)

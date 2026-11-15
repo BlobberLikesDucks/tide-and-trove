@@ -697,22 +697,42 @@ def tool_station():
 # ------------------------------------------------------------ plaque check --
 @asset("plaque_checker", tier="prop", group="props", col=[("box", (0, 0, 0.75), (0.9, 0.7, 1.5))])
 def plaque_checker():
-    """Curator's Fact-Check Kiosk: a lectern with a brass magnifier and a light that
-    flags exhibits with wrong plaques. Cheap and available on day one."""
+    """Curator's Fact-Check Kiosk: a lectern with a reading board, a brass magnifier
+    lying ON the board and a status light on the cabinet top. Everything sits on the
+    surface it belongs to (no floating parts): points are placed in the board's own
+    tilted frame."""
+    TILT = 22.0                           # board rises toward the back (reader stands at -Y)
+    BC = Vector((0.0, 0.02, 1.2))         # board centre
+    th = math.radians(TILT)
+    U = Vector((1, 0, 0))
+    V = Vector((0, math.cos(th), math.sin(th)))      # up the slope
+    N = Vector((0, -math.sin(th), math.cos(th)))     # board normal (faces the reader + up)
+
+    def on_board(u, v, h):
+        return BC + U * u + V * v + N * h
+
     def f(p):
         rbox(p, WOOD_DK, (0.8, 0.6, 0.08), loc=(0, 0, 0.04), r=0.02)
         rbox(p, WOOD, (0.5, 0.4, 1.0), loc=(0, 0, 0.58), r=0.03)
         for k in range(3):
             rbox(p, WOOD_LT, (0.42, 0.02, 0.24), loc=(0, -0.205, 0.3 + k * 0.3), r=0.01)
-        rbox(p, WOOD_DK, (0.8, 0.62, 0.06), loc=(0, -0.05, 1.18), rot=(-20, 0, 0), r=0.02)
-        rbox(p, PAPER, (0.62, 0.42, 0.012), loc=(0, -0.06, 1.215), rot=(-20, 0, 0), r=0.006)
-        for k in range(4):
-            rbox(p, INK, (0.4 - k * 0.05, 0.02, 0.008), loc=(0, -0.13 + k * 0.06, 1.2 + k * 0.021), rot=(-20, 0, 0), r=0.002)
-        tube(p, BRASS, [(0.3, 0.15, 1.25), (0.3, 0.15, 1.55), (0.15, 0.0, 1.65)], 0.015, seg=6)
-        lathe(p, BRASS, [(0.0, 0.0), (0.1, 0.0), (0.1, 0.025), (0.0, 0.025)], seg=16, loc=(0.1, -0.05, 1.6), rot=(70, 0, 0))
-        cyl(p, GLASS, 0.085, 0.02, loc=(0.1, -0.05, 1.6), rot=(70, 0, 0), seg=16)
-        # status lamp (Godot recolours the "Lamp" tint: green = all correct, red = a wrong plaque)
-        cyl(p, BRASS, 0.07, 0.06, loc=(-0.28, 0.18, 1.27), seg=12)
-        sph(p, LAMP_TINT, 0.07, loc=(-0.28, 0.18, 1.34), u=12, v=8)
+        # neck block joining the cabinet top (z 1.08) to the underside of the board
+        rbox(p, WOOD, (0.44, 0.34, 0.12), loc=(0, 0.02, 1.12), r=0.02)
+        rbox(p, WOOD_DK, (0.8, 0.62, 0.06), loc=BC, rot=(TILT, 0, 0), r=0.02)
+        rbox(p, PAPER, (0.62, 0.42, 0.012), loc=on_board(0, 0.0, 0.034), rot=(TILT, 0, 0), r=0.006)
+        for k in range(4):  # printed lines lying on the paper
+            rbox(p, INK, (0.4 - k * 0.05, 0.02, 0.006), loc=on_board(-0.05, 0.13 - k * 0.07, 0.041), rot=(TILT, 0, 0), r=0.002)
+        # magnifier lying flat on the board (lens + rim + handle)
+        mc = on_board(0.18, -0.08, 0.045)
+        lathe(p, BRASS, [(0.0, 0.0), (0.075, 0.0), (0.075, 0.018), (0.0, 0.018)], seg=16, loc=mc, rot=(TILT, 0, 0))
+        cyl(p, GLASS, 0.065, 0.02, loc=mc + N * 0.002, rot=(TILT, 0, 0), seg=16)
+        h0 = on_board(0.25, -0.02, 0.05)
+        h1 = on_board(0.36, 0.08, 0.05)
+        tube(p, C_HANDLE, [h0, h1], 0.014, seg=6)
+        # status lamp seated on the board's upper-left corner (Godot tints "Lamp":
+        # green = all correct, red = a wrong plaque)
+        lp = on_board(-0.31, 0.21, 0.03)
+        cyl(p, BRASS, 0.055, 0.04, loc=lp + N * 0.02, rot=(TILT, 0, 0), seg=12)
+        sph(p, LAMP_TINT, 0.055, loc=lp + N * 0.075, u=12, v=8)
         text3d(p, CREAM, "FACT CHECK", size=0.06, loc=(0, -0.211, 0.92), depth=0.003, max_w=0.42)
     return single("SM_PlaqueChecker", f)

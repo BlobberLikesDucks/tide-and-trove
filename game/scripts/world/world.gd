@@ -27,6 +27,12 @@ var player: Player
 var day_cycle: DayCycle
 var build: BuildMode
 var ui: GameUI
+var traffic: Traffic
+## The Curator's Office (computer + J-Mail), built with the 3-star expansion.
+var office: Office
+## Where the office desk sits inside the Prep Lab pavilion (lab-local).
+@export var office_spot: Vector3 = Vector3(0.0, 0.0, 2.7)
+@export var office_yaw_deg: float = 180.0
 var _obj_t := 0.0
 var _was_inside := false
 var shopkeeper: CharVisual
@@ -35,6 +41,8 @@ var shopkeeper: CharVisual
 func _ready() -> void:
 	instance = self
 	Art.prepare(self)  # cel-shade + collision-normalise every editor-placed model
+	_tune_props()  # static world only (before any actor exists)
+	_snap_grass.call_deferred()
 	env = env.duplicate(true)  # day/night tweaks never write back to the .tres
 	($WorldEnvironment as WorldEnvironment).environment = env
 	sky_mat = env.sky.sky_material as ProceduralSkyMaterial
@@ -53,6 +61,11 @@ func _ready() -> void:
 	day_cycle.setup(self, museum)
 	build = BuildMode.new()
 	add_child(build)
+	traffic = Traffic.new()
+	traffic.name = "Traffic"
+	add_child(traffic)
+	_ensure_office()
+	Events.expansion_bought.connect(_on_expansion)
 	ui = ui_scene.instantiate() as GameUI
 	add_child(ui)
 	Events.half_star_gained.connect(_on_half_star)
@@ -71,6 +84,8 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.has("--autotest") or args.has("--shots"):
 		add_child(Autotest.new())
+	elif args.has("--look"):
+		add_child(LookShots.new())
 
 # --------------------------------------------- InteractSpot actions/prompts ---
 ## Generic action used by InteractSpot components placed in the scene.
@@ -104,6 +119,90 @@ func actors() -> Array:
 func _apply_graphics() -> void:
 	if sun:
 		sun.shadow_enabled = Settings.shadows_enabled()
+	var q := Settings.quality()
+	if env:
+		env.ssao_enabled = q >= 2
+		env.glow_enabled = q >= 1
+		env.fog_aerial_perspective = 0.35 if q >= 1 else 0.0
+	if sun:
+		sun.directional_shadow_max_distance = [60.0, 90.0, 140.0][q]
+
+
+## Performance: small scattered props stop drawing (and casting shadows) when far away.
+func _tune_props() -> void:
+	for mi in Art.meshes(self):
+		if mi.mesh == null or mi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
+			continue
+		var sz := mi.mesh.get_aabb().size.length()
+		if sz < 1.2:
+			mi.visibility_range_end = 45.0
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		elif sz < 4.0:
+			mi.visibility_range_end = 110.0
+
+
+## Grass tufts were placed at a flat height, but the painted ground sheets dip and
+## rise a little: drop every tuft onto the real ground surface so none float.
+func _snap_grass() -> void:
+	var grass := get_node_or_null("Beach/Grass")
+	if grass == null:
+		return
+	var temp: Array = []
+	for path in ["Beach/ZoneGrounds", "Ground/GroundGrass", "Ground/GroundFill", "Ground/ShoreSlope"]:
+		var n := get_node_or_null(path)
+		if n == null:
+			continue
+		for mi in Art.meshes(n):
+			if mi.mesh == null:
+				continue
+			var body := StaticBody3D.new()
+			body.collision_layer = 1 << 9  # a private layer only this probe uses
+			body.collision_mask = 0
+			var cs := CollisionShape3D.new()
+			cs.shape = mi.mesh.create_trimesh_shape()
+			body.add_child(cs)
+			mi.add_child(body)
+			temp.append(body)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var space := get_world_3d().direct_space_state
+	for t in grass.get_children():
+		if not (t is Node3D):
+			continue
+		var p: Vector3 = (t as Node3D).global_position
+		var q := PhysicsRayQueryParameters3D.create(p + Vector3(0, 3, 0), p - Vector3(0, 3, 0), 1 << 9)
+		var hit := space.intersect_ray(q)
+		if not hit.is_empty():
+			(t as Node3D).global_position.y = float(hit["position"].y) - 0.03
+	for b in temp:
+		b.queue_free()
+
+
+## An Expansion node was bought in the Upgrade Tree: build the bigger museum now.
+func _on_expansion(level: int) -> void:
+	museum.expand(level)
+	day_cycle.spawn_staff()
+	build.refit()
+	_ensure_office()
+	Audio.sfx("fanfare")
+	Events.say("Museum expanded to %dx%d!" % [museum.W, museum.D], UIKit.GOLD)
+	if GameState.has_office() and office and not GameState.flags.get("office_intro", false):
+		GameState.flags["office_intro"] = true
+		Mail.generate_day()
+		Events.dialog_requested.emit([
+			{"name": "Pearl", "text": "Fancy! The expansion came with a Curator's Office - there's a computer in the Prep Lab now."},
+			{"name": "Pearl", "text": "Check your J-Mail every morning: schools book class trips there. And careful - scammers love new museums. If an email promises free money, DELETE it."},
+		])
+
+
+func _ensure_office() -> void:
+	if office or not GameState.has_office():
+		return
+	office = Office.new()
+	office.name = "Office"
+	lab_root.add_child(office)
+	office.position = office_spot
+	office.rotation.y = deg_to_rad(office_yaw_deg)
 
 
 func _set_sun(h: float) -> void:
@@ -149,6 +248,9 @@ func _process(delta: float) -> void:
 func new_day() -> void:
 	beach.spawn_nodes()
 	day_cycle.spawn_staff()
+	Mail.generate_day()
+	if Mail.unread() > 0 and GameState.has_office():
+		Events.say("You have %d new J-Mail(s) - check the office computer in the Prep Lab." % Mail.unread(), UIKit.GOLD)
 	_set_sun(9.0)
 	story_check()
 	update_objective()
@@ -164,7 +266,7 @@ func _intro() -> void:
 		{"name": "Ammonite Bay", "text": "You spent your last dime on a boarded-up shack by the sea. Zero money. One rusty shovel. A whole coastline full of secrets."},
 		{"name": "Pearl (Equipment Shop)", "text": "Welcome to the bay, dreamer! Dig up gems and ores on the beach, then bring them across the street - I'll buy them for cash."},
 		{"name": "Pearl (Equipment Shop)", "text": "Fossils are worth more on display than in my till. Clean them at the Prep Lab next to the museum, mount them, then flip your sign to OPEN."},
-		{"name": "Tip", "text": "Time is paused until you open the doors. Take it slow. Press %s for the Upgrade Tree, %s for Build Mode, %s for the Guide (how to play + Field Guide)." % [Settings.prompt("skill_tree"), Settings.prompt("build_mode"), Settings.prompt("field_guide")]},
+		{"name": "Tip", "text": "Time is paused until you open the doors. %s interacts, %s opens your backpack, hold %s to dig. Press %s for the Upgrade Tree (earn points by opening the museum), %s for Build Mode, %s for the Guide." % [Settings.prompt("interact"), Settings.prompt("inventory"), Settings.prompt("use_item"), Settings.prompt("skill_tree"), Settings.prompt("build_mode"), Settings.prompt("field_guide")]},
 	])
 
 
@@ -221,12 +323,12 @@ func _on_half_star(h: int) -> void:
 
 
 func _on_discovery(sp: String) -> void:
-	Events.say("NEW SPECIES: %s! Claim research points at the Curator's Desk." % DB.SPECIES[sp]["name"], UIKit.GOLD)
+	Events.say("NEW SPECIES: %s! Display it and open the museum - when visitors see it you earn Upgrade Points." % DB.SPECIES[sp]["name"], UIKit.GOLD)
 
 
 func on_field_trip_done() -> void:
 	var opts: Array = []
-	for o in museum.objects_of("display_case"):
+	for o in museum.cases():
 		var f: Dictionary = o.fossil_entry()
 		if not f.is_empty():
 			opts.append(GameState.species_of(f["f"]))
@@ -252,21 +354,21 @@ func update_objective() -> void:
 	var t := ""
 	var st := GameState.stats
 	var has_display := false
-	for o in museum.objects_of("display_case"):
+	for o in museum.cases():
 		if not o.fossil_entry().is_empty():
 			has_display = true
 	if int(st["digs"]) == 0:
-		t = "Walk to the beach (south), hold your shovel (slot 1) and dig a sand patch with %s" % Settings.prompt("use_item")
+		t = "Walk to the beach (south), hold your shovel (slot 1) and HOLD %s on a sand patch to dig" % Settings.prompt("use_item")
 	elif GameState.sellable_count() > 0 and GameState.money < 40 and int(GameState.stats["earned"]) == 0:
 		t = "Sell your gems & ores at the Equipment Shop across the street"
 	elif GameState.encased_items().size() > 0 and int(st["cleaned"]) == 0:
 		t = "Clean your encased fossil at the Prep Lab workbench (east of the museum)"
 	elif int(st["cleaned"]) > 0 and not has_display:
 		t = "Mount a cleaned fossil in the Display Case inside the museum"
-	elif GameState.unclaimed_count() > 0:
-		t = "Claim your discovery points at the Curator's Desk in the Prep Lab"
 	elif GameState.day == 1 and GameState.phase == GameState.Phase.PREP:
-		t = "Flip the sign by the museum door to OPEN"
+		t = "Flip the sign by the museum door to OPEN - opening earns Upgrade Points"
+	elif GameState.unclaimed_count() > 0 and GameState.phase == GameState.Phase.PREP:
+		t = "Display your new species and open the museum: visitors seeing it earns Upgrade Points"
 	else:
 		var act := int(GameState.flags.get("act", 1))
 		if GameState.flags.get("won", false):

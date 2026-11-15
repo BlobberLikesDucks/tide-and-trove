@@ -60,6 +60,10 @@ func build(n: String, data: Variant) -> Control:
 			return trivia(data)
 		"choice":
 			return choice(data)
+		"tour":
+			return tour_panel(data)
+		"jmail_note":
+			return choice(data)
 		"pause":
 			return pause()
 		"settings":
@@ -187,13 +191,16 @@ func lab() -> Control:
 	if items.is_empty():
 		body.add_child(UIKit.label("No encased fossils. Dig them up on the beach - rock-encased finds go to storage when you return.", 18, UIKit.MUTED))
 		return m["root"]
-	body.add_child(UIKit.label("Choose a rock-encased fossil to prepare. Expose every bit of bone; cracks lower the Preservation Rating (and the ticket price it earns).", 16, UIKit.MUTED))
+	body.add_child(UIKit.label("Choose a find to prepare. Expose every bit of bone; cracks lower the Preservation Rating (and the ticket price it earns). Small finds clean quickly; big field jackets take longer.", 16, UIKit.MUTED))
 	var s := UIKit.scroll(380)
 	body.add_child(s["scroll"])
 	for it in items:
 		var h := UIKit.hbox(8)
 		(s["body"] as VBoxContainer).add_child(h)
-		h.add_child(UIKit.expand(UIKit.label("Encased Fossil  -  %s strata" % it["era"], 18, UIKit.TEXT, true)))
+		var g := GameState.lab_grid(String(it["f"]))
+		var csz := GameState.fossil_case(String(it["f"]))
+		h.add_child(UIKit.icon("bone", 26))
+		h.add_child(UIKit.expand(UIKit.label("%s   (%s find, %dx%d grid)" % [GameState.item_name(it), String(DB.CASE_NAMES[csz]).replace("Fossil Display Case", "").replace("Display Case", "").strip_edges().to_lower() if csz != "small" else "small", g.x, g.y], 17, UIKit.TEXT, true)))
 		h.add_child(UIKit.button("Prepare", _start_lab.bind(it), 130))
 		if Settings.get_v("auto_clean"):
 			h.add_child(UIKit.button("Quick clean (60%)", _quick_clean.bind(it), 0, Color("8a8478")))
@@ -215,8 +222,12 @@ func _start_lab(it: Dictionary) -> void:
 	if GameState.piece_of(it["f"]) != "":
 		shape = "skull" if GameState.piece_of(it["f"]) in ["skull", "jaw"] else "bone"
 	_lab = LabGame.new()
-	_lab.setup(shape, sd["color"], hash(String(it["f"]) + str(GameState.next_uid)))
-	_lab.custom_minimum_size = Vector2(LabGame.GW * 36, LabGame.GH * 36)
+	var grid := GameState.lab_grid(String(it["f"]))
+	var csz := GameState.fossil_case(String(it["f"]))
+	var hard := 2 if csz in ["big", "mega"] else 1
+	_lab.setup(shape, sd["color"], hash(String(it["f"]) + str(GameState.next_uid)), grid, GameState.matrix_of(it), hard)
+	var cell := minf(56.0, minf(760.0 / grid.x, 430.0 / grid.y))
+	_lab.custom_minimum_size = Vector2(grid.x * cell, grid.y * cell)
 	var center := CenterContainer.new()
 	body.add_child(center)
 	center.add_child(_lab)
@@ -229,7 +240,14 @@ func _start_lab(it: Dictionary) -> void:
 	_lab_tools.add_child(UIKit.expand(Control.new()))
 	_lab_info = UIKit.label("", 17, UIKit.TEXT, true)
 	_lab_tools.add_child(_lab_info)
-	body.add_child(UIKit.label("Mouse: click / drag to chip.  Gamepad: D-pad moves, %s chips, %s switches tool." % [Settings.prompt("interact"), Settings.prompt("drop_item")], 14, UIKit.MUTED))
+	var help := UIKit.label("Mouse: click / drag to chip.  Keyboard: WASD or arrows move the cursor, %s or Space chips, %s switches tool.  Gamepad: D-pad + %s." % [Settings.prompt("interact"), Settings.prompt("drop_item"), Settings.prompt("interact")], 14, UIKit.MUTED)
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	help.custom_minimum_size = Vector2(860, 0)
+	body.add_child(help)
+	var dmg_help := UIKit.label("Damage = cracks in exposed bone. The Micro-Brush can never crack bone; only the faster Air Scribe and Pro Scribe (sold at Pearl's shop) can.", 14, UIKit.MUTED)
+	dmg_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dmg_help.custom_minimum_size = Vector2(860, 0)
+	body.add_child(dmg_help)
 	_lab.changed.connect(_lab_refresh)
 	_lab.finished.connect(_lab_done)
 	_lab.gui_input.connect(_lab_pad)
@@ -244,15 +262,16 @@ func _start_lab(it: Dictionary) -> void:
 
 
 func _lab_pad(e: InputEvent) -> void:
-	if e.is_action_pressed("ui_left") or e.is_action_pressed("move_left"):
+	if e.is_action_pressed("ui_left", true) or e.is_action_pressed("move_left", true):
 		_lab.move_cursor(Vector2i(-1, 0))
-	elif e.is_action_pressed("ui_right") or e.is_action_pressed("move_right"):
+	elif e.is_action_pressed("ui_right", true) or e.is_action_pressed("move_right", true):
 		_lab.move_cursor(Vector2i(1, 0))
-	elif e.is_action_pressed("ui_up") or e.is_action_pressed("move_forward"):
+	elif e.is_action_pressed("ui_up", true) or e.is_action_pressed("move_forward", true):
 		_lab.move_cursor(Vector2i(0, -1))
-	elif e.is_action_pressed("ui_down") or e.is_action_pressed("move_back"):
+	elif e.is_action_pressed("ui_down", true) or e.is_action_pressed("move_back", true):
 		_lab.move_cursor(Vector2i(0, 1))
-	elif e is InputEventJoypadButton and (e.is_action_pressed("interact") or e.is_action_pressed("ui_accept")):
+	elif e.is_action_pressed("interact", true) or e.is_action_pressed("jump", true) or e.is_action_pressed("ui_accept", true):
+		# keyboard F / Space / Enter and the gamepad all chip at the cursor
 		_lab.chip(_lab.cursor)
 	elif e.is_action_pressed("drop_item"):
 		_set_lab_tool(_lab.tool % int(GameState.tools["lab"]) + 1)
@@ -273,7 +292,9 @@ func _set_lab_tool(t: int) -> void:
 
 func _lab_refresh() -> void:
 	if _lab_info and _lab:
-		_lab_info.text = "Exposed %d%%   Damage %d   Preservation %d%%" % [int(_lab.progress() * 100), _lab.dmg_total, int(_lab.preservation() * 100)]
+		var tool_name: String = DB.TOOLS["lab_%d" % _lab.tool]["name"]
+		_lab_info.text = "Exposed %d%%   Cracks %d%s   Preservation %d%%" % [int(_lab.progress() * 100), _lab.dmg_total,
+			" (brush is safe)" if _lab.tool == 1 else " (%s can crack bone!)" % tool_name, int(_lab.preservation() * 100)]
 
 
 func _lab_done(pres: float) -> void:
@@ -292,8 +313,13 @@ func _finish_clean(it: Dictionary, pres: float) -> void:
 	var grade := "Pristine" if pres >= 0.95 else ("Excellent" if pres >= 0.8 else ("Good" if pres >= 0.6 else ("Fair" if pres >= 0.4 else "Poor")))
 	body.add_child(UIKit.label("Preservation Rating: %d%% (%s)" % [int(pres * 100), grade], 20, UIKit.GOOD if pres >= 0.6 else UIKit.CORAL, true))
 	body.add_child(UIKit.label("Rarity: %s" % GameState.fossil_rarity(it["f"]).capitalize(), 17))
+	var csz := GameState.fossil_case(String(it["f"]))
+	body.add_child(UIKit.label("Display it in a: %s" % DB.CASE_NAMES[csz], 17, UIKit.ACCENT, true))
 	if e.get("new", false):
-		body.add_child(UIKit.label("NEW SPECIES for your Field Guide! Claim Upgrade Points at the Curator's Desk.", 18, Color("c08a10"), true))
+		var nl := UIKit.label("NEW SPECIES for your Field Guide! Put it on display and OPEN the museum: the first day visitors see it earns +%d Upgrade Point(s)." % GameState.discovery_points(sp), 17, Color("c08a10"), true)
+		nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		nl.custom_minimum_size = Vector2(620, 0)
+		body.add_child(nl)
 	if sp == "apex":
 		body.add_child(UIKit.label("A piece of the Cove Tyrant! (%d/8 found)" % GameState.owned_pieces("apex").size(), 18, UIKit.CORAL, true))
 	var h := UIKit.hbox(8)
@@ -309,20 +335,20 @@ func _finish_clean(it: Dictionary, pres: float) -> void:
 
 # ------------------------------------------------------------------ guide ---
 const GUIDE_TOPICS := [
-	["Getting started", "[b]Your goal:[/b] grow a seaside fossil museum to 5 stars and reveal the secret of Ammonite Bay.\n\n[b]The daily loop[/b]\n1. [b]Prep[/b] (time is paused): dig on the beach, sell gems at the Equipment Shop, clean fossils at the Prep Lab, and arrange your museum in Build Mode.\n2. [b]Open[/b]: flip the OPEN sign by the museum door. Visitors arrive, buy tickets and look at your exhibits.\n3. [b]Sunset[/b]: read the day's reviews, then the ledger pays wages, loans and upkeep.\n4. Spend Upgrade Points in the [b]Upgrade Tree[/b] and start the next day."],
-	["Hotbar & tools", "The row of slots at the bottom of the screen is your [b]hotbar[/b]. Whatever is in the selected slot is in your hand.\n\n- Select a slot with [b]1-9[/b] or the mouse wheel.\n- [b]Use[/b] (left mouse) uses the held tool: the [b]shovel[/b] digs sand, dirt and buried finds; the [b]pickaxe[/b] breaks rock; the [b]detector[/b] scans for hidden fossils while you hold it.\n- [b]Drop[/b] (Q) puts the held item on the ground. Pick it up again with Interact.\n- [b]Trash[/b] (X) throws the held item away. Your shovel, pickaxe and detector are vital and can't be trashed.\n- Lost or dropped a tool? The [b]gear rack[/b] in the Prep Lab re-issues any tool you own.\n- Each star tier of the Upgrade Tree has a [b]Tool Belt +1[/b] node that adds a hotbar slot."],
-	["Digging & zones", "Look at a dig spot and press [b]Use[/b] with the right tool in your hand.\n\n- [b]Sand patches, dirt mounds and buried finds[/b]: shovel.\n- [b]Cracked rock, crystal boulders and slate[/b]: pickaxe (better tiers break harder rock).\n- Hidden buried finds only appear when the [b]detector[/b] is in your hand and you walk close.\n\nEach beach zone exposes rock of a different age: Driftwood Shore (Cenozoic), Ammonite Cliffs and Sea Caves (Mesozoic), Paleozoic Shelf. New zones open with permits in the Upgrade Tree."],
-	["Backpack & storage", "Finds go into your [b]backpack[/b]. When it is full, unload at the [b]storage crates[/b] in the Prep Lab.\n\nThe storage window lets you move single items between your hotbar, backpack and storage. It also lists every cleaned fossil that is ready to put on display.\n\nThe Inventory ([b]Tab[/b]) lets you move items between your hotbar and backpack anywhere."],
-	["Prep Lab", "Rock-encased fossils must be cleaned at the [b]workbench[/b] before they can be displayed. Chip the rock away with the brush or air scribe. Careless chipping cracks the bone and lowers the preservation rating.\n\nCleaning a species for the first time unlocks its Field Guide page. Claim the discovery at the [b]Curator's Desk[/b] for Upgrade Points."],
-	["Exhibits & plaques", "Place a [b]Fossil Display Case[/b] in Build Mode and mount a cleaned fossil in it.\n\nEvery case needs a correct [b]plaque[/b]: pick the right Era, Diet and Habitat. There is no auto option.\n- A correct plaque raises the ticket price and earns tips from fossil enthusiasts.\n- A blank plaque disappoints visitors.\n- A [b]wrong[/b] plaque makes visitors complain, and [b]fossil enthusiasts write brutal one-star reviews[/b] that count double.\n\nCheck facts in the Field Guide (on the left). Build a cheap [b]Fact-Check Kiosk[/b] on day one: its lamp turns red and it lists every case with a wrong or blank plaque. A Paleontology Intern corrects plaques every morning."],
-	["Opening the museum", "Flip the [b]OPEN/CLOSED sign[/b] by the door to start the day. Guests pay for a ticket at the door, then wander between your exhibits. They love variety, decorations and a clean floor. Overpricing and boredom make them grumpy.\n\nAt 18:00 the museum closes, and every guest writes a review. Good review days fill the Quality bar; a full bar earns half a star."],
-	["Snack stands", "Concession stands (Food Vendor License) don't sell by themselves: [b]you serve the queue.[/b]\n1. Look at the stand and press Interact to grab an empty cup, bag or bun (it goes into a free hotbar slot).\n2. Interact again to fill it from the jug, popcorn machine or grill.\n3. Interact once more to serve the guest at the front of the queue.\n\nGuests wait about 45 seconds (kids and VIPs less). A guest who waits too long gives up and complains in their review.
-
-Busy day? Unlock the [b]Snack Vendor[/b] job (1-star tier) and hire one: vendors walk to whichever stand has a queue and serve it for you."],
-	["Trash & cleanliness", "Guests drop trash when no bin is close. Look at a piece of trash and press Interact to [b]pick it up[/b]. Then look at a [b]trash bin[/b] and press Interact to throw it in. Empty full bins with empty hands. Janitors do all of this for you once you can hire them."],
-	["Stars & the Upgrade Tree", "Open the Upgrade Tree with [b]T[/b]. Nodes are grouped by [b]star tier[/b] (0 to 5 stars); a tier stays locked until your museum has that many stars. Lines connect each node to the nodes it unlocks: you must buy a node's parents first, and some nodes open several branches.\n\nClick a node to see its name, description and price (Upgrade Points, sometimes cash too) and to unlock it. You earn Upgrade Points from half-star milestones, new species, 5-star days and critics."],
-	["Staff", "You start with [b]no staff slots[/b]. Each star tier from 2 stars up has a [b]Staff Slot +1[/b] node, and every job must be unlocked first: Janitor and Snack Vendor (1 star), Security Guard (2 stars), Paleontology Intern (3 stars).\n\nStaff have morale. Praise them, give raises, and never shove them, or they quit."],
-	["Controls", "[b]Move[/b] WASD - [b]Sprint[/b] Shift - [b]Jump[/b] Space\n[b]Interact / pick up[/b] E - [b]Use held tool[/b] Left mouse\n[b]Hotbar[/b] 1-9 / wheel - [b]Drop[/b] Q - [b]Trash held item[/b] X\n[b]Shove a guest[/b] Use while facing them - [b]Build Mode[/b] B - [b]Upgrade Tree[/b] T\n[b]Guide[/b] G - [b]Inventory[/b] Tab - [b]Management[/b] M - [b]Pause[/b] Esc\n\nEverything can be remapped in Settings, and gamepads work too."],
+	["Getting started", "[b]Your goal:[/b] grow a seaside fossil museum to 5 stars and reveal the secret of Ammonite Bay.\n\n[b]The daily loop[/b]\n1. [b]Prep[/b] (time is paused): dig on the beach, sell gems at the Equipment Shop, clean fossils at the Prep Lab, and arrange your museum in Build Mode.\n2. [b]Open[/b]: flip the OPEN sign by the museum door. Visitors arrive by car, buy tickets and look at your exhibits.\n3. [b]Sunset[/b]: visitors take the bus home, you read the day's reviews, then the ledger pays wages and upkeep.\n4. Opening is how you earn [b]Upgrade Points[/b]: spend them in the Upgrade Tree and start the next day.\n\nYou can save at any time from the pause menu."],
+	["Hotbar & tools", "The row of slots at the bottom of the screen is your [b]hotbar[/b]. Whatever is in the selected slot is in your hand.\n\n- Select a slot with [b]1-9[/b] or the mouse wheel.\n- [b]Use[/b] (left mouse) uses the held tool: HOLD it with the [b]shovel[/b] or [b]pickaxe[/b] on a dig spot; the [b]detector[/b] scans while you hold it; held [b]trash[/b] is thrown (aim at a bin!).\n- [b]Drop[/b] (Q) puts the held item on the ground. Pick it up again with Interact.\n- [b]Trash[/b] (X) throws the held item away. Your shovel, pickaxe and detector are vital and can't be trashed.\n- Lost or dropped a tool? The [b]gear rack[/b] in the Prep Lab re-issues any tool you own.\n- The Upgrade Tree's [b]Tool Belt[/b] nodes add hotbar slots."],
+	["Digging & zones", "Look at a dig spot, hold the right tool and [b]HOLD Use[/b]. The bar fills while you hold; let go (or look away) and it resets, so you can stop any time.\n\n- [b]Sand patches, dirt mounds and buried finds[/b]: shovel. [b]Cracked rock, crystal boulders and slate[/b]: pickaxe (better tiers break harder rock).\n- Bigger spots take longer. Better tools and the [b]Strong Arms[/b] upgrades (one per star tier) dig faster.\n- Rare [b]BIG spots[/b] (Giant Dune Mound, Fossil Boulder, Bone Bed) need better tools and take a long time, but hold big fossils and skeleton bones.\n- Untouched spots weather away after a while, and new ones keep appearing.\n- Hidden buried finds only appear when the [b]detector[/b] is in your hand and you walk close.\n- Gems and ores are common (a full early backpack sells for about $100); fossils are rarer.\n\nEach beach zone exposes rock of a different age: Driftwood Shore (Cenozoic), Ammonite Cliffs and Sea Caves (Mesozoic), Paleozoic Shelf. New zones open with permits in the Upgrade Tree."],
+	["Backpack & storage", "Finds go into your [b]backpack[/b] (press [b]E[/b] to open it). When it is full, unload at the [b]storage crates[/b] in the Prep Lab.\n\nThe storage window lets you move single items between your hotbar, backpack and storage. It also lists every cleaned fossil that is ready to put on display."],
+	["Prep Lab", "Fossils come out of the ground wrapped in rock: a [b]Sandstone Nodule[/b], [b]Shale Slab[/b], [b]Chalk Block[/b], [b]Tar Seep Block[/b], [b]Amber Lump[/b] or, for big finds, a [b]Plaster Field Jacket[/b]. Clean them at the [b]workbench[/b].\n\nThe grid matches the find: small common fossils are quick, big rare ones take longer. Click or drag to chip, or use WASD + F/Space. [b]Cracks[/b] lower the preservation rating - the Micro-Brush never cracks bone; only the faster scribes from Pearl's shop can.\n\nCleaning a species for the first time adds it to your Field Guide."],
+	["Exhibits & plaques", "Every fossil fits exactly ONE kind of case:\n- [b]Fossil Display Case[/b] (1x1): small finds.\n- [b]Medium Case[/b] (2x1): hand- to arm-sized finds.\n- [b]Big Case[/b] (2x2): skulls, horns, tusks, plates.\n- [b]Mega Case[/b] (3x3): assemble skeleton bones into a whole skeleton.\nBigger cases are unlocked in the Upgrade Tree.\n\nEvery case needs a correct [b]plaque[/b]: pick the right Era, Diet and Habitat. A correct plaque raises the ticket price and earns tips; a blank one disappoints; a [b]wrong[/b] one makes fossil enthusiasts write brutal one-star reviews. Build a [b]Fact-Check Kiosk[/b] to see which plaques are wrong."],
+	["Opening & Upgrade Points", "Flip the [b]OPEN/CLOSED sign[/b] by the door to start the day. Visitors arrive by car, wander between your exhibits, and some will throw litter - pick it up and throw it in a bin.\n\nAt sunset every visitor writes a review. Good days fill the Quality bar; a full bar earns half a star.\n\n[b]Upgrade Points come from opening:[/b] +1 for every 5 visitors, a bonus for good review days, and the FIRST day visitors see a new species on display earns its discovery points.\n\nThe road outside is busy: cars and buses come out of the tunnels, and they won't stop for you!"],
+	["Snack stands", "Concession stands don't sell by themselves: [b]you serve the queue.[/b]\n1. Look at the stand and press Interact to grab an empty cup, bag or bun.\n2. Interact again to fill it.\n3. Interact once more to serve the guest at the front of the queue.\n\nGuests wait about 45 seconds. Busy day? Unlock the [b]Snack Vendor[/b] job and hire one."],
+	["Trash & cleanliness", "Visitors throw trash: into a bin if one is close, otherwise onto the floor. Look at a piece of trash and press Interact to [b]pick it up[/b] into your hotbar, then aim at a [b]trash bin[/b] and press Use to throw it in (or Interact with the bin). Empty full bins with empty hands. Janitors do all of this for you."],
+	["Building", "Press [b]B[/b] for Build Mode - before or while the museum is open (never on top of a visitor or yourself). Right-click [b]sells[/b] a build for 25% of its price (Resale Contacts upgrades raise it). New builds and bigger floors are unlocked in the [b]Upgrade Tree[/b]."],
+	["Office & J-Mail", "The 3-star expansion adds an office computer to the Prep Lab. Sit down and read your [b]J-Mail[/b] every morning: schools book class trips (they pay well - give the class a guided tour and only tell them true facts!), collectors make offers, newspapers ask questions...\n\n[b]Beware of scams:[/b] if an email promises free money or asks you to send yours, DELETE it. Falling for one costs a huge share of your cash."],
+	["Stars & the Upgrade Tree", "Open the Upgrade Tree with [b]T[/b]. It is much bigger than the window: drag to move around, scroll to zoom, or jump to a branch with the buttons on top. Nodes sit on [b]star tiers[/b] (0 to 5 stars); a tier stays locked until your museum has that many stars. Buy a node's parents first."],
+	["Staff", "You start with [b]no staff slots[/b]. Each star tier from 2 stars up has a [b]Staff Slot +1[/b] node, and every job must be unlocked first.\n\nStaff have morale. Praise them, give raises, and never shove them, or they quit."],
+	["Controls", "[b]Move[/b] WASD - [b]Sprint[/b] Shift - [b]Jump[/b] Space\n[b]Interact / pick up[/b] F - [b]Use held item[/b] Left mouse (HOLD to dig)\n[b]Inventory / backpack[/b] E (or Tab) - [b]Hotbar[/b] 1-9 / wheel\n[b]Drop[/b] Q - [b]Trash held item[/b] X\n[b]Build Mode[/b] B - [b]Upgrade Tree[/b] T - [b]Guide[/b] G - [b]Management[/b] M - [b]Pause[/b] Esc\n\nEverything can be remapped in Settings, and gamepads work too."],
 ]
 
 
@@ -330,11 +356,11 @@ func guide(claim_mode: bool) -> Control:
 	_guide_claim = claim_mode
 	var m := _modal("Curator's Desk" if claim_mode else "Guide", 960, 560)
 	var body: VBoxContainer = m["body"]
-	if claim_mode and GameState.unclaimed_count() > 0:
-		var top := UIKit.hbox(10)
+	if GameState.unclaimed_count() > 0:
+		var top := UIKit.label("%d new species waiting to be seen by visitors: put them on display and open the museum to earn their Upgrade Points." % GameState.unclaimed_count(), 15, UIKit.CORAL, true)
+		top.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		top.custom_minimum_size = Vector2(900, 0)
 		body.add_child(top)
-		top.add_child(UIKit.expand(UIKit.label("%d new discovery reward(s) to claim." % GameState.unclaimed_count(), 16, UIKit.CORAL, true)))
-		top.add_child(UIKit.button("Claim all discoveries", _claim_all, 0, UIKit.GOLD.darkened(0.2)))
 	var split := UIKit.hbox(12)
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(split)
@@ -430,11 +456,13 @@ func _guide_show(sp: String) -> void:
 		var pl := UIKit.label(s, 14, UIKit.MUTED)
 		pl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_guide_page.add_child(pl)
+	var cl := UIKit.label("Display case: %s" % DB.CASE_NAMES[String(sd.get("case", "small"))], 15, UIKit.ACCENT, true)
+	_guide_page.add_child(cl)
 	if not GameState.discovered[sp]["claimed"]:
-		if _guide_claim:
-			_guide_page.add_child(UIKit.button("Claim discovery reward", _claim.bind(sp), 0, UIKit.GOLD.darkened(0.2)))
-		else:
-			_guide_page.add_child(UIKit.label("Reward unclaimed - visit the Curator's Desk in the Prep Lab.", 15, UIKit.CORAL, true))
+		var rl := UIKit.label("Reward: +%d Upgrade Point(s) the first day visitors see it on display." % GameState.discovery_points(sp), 15, UIKit.CORAL, true)
+		rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rl.custom_minimum_size = Vector2(540, 0)
+		_guide_page.add_child(rl)
 	Audio.sfx("page", 1.0, -8.0)
 
 
@@ -466,33 +494,57 @@ func _claim_all() -> void:
 	ui.open("guide", true)
 
 # ----------------------------------------------------------- upgrade tree ---
-const TREE_W := 1180.0
-const TREE_H := 486.0
-const TREE_LEFT := 62.0
-const TREE_TOP := 30.0
+const TREE_COL_W := 138.0
+const TREE_ROW_H := 124.0
+const TREE_LEFT := 74.0
+const TREE_TOP := 60.0
+const TREE_VIEW := Vector2(1200, 470)
+var TREE_W: float:
+	get: return TREE_LEFT + DB.SKILL_COLUMNS * TREE_COL_W + 40.0
+var TREE_H: float:
+	get: return TREE_TOP + 6.0 * TREE_ROW_H + 20.0
+var _tree_view: TreeView
 
 
 func _tree_pos(id: String) -> Vector2:
 	var d: Dictionary = DB.SKILLS[id]
-	var cw := (TREE_W - TREE_LEFT) / float(DB.SKILL_COLUMNS)
-	var rh := (TREE_H - TREE_TOP) / 6.0
-	return Vector2(TREE_LEFT + (float(d["x"]) + 0.5) * cw, TREE_TOP + (float(d["tier"]) + 0.5) * rh)
+	return Vector2(TREE_LEFT + (float(d["x"]) + 0.5) * TREE_COL_W, TREE_TOP + (float(d["tier"]) + 0.5) * TREE_ROW_H)
 
 
+## The Upgrade Tree: far bigger than the window - drag to pan, scroll to zoom,
+## jump between branches with the tabs on top.
 func skills() -> Control:
-	var m := _modal("Upgrade Tree", 1240, 0)
+	var m := _modal("Upgrade Tree", 1260, 0)
 	var body: VBoxContainer = m["body"]
 	var top := UIKit.hbox(14)
 	body.add_child(top)
 	top.add_child(UIKit.icon_label("research", "Upgrade Points: %d" % GameState.up, 18, UIKit.ACCENT, true, 28))
 	top.add_child(UIKit.icon_label("coin", UIKit.money_text(GameState.money), 18, UIKit.GOOD, true, 26))
 	top.add_child(UIKit.stars_row(GameState.half_stars, 22))
-	top.add_child(UIKit.expand(UIKit.label("Click a node. Lines show what each unlock leads to. Tiers need that many museum stars.", 14, UIKit.MUTED)))
+	var owned := GameState.skills.size()
+	top.add_child(UIKit.label("%d / %d unlocked" % [owned, DB.SKILLS.size()], 15, UIKit.MUTED, true))
+	top.add_child(UIKit.expand(UIKit.label("Drag to move around, scroll to zoom. Earn points by opening the museum.", 14, UIKit.MUTED)))
+	var jumps := UIKit.hbox(6)
+	body.add_child(jumps)
+	for br in DB.SKILL_BRANCHES:
+		var jb := UIKit.button(br[0], _tree_jump.bind(br), 0, Color.TRANSPARENT)
+		jb.custom_minimum_size = Vector2(0, 34)
+		jb.add_theme_font_size_override("font_size", 14)
+		jumps.add_child(jb)
 	var canvas := Control.new()
 	canvas.custom_minimum_size = Vector2(TREE_W, TREE_H)
-	canvas.clip_contents = true
-	body.add_child(canvas)
-	var rh := (TREE_H - TREE_TOP) / 6.0
+	canvas.size = canvas.custom_minimum_size
+	canvas.mouse_filter = Control.MOUSE_FILTER_PASS
+	_tree_view = TreeView.new()
+	_tree_view.custom_minimum_size = TREE_VIEW
+	body.add_child(_tree_view)
+	_tree_view.setup(canvas)
+	var bg := ColorRect.new()
+	bg.color = Color("efe2c6")
+	bg.size = canvas.custom_minimum_size
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	canvas.add_child(bg)
+	var rh := TREE_ROW_H
 	var stars := GameState.star_count()
 	for t in range(6):  # star tier bands
 		var band := ColorRect.new()
@@ -505,13 +557,21 @@ func skills() -> Control:
 		canvas.add_child(band)
 		var tl := UIKit.icon_label("star" if t <= stars else "lock", "%d" % t, 16, UIKit.ACCENT if t <= stars else UIKit.GREY, true, 20)
 		tl.position = Vector2(8, TREE_TOP + t * rh + rh * 0.5 - 14)
+		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		canvas.add_child(tl)
-	var cw := (TREE_W - TREE_LEFT) / float(DB.SKILL_COLUMNS)
-	for br in DB.SKILL_BRANCHES:  # branch headers
-		var hl := UIKit.label(br[0], 15, UIKit.ACCENT.darkened(0.2), true)
+	var cw := TREE_COL_W
+	for br in DB.SKILL_BRANCHES:  # branch headers + soft column backdrops
+		var col := ColorRect.new()
+		col.color = Color(1, 1, 1, 0.22)
+		col.position = Vector2(TREE_LEFT + float(br[1]) * cw + 4, TREE_TOP)
+		col.size = Vector2((float(br[2]) - float(br[1]) + 1.0) * cw - 8, 6.0 * rh)
+		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		canvas.add_child(col)
+		var hl := UIKit.label(br[0], 18, UIKit.ACCENT.darkened(0.2), true)
 		hl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		hl.position = Vector2(TREE_LEFT + float(br[1]) * cw, 4)
-		hl.size = Vector2((float(br[2]) - float(br[1]) + 1.0) * cw, 24)
+		hl.position = Vector2(TREE_LEFT + float(br[1]) * cw, 18)
+		hl.size = Vector2((float(br[2]) - float(br[1]) + 1.0) * cw, 28)
+		hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		canvas.add_child(hl)
 	for id in DB.SKILLS.keys():  # connecting lines (drawn under the nodes)
 		for r in DB.SKILLS[id]["req"]:
@@ -544,6 +604,15 @@ func skills() -> Control:
 		b.custom_minimum_size = Vector2(58, 58)
 		b.size = Vector2(58, 58)
 		b.position = p - Vector2(29, 29)
+		var nl := UIKit.label(String(DB.SKILLS[id]["name"]).replace("Blueprint: ", ""), 12, UIKit.TEXT if st != "locked" and st != "stars" else UIKit.MUTED, true)
+		nl.add_theme_stylebox_override("normal", UIKit.sb(Color(1, 0.98, 0.93, 0.85), Color.TRANSPARENT, 0, 6, 2))
+		nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		nl.position = p + Vector2(-64, 31)
+		nl.size = Vector2(128, 30)
+		nl.custom_minimum_size = Vector2(128, 0)
+		nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		canvas.add_child(nl)
 		b.tooltip_text = DB.SKILLS[id]["name"]
 		b.focus_mode = Control.FOCUS_ALL
 		UIKit.style_button(b, {"owned": "btn_gold", "available": "btn_teal", "locked": "btn_grey", "stars": "btn_grey"}[st])
@@ -556,10 +625,16 @@ func skills() -> Control:
 			ck.position = p + Vector2(14, -34)
 			canvas.add_child(ck)
 	_tree_info = UIKit.card()
-	_tree_info.custom_minimum_size = Vector2(TREE_W, 104)
+	_tree_info.custom_minimum_size = Vector2(TREE_VIEW.x, 104)
 	body.add_child(_tree_info)
 	_tree_fill_info()
 	return m["root"]
+
+
+func _tree_jump(br: Array) -> void:
+	if _tree_view:
+		var mid := (float(br[1]) + float(br[2]) + 1.0) * 0.5
+		_tree_view.center_on(Vector2(TREE_LEFT + mid * TREE_COL_W, TREE_TOP + 2.6 * TREE_ROW_H))
 
 
 func _tree_select(id: String) -> void:
@@ -613,6 +688,8 @@ func _buy_skill(id: String) -> void:
 			world().beach.refresh_barriers(true)
 		if id.begins_with("equip_"):
 			Events.say("Pearl's Equipment Shop has new stock!", UIKit.GOLD)
+		if id.begins_with("bp_") or id.begins_with("lic_"):
+			Events.say("New build unlocked - find it in Build Mode (%s)." % Settings.prompt("build_mode"), UIKit.GOLD)
 	ui.reopen()
 
 # -------------------------------------------------------------- inventory ---
@@ -797,26 +874,64 @@ func _equip_tool(kind: String) -> void:
 	ui.reopen()
 
 
-## Fact-Check Kiosk report: which display cases have wrong or blank plaques.
+## Fact-Check Kiosk report: one tidy row per display case (fossil, where it is,
+## and exactly which tags are wrong or missing), in a scrolling list.
 func factcheck(_o: Variant) -> Control:
-	var m := _modal("Fact-Check Kiosk", 760, 0)
+	var m := _modal("Fact-Check Kiosk", 820, 0)
 	var body: VBoxContainer = m["body"]
-	var bad := world().museum.wrong_plaques()
-	if bad.is_empty():
-		body.add_child(UIKit.icon_label("check", "Every display has a correct plaque. The enthusiasts will be pleased!", 17, UIKit.GOOD, true, 30))
+	var cases: Array = world().museum.cases()
+	var shown: Array = cases.filter(func(o): return not o.fossil_entry().is_empty())
+	var bad: Array = world().museum.wrong_plaques()
+	var summary := UIKit.hbox(10)
+	body.add_child(summary)
+	summary.add_child(UIKit.icon("check" if bad.is_empty() else "warning", 34))
+	var st := UIKit.label("All %d plaque(s) are correct. The enthusiasts will be pleased!" % shown.size() if bad.is_empty() else "%d of %d plaque(s) need fixing." % [bad.size(), shown.size()], 19, UIKit.GOOD if bad.is_empty() else UIKit.BAD, true)
+	st.autowrap_mode = TextServer.AUTOWRAP_OFF
+	summary.add_child(st)
+	var why := UIKit.label("Wrong plaques make visitors complain, and fossil enthusiasts leave furious one-star reviews. Blank plaques disappoint everyone.", 15, UIKit.MUTED)
+	why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	why.custom_minimum_size = Vector2(760, 0)
+	body.add_child(why)
+	if shown.is_empty():
+		body.add_child(UIKit.label("No fossils on display yet.", 16, UIKit.MUTED))
 		return m["root"]
-	body.add_child(UIKit.label("%d display case(s) need attention. Wrong plaques make visitors complain, and fossil enthusiasts leave one-star reviews." % bad.size(), 16, UIKit.CORAL, true))
-	for o in bad:
+	var s := UIKit.scroll(330)
+	(s["scroll"] as Control).custom_minimum_size = Vector2(760, 330)
+	body.add_child(s["scroll"])
+	var list: VBoxContainer = s["body"]
+	for o in shown:
+		var status: String = o.plaque_status()
 		var card := UIKit.card()
-		body.add_child(card)
+		card.custom_minimum_size = Vector2(740, 0)
+		list.add_child(card)
+		var row := UIKit.hbox(12)
+		card.add_child(row)
+		row.add_child(UIKit.icon("check" if status == "ok" else "warning", 30))
 		var v := UIKit.vbox(2)
-		card.add_child(v)
+		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(v)
 		var f: Dictionary = o.fossil_entry()
-		v.add_child(UIKit.label(GameState.fossil_name(f["f"]), 18, UIKit.TEXT, true))
-		if o.plaque_status() == "blank":
-			v.add_child(UIKit.label("Blank plaque: pick its Era, Diet and Habitat.", 15, UIKit.CORAL))
-		else:
-			v.add_child(UIKit.label("Wrong tag(s): " + ", ".join(o.wrong_tags()), 15, UIKit.BAD, true))
+		var nm := UIKit.label(GameState.fossil_name(f["f"]), 18, UIKit.TEXT, true)
+		nm.autowrap_mode = TextServer.AUTOWRAP_OFF
+		v.add_child(nm)
+		var where := UIKit.label("%s, row %d / column %d" % [o.def["name"], o.cell.y + 1, o.cell.x + 1], 14, UIKit.MUTED)
+		where.autowrap_mode = TextServer.AUTOWRAP_OFF
+		v.add_child(where)
+		var detail := ""
+		var col := UIKit.GOOD
+		match status:
+			"ok":
+				detail = "Correct"
+			"blank":
+				detail = "Blank plaque - pick its Era, Diet and Habitat"
+				col = UIKit.CORAL
+			_:
+				detail = "Wrong: " + ", ".join(o.wrong_tags())
+				col = UIKit.BAD
+		var dl := UIKit.label(detail, 15, col, true)
+		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		dl.custom_minimum_size = Vector2(560, 0)
+		v.add_child(dl)
 	body.add_child(UIKit.label("Tip: look the species up in the Field Guide (%s)." % Settings.prompt("field_guide"), 14, UIKit.MUTED))
 	return m["root"]
 
@@ -901,27 +1016,14 @@ func management(tab: String) -> Control:
 	fv.name = "Finances"
 	tabs.add_child(fv)
 	_row(fv, "Cash", UIKit.money_text(GameState.money), UIKit.GOOD if GameState.money >= 0 else UIKit.BAD)
-	_row(fv, "Total debt (loans + overdraft)", UIKit.money_text(GameState.debt_total()), UIKit.BAD if GameState.debt_total() > 0 else UIKit.TEXT)
+	_row(fv, "Overdraft", UIKit.money_text(GameState.debt_total()), UIKit.BAD if GameState.debt_total() > 0 else UIKit.TEXT)
 	_row(fv, "Bankruptcy threshold", "cash below %s" % UIKit.money_text(-GameState.DEBT_LIMIT), UIKit.CORAL)
-	for l in GameState.loans:
-		_row(fv, "  %s" % l["label"], "%s left, %s/day" % [UIKit.money_text(int(l["left"])), UIKit.money_text(int(l["per_day"]))])
 	fv.add_child(UIKit.label("Today so far", 18, UIKit.ACCENT, true))
 	for k in GameState.ledger["income"].keys():
 		_row(fv, "  + " + k, UIKit.money_text(int(GameState.ledger["income"][k])), UIKit.GOOD)
 	for k in GameState.ledger["expense"].keys():
 		_row(fv, "  - " + k, UIKit.money_text(int(GameState.ledger["expense"][k])), UIKit.BAD)
-	var lh := UIKit.hbox(8)
-	fv.add_child(lh)
-	lh.add_child(UIKit.button("Take $300 loan (10 days, 15%)", _loan.bind(300), 0))
-	if GameState.half_stars >= 2:
-		lh.add_child(UIKit.button("Take $1,000 loan", _loan.bind(1000), 0))
-	var owed := 0
-	for l in GameState.loans:
-		owed += int(l["left"])
-	if owed > 0:
-		var rb := UIKit.button("Repay all loans (%s)" % UIKit.money_text(owed), _repay, 0, UIKit.GOOD)
-		rb.disabled = GameState.money < owed
-		lh.add_child(rb)
+	fv.add_child(UIKit.label("No loans: grow by selling gems, opening every day and selling builds you no longer need.", 15, UIKit.MUTED))
 	# Museum
 	var mv := UIKit.vbox(6)
 	mv.name = "Museum"
@@ -974,25 +1076,10 @@ func _hire(t: String) -> void:
 	ui.reopen()
 
 
-func _loan(amount: int) -> void:
-	GameState.take_loan(amount, 10, "Bank loan")
-	Audio.sfx("coin")
-	Events.say("Loan received: %s" % UIKit.money_text(amount), UIKit.GOLD)
-	ui.open("management", "Finances")
-
-
-func _repay() -> void:
-	var owed := 0
-	for l in GameState.loans:
-		owed += int(l["left"])
-	if GameState.try_spend(owed, "Loan repayments"):
-		GameState.loans.clear()
-		Events.say("All loans repaid!", UIKit.GOOD)
-	ui.open("management", "Finances")
 
 # --------------------------------------------------------------- exhibits ---
 func exhibit(o: PlacedObject) -> Control:
-	var m := _modal("Fossil Display Case", 900, 0)
+	var m := _modal(String(o.def["name"]), 900, 0)
 	var body: VBoxContainer = m["body"]
 	var f := o.fossil_entry()
 	if not f.is_empty():
@@ -1034,10 +1121,21 @@ func exhibit(o: PlacedObject) -> Control:
 			res.text = "Fact-Check Kiosk: this plaque is WRONG (%s)." % ", ".join(o.wrong_tags())
 			res.add_theme_color_override("font_color", UIKit.BAD)
 		body.add_child(HSeparator.new())
-	var free := GameState.free_fossils()
-	body.add_child(UIKit.label("Mount a cleaned fossil (%d available):" % free.size(), 18, UIKit.ACCENT, true))
+	var csz: String = o.case_size()
+	var all_free := GameState.free_fossils()
+	var free: Array = all_free.filter(func(e): return GameState.piece_of(e["f"]) == "" and GameState.fossil_case(e["f"]) == csz)
+	body.add_child(UIKit.label("Mount a cleaned fossil that fits this case (%d available):" % free.size(), 18, UIKit.ACCENT, true))
 	if free.is_empty():
-		body.add_child(UIKit.label("No free cleaned fossils. Prepare encased finds at the Prep Lab.", 16, UIKit.MUTED))
+		body.add_child(UIKit.label("No free fossils of this size. Prepare finds at the Prep Lab.", 16, UIKit.MUTED))
+	var other := {}
+	for e in all_free:
+		var c2 := GameState.fossil_case(e["f"])
+		if c2 != csz:
+			other[c2] = int(other.get(c2, 0)) + 1
+	for c2 in other.keys():
+		var ol := UIKit.label("%d other cleaned fossil(s) need a %s." % [other[c2], DB.CASE_NAMES[c2]], 15, UIKit.MUTED)
+		ol.autowrap_mode = TextServer.AUTOWRAP_OFF
+		body.add_child(ol)
 	var s := UIKit.scroll(260)
 	body.add_child(s["scroll"])
 	for e in free:
@@ -1085,7 +1183,7 @@ func _save_plaque(o: PlacedObject, opts: Dictionary, res: Label) -> void:
 
 
 func podium(o: PlacedObject) -> Control:
-	var m := _modal("Mega-Skeleton Podium", 820, 0)
+	var m := _modal("Mega Display Case", 860, 0)
 	var body: VBoxContainer = m["body"]
 	var cur: String = o.data.get("species", "")
 	if cur != "":
@@ -1097,9 +1195,16 @@ func podium(o: PlacedObject) -> Control:
 		body.add_child(UIKit.label(s, 16))
 		if o.skeleton_complete():
 			body.add_child(UIKit.label("COMPLETE! A towering centrepiece.", 18, UIKit.GOOD, true))
-	body.add_child(UIKit.label("Assemble 5-8 distinct bone finds of one species. Bones come from Ichthyosaurus (Ammonite Cliffs), Mosasaurus (Sea Caves) and... something else in the caves.", 15, UIKit.MUTED))
+	var hint := UIKit.label("Assemble the bones of ONE skeleton species. Skeleton bones come from big dig spots and buried finds: Ichthyosaurus (cliffs), Mosasaurus, Iguanodon and T. rex (caves), Dimetrodon (Paleozoic shelf)... and something else in the caves.", 15, UIKit.MUTED)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size = Vector2(800, 0)
+	body.add_child(hint)
 	var any := false
-	for sp in ["ichthyosaurus", "mosasaurus", "apex"]:
+	var megas: Array = []
+	for k in DB.SPECIES.keys():
+		if DB.SPECIES[k].has("pieces"):
+			megas.append(k)
+	for sp in megas:
 		var free := GameState.free_fossils(sp)
 		var distinct := {}
 		for e in free:
@@ -1233,6 +1338,11 @@ func reviews(d: Dictionary) -> Control:
 			why.append("5-star review day")
 		if int(d["commend"]) > 0:
 			why.append("critic commendation")
+		if int(d.get("up_visitors", 0)) > 0:
+			why.append("%d from visitors" % int(d["up_visitors"]))
+		var seen: Array = d.get("seen", [])
+		if not seen.is_empty():
+			why.append("new species seen: " + ", ".join(seen))
 		body.add_child(UIKit.label("+%d Upgrade Points (%s)" % [int(d["up"]), ", ".join(why)], 18, UIKit.ACCENT, true))
 	body.add_child(UIKit.button("Continue to the ledger", _to_ledger, 0, UIKit.GOOD))
 	return m["root"]
@@ -1295,6 +1405,32 @@ func _answer(a: String, correct: String) -> void:
 	ui.close_panel()
 
 
+## Guided school tour: pick what to tell the class about this exhibit.
+func tour_panel(q: Dictionary) -> Control:
+	var m := _modal("Guided Tour", 760, 0, false)
+	var body: VBoxContainer = m["body"]
+	var l := UIKit.label("The class gathers round the %s. %s and the children look at you expectantly. What do you tell them?" % [q["what"], q["teacher"]], 17, UIKit.TEXT, true)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(700, 0)
+	body.add_child(l)
+	for o in q["options"]:
+		var b := UIKit.button(String(o), _tour_pick.bind(int(q["obj"]), String(o) == String(q["answer"])), 700)
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		b.custom_minimum_size = Vector2(700, 58)
+		body.add_child(b)
+	var tip := UIKit.label("Not sure? Close this with the Field Guide in mind - you can come back.", 14, UIKit.MUTED)
+	body.add_child(tip)
+	body.add_child(UIKit.button("Not yet (check the Field Guide first)", ui.close_panel, 0, UIKit.CORAL))
+	return m["root"]
+
+
+func _tour_pick(obj_id: int, ok: bool) -> void:
+	ui.close_panel()
+	var dc := world().day_cycle
+	if dc.tour and is_instance_valid(dc.tour):
+		dc.tour.answer(obj_id, ok)
+
+
 func choice(d: Dictionary) -> Control:
 	var m := _modal(d.get("title", "Choose"), 700, 0, false)
 	var body: VBoxContainer = m["body"]
@@ -1312,18 +1448,37 @@ func _choice_pick(cb: Variant) -> void:
 		(cb as Callable).call()
 
 # ------------------------------------------------------------------ pause ---
+## Pause: the close X sits in the very top-LEFT corner of the panel and the
+## "Paused" ribbon is centred at the top. Saving works in every phase.
 func pause() -> Control:
-	var m := _modal("Paused", 460, 0)
+	var m := _modal("Paused", 500, 0)
 	var body: VBoxContainer = m["body"]
+	var header: HBoxContainer = (m["root"] as Control).get_node("Center/Panel/Layout/Header")
+	var close: TextureButton = header.get_node("Close")
+	header.remove_child(close)
+	var panel: PanelContainer = m["panel"]
+	# the X lives on the full-screen modal root and is pinned to the panel frame's
+	# very top-left corner whenever the panel is laid out / resized
+	(m["root"] as Control).add_child(close)
+	close.size = Vector2(46, 46)
+	var pin := func() -> void:
+		if is_instance_valid(close) and is_instance_valid(panel):
+			close.global_position = panel.global_position + Vector2(6, 6)
+	panel.item_rect_changed.connect(pin)
+	pin.call_deferred()
+	header.get_node("SpacerRight").size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_child(UIKit.label("Day %d  |  %s  |  %s" % [GameState.day, UIKit.money_text(GameState.money), GameState.star_text()], 17, UIKit.MUTED))
-	body.add_child(UIKit.button("Resume", ui.close_panel, 380, UIKit.GOOD, "check"))
-	body.add_child(UIKit.button("Ledger & Debt", _open_finances, 380, Color.TRANSPARENT, "coin"))
-	body.add_child(UIKit.button("Settings", _open_settings, 380, Color.TRANSPARENT, "gear"))
-	var sb := UIKit.button("Save Game" if GameState.phase == GameState.Phase.PREP else "Save Game (Prep phase only)", _save, 380, UIKit.GOLD, "save")
-	sb.disabled = GameState.phase != GameState.Phase.PREP
-	body.add_child(sb)
-	body.add_child(UIKit.button("Quit to Main Menu", _to_menu, 380, UIKit.CORAL, "calendar"))
-	body.add_child(UIKit.button("Quit Game", _quit, 380, UIKit.CORAL, "warning"))
+	body.add_child(UIKit.button("Resume", ui.close_panel, 420, UIKit.GOOD, "check"))
+	body.add_child(UIKit.button("Ledger & Finances", _open_finances, 420, Color.TRANSPARENT, "coin"))
+	body.add_child(UIKit.button("Settings", _open_settings, 420, Color.TRANSPARENT, "gear"))
+	body.add_child(UIKit.button("Save Game", _save, 420, UIKit.GOLD, "save"))
+	if GameState.phase != GameState.Phase.PREP:
+		var nl := UIKit.label("Saving now ends today early: loading this save starts the next morning, keeping what you earned.", 14, UIKit.MUTED)
+		nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		nl.custom_minimum_size = Vector2(420, 0)
+		body.add_child(nl)
+	body.add_child(UIKit.button("Quit to Main Menu", _to_menu, 420, UIKit.CORAL, "calendar"))
+	body.add_child(UIKit.button("Quit Game", _quit, 420, UIKit.CORAL, "warning"))
 	return m["root"]
 
 

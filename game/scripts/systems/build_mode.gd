@@ -1,7 +1,9 @@
 class_name BuildMode
 extends Node3D
-## Top-down Build Mode: the camera snaps to an orthographic view of the
-## floor plan; place / rotate / remove exhibits on the grid; buy expansions.
+## Top-down Build Mode: the camera snaps to an orthographic view of the floor
+## plan; place / rotate / SELL builds on the grid. Works in the prep phase AND
+## while the museum is open (never on top of a visitor or you). Expansions are
+## bought in the Upgrade Tree; builds unlock there too.
 
 const GRID_SHADER := """
 shader_type spatial;
@@ -37,6 +39,7 @@ var _zoom := 1.0
 func _ready() -> void:
 	cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	cam.cull_mask = 0xFFFFF & ~2  # layer 2 = first-person arms / held item: never seen from above
 	cam.rotation = Vector3(-PI * 0.5, 0, 0)
 	cam.far = 200.0
 	add_child(cam)
@@ -64,12 +67,18 @@ func toggle() -> void:
 
 
 func enter() -> void:
-	if GameState.phase != GameState.Phase.PREP:
-		Events.say("Build Mode is available during the Prep phase (before you open).", UIKit.CORAL)
+	if GameState.phase == GameState.Phase.REVIEWS or GameState.phase == GameState.Phase.LEDGER:
+		Events.say("Build Mode opens again in the morning.", UIKit.CORAL)
 		Audio.sfx("error")
 		return
+	var pl := World.instance.player
+	if pl.ragdolled:
+		return
+	if pl.digging:
+		pl.cancel_dig()
 	active = true
-	World.instance.player.locked = true
+	pl.locked = true
+	pl.set_build_view(true)
 	cell = museum().entrance() + Vector2i(0, 1)
 	_fit_camera()
 	cam.current = true
@@ -85,6 +94,7 @@ func exit() -> void:
 	cam.current = false
 	World.instance.player.camera.current = true
 	World.instance.player.locked = false
+	World.instance.player.set_build_view(false)
 	grid_mesh.visible = false
 	if ghost:
 		ghost.queue_free()
@@ -119,9 +129,11 @@ func _build_ui() -> void:
 	ui.add_child(top)
 	var tv := UIKit.vbox(4)
 	top.add_child(tv)
-	tv.add_child(UIKit.label("BUILD MODE  -  %s place   %s remove   %s rotate   %s/%s cycle   %s exit" % [
-		Settings.prompt("build_place"), Settings.prompt("build_remove"), Settings.prompt("rotate"),
+	tv.add_child(UIKit.label("BUILD MODE  -  %s place   %s sell (%d%% back)   %s rotate   %s/%s cycle   %s exit" % [
+		Settings.prompt("build_place"), Settings.prompt("build_remove"), int(round(GameState.refund_rate() * 100.0)), Settings.prompt("rotate"),
 		Settings.prompt("build_prev"), Settings.prompt("build_next"), Settings.prompt("build_mode")], 17, UIKit.TEXT, true))
+	if GameState.phase == GameState.Phase.OPEN:
+		tv.add_child(UIKit.label("The museum is open - time keeps running and visitors keep walking around.", 15, UIKit.CORAL, true))
 	money_lbl = UIKit.label("", 17)
 	tv.add_child(money_lbl)
 	info = UIKit.label("", 16, UIKit.MUTED)
@@ -143,8 +155,9 @@ func _build_ui() -> void:
 		var cb := UIKit.button(c, _set_category.bind(c), 0, UIKit.ACCENT if c == category else Color("8a8478"))
 		cat_box.add_child(cb)
 	cat_box.add_child(UIKit.expand(Control.new()))
-	expand_btn = UIKit.button("Expand Museum", _try_expand, 0, UIKit.CORAL)
-	cat_box.add_child(expand_btn)
+	var el := UIKit.label("Bigger floor? Buy Expansions in the Upgrade Tree (%s)." % Settings.prompt("skill_tree"), 14, UIKit.MUTED)
+	el.autowrap_mode = TextServer.AUTOWRAP_OFF
+	cat_box.add_child(el)
 	cat_box.add_child(UIKit.button("Done", exit, 0, UIKit.CORAL))
 	var sc := ScrollContainer.new()
 	sc.custom_minimum_size = Vector2(0, 66)
@@ -197,10 +210,9 @@ Not enough cash (%s)." % UIKit.money_text(int(d["cost"]))
 
 func lock_reason(id: String) -> String:
 	var d: Dictionary = DB.BUILD[id]
-	if d["lic"] != "" and not GameState.has_skill(d["lic"]):
-		return "Needs skill: " + String(DB.SKILLS[d["lic"]]["name"])
-	if GameState.half_stars < int(d["stars"]):
-		return "Needs %s" % GameState.star_text(int(d["stars"]))
+	if not GameState.build_unlocked(id):
+		var sk: Dictionary = DB.SKILLS[d["lic"]]
+		return "Unlock \"%s\" in the Upgrade Tree (%d-star tier)" % [sk["name"], int(sk["tier"])]
 	return ""
 
 
@@ -236,16 +248,6 @@ func _update_info() -> void:
 		s += "\n" + err
 	info.text = s
 	money_lbl.text = "Cash: %s     Floor: %dx%d" % [UIKit.money_text(GameState.money), museum().W, museum().D]
-	var lvl := GameState.museum_level
-	if lvl + 1 < DB.MUSEUM_SIZES.size():
-		var nsz: Vector2i = DB.MUSEUM_SIZES[lvl + 1]
-		var cost: int = DB.EXPANSION_COST[lvl + 1]
-		expand_btn.text = "Expand to %dx%d (%s)" % [nsz.x, nsz.y, UIKit.money_text(cost)]
-		expand_btn.disabled = not GameState.has_skill("expand_%d" % (lvl + 1))
-		expand_btn.tooltip_text = "Requires skill: Expansion Permit %s" % ["I", "II", "III"][lvl] if expand_btn.disabled else "Bigger floor plan. Can be financed with a loan."
-	else:
-		expand_btn.text = "Max size"
-		expand_btn.disabled = true
 
 
 func _update_ghost() -> void:
@@ -339,9 +341,13 @@ func _place() -> void:
 	var o := museum().place(selected, cell, rot)
 	Audio.sfx("register")
 	Events.say("Built %s." % DB.BUILD[selected]["name"], UIKit.GOOD)
-	if selected == "display_case" and not GameState.free_fossils().is_empty():
-		Events.open_panel.emit("exhibit", o)
-	elif selected == "mega_podium":
+	if o.is_case():
+		var csz := o.case_size()
+		for e in GameState.free_fossils():
+			if GameState.piece_of(e["f"]) == "" and GameState.fossil_case(e["f"]) == csz:
+				Events.open_panel.emit("exhibit", o)
+				break
+	elif o.is_mega():
 		Events.open_panel.emit("podium", o)
 	_refresh_items()
 	_update_ghost()
@@ -356,47 +362,24 @@ func _remove() -> void:
 				break
 	if o == null:
 		return
-	var refund := int(DB.BUILD[o.type]["cost"]) / 2
+	## Selling gives back only part of the price (Resale Contacts upgrades raise it).
+	var refund := int(floor(float(DB.BUILD[o.type]["cost"]) * GameState.refund_rate()))
+	if o.is_stand():
+		for g in o.queue.duplicate():
+			if is_instance_valid(g) and g.has_method("_quit_queue"):
+				g._quit_queue(false)
 	museum().remove(o)
 	if refund > 0:
-		GameState.earn(refund, "Refunds")
+		GameState.earn(refund, "Sold builds")
 	Audio.sfx("crack")
-	Events.say("Removed %s (+%s refund)." % [o.def["name"], UIKit.money_text(refund)], Color.WHITE)
+	Events.say("Sold %s for %s (%d%% of its price)." % [o.def["name"], UIKit.money_text(refund), int(round(GameState.refund_rate() * 100.0))], Color.WHITE)
 	_refresh_items()
 	_update_ghost()
 
 
-func _try_expand() -> void:
-	var lvl := GameState.museum_level
-	if lvl + 1 >= DB.MUSEUM_SIZES.size():
-		return
-	var cost: int = DB.EXPANSION_COST[lvl + 1]
-	if GameState.money >= cost:
-		GameState.charge(cost, "Expansion")
-		_do_expand()
-	else:
-		var need := cost - maxi(GameState.money, 0)
-		Events.open_panel.emit("choice", {
-			"title": "Finance the expansion?",
-			"text": "The expansion costs %s. You can take an expansion loan of %s, repaid with 15%% interest over 10 days (%s/day)." % [UIKit.money_text(cost), UIKit.money_text(need), UIKit.money_text(int(ceil(need * 1.15 / 10.0)))],
-			"options": [
-				["Take the loan", _expand_with_loan.bind(need, cost)],
-				["Not now", Callable()],
-			],
-		})
-
-
-func _expand_with_loan(need: int, cost: int) -> void:
-	GameState.take_loan(need, 10, "Expansion loan")
-	GameState.charge(cost, "Expansion")
-	_do_expand()
-
-
-func _do_expand() -> void:
-	museum().expand()
-	World.instance.day_cycle.spawn_staff()
-	Audio.sfx("fanfare")
-	Events.say("Museum expanded to %dx%d!" % [museum().W, museum().D], UIKit.GOLD)
-	_fit_camera()
-	cell = museum().entrance() + Vector2i(0, 1)
-	_update_ghost()
+## Called when an Expansion node is bought in the Upgrade Tree.
+func refit() -> void:
+	if active:
+		_fit_camera()
+		cell = museum().entrance() + Vector2i(0, 1)
+		_update_ghost()
