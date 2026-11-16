@@ -1,5 +1,6 @@
 // Tide & Trove "Stylistic" shader (godot-shader skill): soft painterly light bands, a warm/cool
-// shadow tint, a crisp toon specular blob and a fresnel rim. Every Blender-painted
+// shadow tint. The toon specular and fresnel rim are off by default: on rounded corners
+// they drew thin white lines along every edge. Every Blender-painted
 // material is converted to this at load (Art.toon), so the hand-painted textures
 // keep their detail while lighting snaps into clean stylized steps.
 shader_type spatial;
@@ -22,9 +23,9 @@ uniform vec4 shadow_tint : source_color = vec4(0.5, 0.48, 0.78, 1.0);
 /** How dark the darkest band gets (1 = no shadow). */
 uniform float shadow_floor : hint_range(0.0, 1.0) = 0.46;
 uniform float specular_size : hint_range(0.0, 1.0) = 0.14;
-uniform float specular_strength : hint_range(0.0, 2.0) = 0.35;
+uniform float specular_strength : hint_range(0.0, 2.0) = 0.0;
 uniform vec4 rim_color : source_color = vec4(1.0, 0.95, 0.85, 1.0);
-uniform float rim_amount : hint_range(0.0, 1.0) = 0.18;
+uniform float rim_amount : hint_range(0.0, 1.0) = 0.0;
 uniform float rim_width : hint_range(0.0, 1.0) = 0.32;
 uniform vec4 emission_color : source_color = vec4(0.0, 0.0, 0.0, 1.0);
 uniform float emission_energy : hint_range(0.0, 8.0) = 0.0;

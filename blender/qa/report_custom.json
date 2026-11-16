@@ -11,7 +11,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 5.6
+  "seconds": 6.3
  },
  {
   "id": "wall_window",
@@ -26,7 +26,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.8
+  "seconds": 2.0
  },
  {
   "id": "wall_door",
@@ -40,7 +40,7 @@
   "collision": 5,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.7
+  "seconds": 1.9
  },
  {
   "id": "wall_corner",
@@ -54,7 +54,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.3
+  "seconds": 2.2
  },
  {
   "id": "floor_tile",
@@ -68,7 +68,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.3
+  "seconds": 3.3
  },
  {
   "id": "porch",
@@ -82,7 +82,7 @@
   "collision": 2,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.3
+  "seconds": 3.1
  },
  {
   "id": "open_sign",
@@ -96,7 +96,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.7
+  "seconds": 4.2
  },
  {
   "id": "museum_sign",
@@ -110,7 +110,7 @@
   "collision": 2,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.4
+  "seconds": 3.0
  },
  {
   "id": "path_stones",
@@ -124,7 +124,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.3
+  "seconds": 2.8
  },
  {
   "id": "museum_roof_0",
@@ -139,7 +139,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.3
+  "seconds": 2.2
  },
  {
   "id": "museum_roof_1",
@@ -154,7 +154,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.1
+  "seconds": 2.0
  },
  {
   "id": "museum_roof_2",
@@ -169,7 +169,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.0
+  "seconds": 1.9
  },
  {
   "id": "museum_roof_3",
@@ -184,7 +184,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.7
+  "seconds": 5.9
  },
  {
   "id": "tool_shop",
@@ -200,7 +200,7 @@
   "collision": 4,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 8.4
+  "seconds": 5.5
  },
  {
   "id": "street_lamp",
@@ -216,7 +216,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.9
+  "seconds": 1.7
  },
  {
   "id": "bus_stop",
@@ -231,7 +231,7 @@
   "collision": 6,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.6
+  "seconds": 2.6
  },
  {
   "id": "street",
@@ -245,7 +245,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 8.2
+  "seconds": 5.2
  },
  {
   "id": "lab_pavilion",
@@ -261,7 +261,7 @@
   "collision": 7,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.8
+  "seconds": 3.7
  },
  {
   "id": "fence_barrier",
@@ -275,7 +275,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.6
+  "seconds": 1.9
  },
  {
   "id": "ground_grass",
@@ -289,7 +289,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 11.1
+  "seconds": 6.9
  },
  {
   "id": "ground_shore",
@@ -303,7 +303,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 11.5
+  "seconds": 7.5
  },
  {
   "id": "ground_slope",
@@ -317,7 +317,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 11.3
+  "seconds": 7.5
  },
  {
   "id": "water_plane",
@@ -331,7 +331,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 0.2
+  "seconds": 0.1
  },
  {
   "id": "ground_cliffs",
@@ -345,7 +345,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 11.7
+  "seconds": 7.6
  },
  {
   "id": "ground_caves",
@@ -359,7 +359,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 11.1
+  "seconds": 7.6
  },
  {
   "id": "ground_reef",
@@ -373,7 +373,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 10.3
+  "seconds": 7.3
  },
  {
   "id": "cliff_meso",
@@ -387,7 +387,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 17.9
+  "seconds": 12.0
  },
  {
   "id": "cliff_paleo",
@@ -401,7 +401,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 15.8
+  "seconds": 11.4
  },
  {
   "id": "cliff_ceno",
@@ -415,7 +415,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 17.3
+  "seconds": 12.1
  },
  {
   "id": "cave_arch",
@@ -431,7 +431,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 14.8
+  "seconds": 10.9
  },
  {
   "id": "palm_tree",
@@ -445,7 +445,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.9
+  "seconds": 1.5
  },
  {
   "id": "fern",
@@ -459,7 +459,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.1
+  "seconds": 0.9
  },
  {
   "id": "grass_tuft",
@@ -473,7 +473,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.3
+  "seconds": 2.2
  },
  {
   "id": "rock_small",
@@ -487,7 +487,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.7
+  "seconds": 3.5
  },
  {
   "id": "rock_large",
@@ -501,7 +501,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.9
+  "seconds": 3.9
  },
  {
   "id": "driftwood",
@@ -515,7 +515,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.0
+  "seconds": 1.4
  },
  {
   "id": "shell_deco",
@@ -529,7 +529,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.9
+  "seconds": 3.4
  },
  {
   "id": "node_sand",
@@ -543,7 +543,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.6
+  "seconds": 2.3
  },
  {
   "id": "node_dirt",
@@ -557,7 +557,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.0
+  "seconds": 3.0
  },
  {
   "id": "node_cracked_rock",
@@ -571,7 +571,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 5.7
+  "seconds": 4.7
  },
  {
   "id": "node_hard_rock",
@@ -586,7 +586,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.3
+  "seconds": 3.7
  },
  {
   "id": "node_deep_rock",
@@ -600,7 +600,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.8
+  "seconds": 3.7
  },
  {
   "id": "node_buried",
@@ -614,7 +614,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.0
+  "seconds": 2.7
  },
  {
   "id": "workbench",
@@ -630,7 +630,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.2
+  "seconds": 2.9
  },
  {
   "id": "curator_desk",
@@ -644,7 +644,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.7
+  "seconds": 3.0
  },
  {
   "id": "storage_crate",
@@ -660,7 +660,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 5.5
+  "seconds": 3.8
  },
  {
   "id": "display_case",
@@ -675,7 +675,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.3
+  "seconds": 3.3
  },
  {
   "id": "mega_podium",
@@ -689,7 +689,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 17.6
+  "seconds": 12.6
  },
  {
   "id": "aquarium",
@@ -706,7 +706,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.4
+  "seconds": 3.8
  },
  {
   "id": "dig_pit",
@@ -720,7 +720,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.8
+  "seconds": 2.9
  },
  {
   "id": "gift_shop",
@@ -736,7 +736,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.0
+  "seconds": 3.3
  },
  {
   "id": "holo_theater",
@@ -753,7 +753,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.6
+  "seconds": 3.3
  },
  {
   "id": "popcorn_stand",
@@ -768,7 +768,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.9
+  "seconds": 2.2
  },
  {
   "id": "dinodog_stand",
@@ -782,7 +782,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.2
+  "seconds": 3.3
  },
  {
   "id": "lemonade_stand",
@@ -798,7 +798,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.7
+  "seconds": 2.6
  },
  {
   "id": "restroom",
@@ -812,7 +812,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 5.8
+  "seconds": 4.4
  },
  {
   "id": "trash_bin",
@@ -826,7 +826,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 5.2
+  "seconds": 4.0
  },
  {
   "id": "bench",
@@ -840,7 +840,7 @@
   "collision": 2,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.8
+  "seconds": 2.0
  },
  {
   "id": "plant_pot",
@@ -854,7 +854,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.7
+  "seconds": 2.1
  },
  {
   "id": "floor_lamp",
@@ -870,7 +870,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.9
+  "seconds": 1.5
  },
  {
   "id": "banner",
@@ -884,7 +884,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.9
+  "seconds": 2.5
  },
  {
   "id": "rug",
@@ -898,7 +898,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 14.3
+  "seconds": 11.9
  },
  {
   "id": "dino_statue",
@@ -912,7 +912,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.4
+  "seconds": 3.1
  },
  {
   "id": "trash",
@@ -926,7 +926,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.7
+  "seconds": 2.3
  },
  {
   "id": "sand_pile",
@@ -940,7 +940,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.2
+  "seconds": 0.9
  },
  {
   "id": "plushie",
@@ -954,7 +954,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.4
+  "seconds": 1.8
  },
  {
   "id": "shovel",
@@ -969,7 +969,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.6
+  "seconds": 1.3
  },
  {
   "id": "pickaxe",
@@ -984,7 +984,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.4
+  "seconds": 1.1
  },
  {
   "id": "detector",
@@ -1001,7 +1001,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.4
+  "seconds": 1.2
  },
  {
   "id": "broom",
@@ -1015,7 +1015,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.0
+  "seconds": 0.8
  },
  {
   "id": "gem",
@@ -1030,7 +1030,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.1
+  "seconds": 3.8
  },
  {
   "id": "ore",
@@ -1045,7 +1045,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.5
+  "seconds": 2.2
  },
  {
   "id": "geode",
@@ -1059,7 +1059,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.8
+  "seconds": 1.7
  },
  {
   "id": "geode_open",
@@ -1074,7 +1074,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.2
+  "seconds": 3.8
  },
  {
   "id": "fossil_rock",
@@ -1088,7 +1088,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.4
+  "seconds": 2.0
  },
  {
   "id": "ammonite",
@@ -1103,7 +1103,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.5
+  "seconds": 2.3
  },
  {
   "id": "trilobite",
@@ -1118,7 +1118,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.1
+  "seconds": 1.7
  },
  {
   "id": "tooth",
@@ -1133,7 +1133,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.6
+  "seconds": 1.4
  },
  {
   "id": "bone",
@@ -1147,7 +1147,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.7
+  "seconds": 1.3
  },
  {
   "id": "crinoid",
@@ -1162,7 +1162,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.6
+  "seconds": 2.1
  },
  {
   "id": "sand_dollar",
@@ -1177,7 +1177,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.2
+  "seconds": 1.8
  },
  {
   "id": "snail_shell",
@@ -1192,7 +1192,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.8
+  "seconds": 2.3
  },
  {
   "id": "horseshoe_crab",
@@ -1206,7 +1206,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.6
+  "seconds": 1.3
  },
  {
   "id": "nautilus",
@@ -1220,7 +1220,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.7
+  "seconds": 1.5
  },
  {
   "id": "skeleton_ichthyosaur",
@@ -1234,7 +1234,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.7
+  "seconds": 6.2
  },
  {
   "id": "skeleton_mosasaur",
@@ -1248,7 +1248,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.6
+  "seconds": 6.5
  },
  {
   "id": "skeleton_apex",
@@ -1262,7 +1262,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 7.3
+  "seconds": 6.9
  },
  {
   "id": "character",
@@ -1286,7 +1286,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 14.2
+  "seconds": 10.3
  },
  {
   "id": "fp_arms",
@@ -1301,7 +1301,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.7
+  "seconds": 2.7
  },
  {
   "id": "fx_puff",
@@ -1315,7 +1315,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.3
+  "seconds": 2.1
  },
  {
   "id": "fx_chip",
@@ -1402,7 +1402,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.5
+  "seconds": 1.6
  },
  {
   "id": "dress_beach_camp",
@@ -1416,7 +1416,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.1
+  "seconds": 5.1
  },
  {
   "id": "dress_tidepool",
@@ -1432,7 +1432,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.7
+  "seconds": 4.1
  },
  {
   "id": "dress_rowboat",
@@ -1446,7 +1446,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.9
+  "seconds": 2.9
  },
  {
   "id": "dress_lifeguard",
@@ -1460,7 +1460,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.4
+  "seconds": 2.7
  },
  {
   "id": "dress_signpost",
@@ -1474,7 +1474,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.1
+  "seconds": 2.3
  },
  {
   "id": "dress_dig_camp",
@@ -1488,7 +1488,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 11.8
+  "seconds": 11.1
  },
  {
   "id": "wall_poster",
@@ -1502,7 +1502,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.6
+  "seconds": 2.5
  },
  {
   "id": "ground_fill",
@@ -1516,7 +1516,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.9
+  "seconds": 2.0
  },
  {
   "id": "held_cup",
@@ -1532,7 +1532,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.9
+  "seconds": 1.8
  },
  {
   "id": "held_bag",
@@ -1546,7 +1546,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.8
+  "seconds": 1.5
  },
  {
   "id": "held_dog",
@@ -1560,7 +1560,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.5
+  "seconds": 1.3
  },
  {
   "id": "tool_station",
@@ -1574,7 +1574,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.8
+  "seconds": 2.6
  },
  {
   "id": "plaque_checker",
@@ -1590,7 +1590,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 5.2
+  "seconds": 3.9
  },
  {
   "id": "amber",
@@ -1623,7 +1623,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.5
+  "seconds": 3.1
  },
  {
   "id": "car_sedan",
@@ -1640,7 +1640,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.0
+  "seconds": 2.7
  },
  {
   "id": "car_van",
@@ -1657,7 +1657,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.0
+  "seconds": 2.8
  },
  {
   "id": "car_pickup",
@@ -1674,7 +1674,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.0
+  "seconds": 2.9
  },
  {
   "id": "bus_city",
@@ -1684,13 +1684,14 @@
   "materials": [
    "GlowRed",
    "GlowWarm",
-   "MAT_BusCity"
+   "MAT_BusCity",
+   "SignCream"
   ],
   "objects": 7,
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 8.9
+  "seconds": 5.9
  },
  {
   "id": "bus_school",
@@ -1706,22 +1707,23 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 9.1
+  "seconds": 6.3
  },
  {
   "id": "tunnel_portal",
   "tier": "env",
-  "tris": 13044,
+  "tris": 11978,
   "budget": 60000,
   "materials": [
-   "GlowWarm",
-   "MAT_TunnelPortal"
+   "MAT_TunnelPortal",
+   "SignCream",
+   "TunnelVoid"
   ],
-  "objects": 2,
+  "objects": 4,
   "collision": 3,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 14.1
+  "seconds": 9.9
  },
  {
   "id": "display_case_medium",
@@ -1736,7 +1738,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.9
+  "seconds": 3.8
  },
  {
   "id": "display_case_big",
@@ -1751,7 +1753,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 13.3
+  "seconds": 9.1
  },
  {
   "id": "display_case_mega",
@@ -1766,7 +1768,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 15.1
+  "seconds": 10.1
  },
  {
   "id": "computer_desk",
@@ -1781,7 +1783,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.7
+  "seconds": 2.6
  },
  {
   "id": "touch_table",
@@ -1795,7 +1797,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.3
+  "seconds": 4.5
  },
  {
   "id": "microscope_station",
@@ -1811,7 +1813,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.5
+  "seconds": 4.7
  },
  {
   "id": "photo_booth",
@@ -1825,7 +1827,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.7
+  "seconds": 3.3
  },
  {
   "id": "ice_cream_stand",
@@ -1840,7 +1842,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 5.8
+  "seconds": 3.9
  },
  {
   "id": "water_fountain",
@@ -1855,7 +1857,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.5
+  "seconds": 4.8
  },
  {
   "id": "vending_machine",
@@ -1872,7 +1874,7 @@
    "tris 8068 > item budget 6000"
   ],
   "verdict": "FIX",
-  "seconds": 4.1
+  "seconds": 3.3
  },
  {
   "id": "volcano_diorama",
@@ -1887,7 +1889,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 15.0
+  "seconds": 10.7
  },
  {
   "id": "dino_slide",
@@ -1901,7 +1903,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 12.3
+  "seconds": 8.7
  },
  {
   "id": "time_tunnel",
@@ -1915,7 +1917,7 @@
   "collision": 3,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 10.2
+  "seconds": 7.1
  },
  {
   "id": "fern_garden",
@@ -1929,7 +1931,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.3
+  "seconds": 5.0
  },
  {
   "id": "ammonite_fountain",
@@ -1944,7 +1946,7 @@
   "collision": 1,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.0
+  "seconds": 4.6
  },
  {
   "id": "bookshelf",
@@ -1960,7 +1962,7 @@
    "tris 7986 > item budget 6000"
   ],
   "verdict": "FIX",
-  "seconds": 2.5
+  "seconds": 1.9
  },
  {
   "id": "scallop",
@@ -1974,7 +1976,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.9
+  "seconds": 1.5
  },
  {
   "id": "crab",
@@ -1989,7 +1991,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.8
+  "seconds": 2.2
  },
  {
   "id": "urchin",
@@ -2004,7 +2006,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.4
+  "seconds": 1.3
  },
  {
   "id": "coral",
@@ -2019,7 +2021,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.3
+  "seconds": 2.0
  },
  {
   "id": "stromatolite",
@@ -2034,7 +2036,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.7
+  "seconds": 2.3
  },
  {
   "id": "whorl",
@@ -2049,7 +2051,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.3
+  "seconds": 1.2
  },
  {
   "id": "plant_slab",
@@ -2064,7 +2066,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.7
+  "seconds": 1.4
  },
  {
   "id": "fish_slab",
@@ -2079,7 +2081,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.7
+  "seconds": 1.3
  },
  {
   "id": "wing_slab",
@@ -2094,7 +2096,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.6
+  "seconds": 1.4
  },
  {
   "id": "footprint",
@@ -2109,7 +2111,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.2
+  "seconds": 0.9
  },
  {
   "id": "claw",
@@ -2124,7 +2126,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.1
+  "seconds": 0.8
  },
  {
   "id": "horn",
@@ -2139,7 +2141,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.9
+  "seconds": 1.5
  },
  {
   "id": "tusk",
@@ -2154,7 +2156,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 1.9
+  "seconds": 1.5
  },
  {
   "id": "armor_plate",
@@ -2169,7 +2171,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 3.2
+  "seconds": 2.7
  },
  {
   "id": "egg",
@@ -2184,7 +2186,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.2
+  "seconds": 1.7
  },
  {
   "id": "dino_skull",
@@ -2199,7 +2201,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.8
+  "seconds": 2.1
  },
  {
   "id": "mammal_skull",
@@ -2214,7 +2216,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.8
+  "seconds": 2.0
  },
  {
   "id": "vertebra",
@@ -2229,7 +2231,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 2.8
+  "seconds": 2.3
  },
  {
   "id": "node_big_sand",
@@ -2243,7 +2245,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.3
+  "seconds": 2.7
  },
  {
   "id": "node_big_rock",
@@ -2257,7 +2259,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.0
+  "seconds": 3.7
  },
  {
   "id": "node_bonebed",
@@ -2271,7 +2273,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 4.9
+  "seconds": 3.2
  },
  {
   "id": "skeleton_trex",
@@ -2285,7 +2287,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 8.5
+  "seconds": 6.6
  },
  {
   "id": "skeleton_iguanodon",
@@ -2299,7 +2301,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 8.2
+  "seconds": 6.7
  },
  {
   "id": "skeleton_dimetrodon",
@@ -2313,7 +2315,7 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 8.5
+  "seconds": 6.8
  },
  {
   "id": "museum_roof_4",
@@ -2328,6 +2330,6 @@
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 6.3
+  "seconds": 5.5
  }
 ]

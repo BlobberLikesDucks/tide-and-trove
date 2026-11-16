@@ -28,6 +28,9 @@ SCHOOL_Y = M("SchoolYellow", "#f4b82a")
 BUS_TEAL = M("BusTeal", "#2f9c9a")
 BUS_CREAM = M("BusCream", "#f6ecd2")
 WIN_DK = M("WindowDark", "#2c3e4f", rough=0.15)
+# flat, unbaked: Godot draws TunnelVoid as unshaded black, SignCream as one clean colour
+VOID = M("TunnelVoid", "#000000", rough=1.0, kind="special")
+SIGN_CREAM = M("SignCream", "#fff3d6", kind="special")
 
 
 def _wheels(root, xs, track, r, w=0.24):
@@ -181,8 +184,8 @@ def _bus(name, L, W, H, body, roof, stripe, label, school=False):
         rbox(p, BUMPER, (0.5, 0.3, 0.06), loc=(L / 2 + 0.25, -W / 2 + 0.2, z0 + 0.15), r=0.02)
     else:
         # route number + "AMMONITE BAY" livery + bike rack on the nose
-        text3d(p, BUS_CREAM, "AMMONITE BAY", size=0.26, loc=(-0.3, -W / 2 - 0.03, z0 + 0.95), depth=0.008, max_w=L * 0.5, max_h=0.28)
-        text3d(p, BUS_CREAM, "AMMONITE BAY", size=0.26, loc=(-0.3, W / 2 + 0.03, z0 + 0.95), rot=(90, 0, 180), depth=0.008, max_w=L * 0.5, max_h=0.28)
+        text3d(p, SIGN_CREAM, "AMMONITE BAY", size=0.26, loc=(-0.3, -W / 2 - 0.03, z0 + 0.95), depth=0.008, max_w=L * 0.5, max_h=0.28)
+        text3d(p, SIGN_CREAM, "AMMONITE BAY", size=0.26, loc=(-0.3, W / 2 + 0.03, z0 + 0.95), rot=(90, 0, 180), depth=0.008, max_w=L * 0.5, max_h=0.28)
         for k in range(3):
             tube(p, METAL, [(L / 2 + 0.2, -0.5 + k * 0.5, z0 + 0.3), (L / 2 + 0.45, -0.5 + k * 0.5, z0 + 0.4), (L / 2 + 0.45, -0.5 + k * 0.5, z0 + 0.7)], 0.025, seg=5)
     finish(p, "Body", root, smooth=40)
@@ -245,23 +248,35 @@ def tunnel_portal():
         y = math.cos(a) * (W / 2 + 0.35)
         z = (H - 1.0) + math.sin(a) * 1.6
         rbox(p, STONE if i % 2 else STONE2, (1.25, 0.75, 0.55), loc=(0, y, z), rot=(math.degrees(a) - 90, 0, 0), r=0.06)
+    # spandrels: solid stone between the arch and the parapet (no gaps into the bore)
+    ri, ro = W / 2 + 0.35, W / 2 + 1.4
+    for sy in (1, -1):
+        curve = [(sy * ri * math.cos(math.pi / 2 * i / 12), (H - 1.0) + 1.6 * math.sin(math.pi / 2 * i / 12)) for i in range(13)]
+        pts = [(sy * ro, H - 1.0), (sy * ro, H + 1.1), (0.0, H + 1.1)] + curve[::-1]
+        if sy < 0:
+            pts = pts[::-1]
+        prism(p, STONE2, pts, 0.9, plane="XZ", loc=(0.45, 0, 0), rot=(0, 0, 90))
     rbox(p, STONE2, (1.4, W + 3.0, 0.9), loc=(0, 0, H + 1.4), r=0.08)
     rbox(p, TEAL, (0.12, 4.2, 0.6), loc=(-0.72, 0, H + 1.4), r=0.04)
-    text3d(p, CREAM, "AMMONITE BAY", size=0.36, loc=(-0.79, 0, H + 1.4), rot=(90, 0, -90), depth=0.012, max_w=3.8, max_h=0.42)
-    # dark bore: inner walls + ceiling recede into blackness (never see the end)
-    for sy in (1, -1):
-        box(p, CAVE_DK, (24.0, 0.4, H), loc=(12.0, sy * (W / 2 + 0.2), H / 2))
-    box(p, CAVE_DK, (24.0, W + 0.8, 0.4), loc=(12.0, 0, H + 0.6))
-    box(p, CAVE_DK, (0.4, W + 0.8, H + 1.2), loc=(23.8, 0, H / 2))
-    # road continues into the bore with lane dashes + kerbs
-    box(p, ASPHALT, (24.0, W, 0.06), loc=(12.0, 0, 0.0))
-    for k in range(5):
-        rbox(p, PAINT_W, (2.2, 0.2, 0.012), loc=(1.5 + k * 4.0, 0, 0.035), r=0.005, seg=1)
-    for sy in (1, -1):
-        rbox(p, CURB, (24.0, 0.5, 0.2), loc=(12.0, sy * (W / 2 - 0.25), 0.1), r=0.04)
-    # tunnel lamps along the inner walls (warm glow pulls the eye in)
-    for k in range(4):
-        for sy in (1, -1):
-            rbox(p, GLOW_WARM, (0.8, 0.08, 0.16), loc=(2.5 + k * 5.0, sy * (W / 2 - 0.02), H - 1.2), r=0.03)
+    # the road apron up to the mouth; everything past it is the black void
+    box(p, ASPHALT, (1.3, W, 0.06), loc=(0.0, 0, 0.0))
     finish(p, "Portal", root, smooth=30)
+    # sign lettering: flat (unbaked) cream so every letter is the same colour
+    p = Part()
+    text3d(p, SIGN_CREAM, "AMMONITE BAY", size=0.36, loc=(-0.79, 0, H + 1.4), rot=(90, 0, -90), depth=0.012, max_w=3.8, max_h=0.42)
+    finish(p, "PortalSign", root, smooth=30)
+    # the bore is pure black (Godot renders "TunnelVoid" unshaded): a black
+    # curtain just inside the mouth hides the inside completely, and the walls,
+    # ceiling and floor behind it are black too, so cars drive out of darkness.
+    p = Part()
+    # curtain shaped like the opening (piers + arch), its edges tucked behind the stones
+    rr = W / 2 + 0.3
+    arch = [(rr * math.cos(math.pi * i / 24), (H - 1.0) + 1.55 * math.sin(math.pi * i / 24)) for i in range(25)]
+    prism(p, VOID, [(rr, 0.0)] + arch + [(-rr, 0.0)], 0.05, plane="XZ", loc=(0.7, 0, 0), rot=(0, 0, 90))
+    for sy in (1, -1):
+        box(p, VOID, (24.0, 0.4, H + 1.0), loc=(12.0, sy * (W / 2 + 0.3), (H + 1.0) / 2))
+    box(p, VOID, (24.0, W + 1.0, 0.4), loc=(12.0, 0, H + 1.1))
+    box(p, VOID, (24.0, W + 1.0, 0.06), loc=(12.6, 0, -0.01))
+    box(p, VOID, (0.4, W + 1.0, H + 1.2), loc=(23.8, 0, H / 2))
+    finish(p, "TunnelBore", root, smooth=0)
     return root

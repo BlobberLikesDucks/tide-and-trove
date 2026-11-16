@@ -137,6 +137,16 @@ static func toon(m: Material) -> Material:
 		return _toon[m]
 	var b := m as BaseMaterial3D
 	var out: Material
+	if b.resource_name.begins_with("TunnelVoid"):
+		# road-tunnel bore: flat pitch black, no light, fog or outline
+		var v := StandardMaterial3D.new()
+		v.resource_name = b.resource_name
+		v.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		v.albedo_color = Color.BLACK
+		v.disable_fog = true
+		v.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_toon[m] = v
+		return v
 	if b.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or b.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED or not GameConfig.get_cfg().cel_shading:
 		var t: BaseMaterial3D = b.duplicate()
 		t.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON

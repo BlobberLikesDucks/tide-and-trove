@@ -9,7 +9,6 @@ For one asset (a list of mesh objects):
                      base colour (white for tint materials)
                    x painted top-light gradient   (light shapes, not photoreal AO)
                    x cool-shifted cavity shadow  (AO node, painted look)
-                   + warm edge highlight         (Bevel-node normal vs face normal)
                    x low-frequency brush mottling (object-space noise / voronoi)
                    x material-specific strokes   (wood grain, strata bands, sand speckle)
   4. finalize()    every 'paint' material of the asset collapses into one MAT_<id>
@@ -234,15 +233,8 @@ def _paint_material(src, lo, hi, white=False):
     ao.samples = 12
     ao.inputs["Distance"].default_value = max(0.04, min(1.2, size * 0.08))
     aof = remap(ao.outputs["AO"], 0.0, 1.0, 0.0, 1.0)
-    # 3. edge highlight
-    bev = N("ShaderNodeBevel")
-    bev.samples = 8
-    bev.inputs["Radius"].default_value = max(0.004, min(0.05 if size < 12 else 0.012, size * 0.01))
-    dot = N("ShaderNodeVectorMath")
-    dot.operation = "DOT_PRODUCT"
-    L(bev.outputs[0], dot.inputs[0])
-    L(geo.outputs["Normal"], dot.inputs[1])
-    edge = remap(dot.outputs["Value"], 0.80, 0.995, 1.0, 0.0)
+    # 3. (no edge highlight: a light line painted along every corner read as
+    #    white seams, so corners keep the surface colour)
     # 4. brush mottling (object space so tiling is consistent per asset)
     tc = N("ShaderNodeTexCoord")
     nz = N("ShaderNodeTexNoise")
@@ -353,9 +345,7 @@ def _paint_material(src, lo, hi, white=False):
     sun = mix(shadowed, (1.0, 0.86, 0.62), 1.0, "SOFT_LIGHT")
     hi_t = remap(t, 0.5, 1.0, 0.0, 0.55)
     shadowed = mix(shadowed, sun, hi_t)
-    warm = mix(shadowed, (1.0, 0.9, 0.72), 1.0, "SCREEN")
-    edged = mix(shadowed, warm, math_("MULTIPLY", edge, 0.42))
-    L(edged, emi.inputs["Color"])
+    L(shadowed, emi.inputs["Color"])
     return m
 
 

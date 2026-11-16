@@ -502,10 +502,7 @@ func _update_dig(delta: float) -> void:
 		Audio.sfx(String(DB.NODE_TYPES[dig_node.kind]["sfx"]))
 		FX.burst(dig_node.get_parent(), dig_node.global_position + Vector3(0, 0.35, 0), "rock" if String(DB.NODE_TYPES[dig_node.kind]["tool"]) == "pick" else "sand")
 	var pct := int(100.0 * dig_t / maxf(dig_total, 0.01))
-	var bar := ""
-	for i in range(10):
-		bar += "|" if i < pct / 10 else "."
-	Events.prompt.emit("%s %s  %d%%  (keep holding %s)" % ["Mining" if String(DB.NODE_TYPES[dig_node.kind]["tool"]) == "pick" else "Digging", bar, pct, Settings.prompt("use_item")])
+	Events.prompt.emit("%s  %d%%  (keep holding %s)" % ["Mining" if String(DB.NODE_TYPES[dig_node.kind]["tool"]) == "pick" else "Digging", pct, Settings.prompt("use_item")])
 	if dig_t >= dig_total:
 		digging = false
 		visual.anim = "idle"
