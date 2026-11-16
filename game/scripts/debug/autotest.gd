@@ -503,6 +503,45 @@ func run() -> void:
 	check(GameState.money == int(snap_before["money"]) and w.day_cycle.visitors_today == int(snap_before["visitors"]), "money and visitor count restored")
 	check(w.museum.mess.size() == int(snap_before["mess"]), "litter restored")
 	check(w.beach.save_nodes().size() == int(snap_before["nodes"]), "dig spots restored")
+	# --- benches: visitors sit ON the seat, facing out, and stand back up after
+	var bench: PlacedObject = null
+	for o in w.museum.objects_of("bench"):
+		bench = o
+	if bench == null:
+		for x in range(w.museum.W):
+			for y in range(w.museum.D):
+				if bench == null and w.museum.can_place("bench", Vector2i(x, y), 1) == "":
+					bench = w.museum.place("bench", Vector2i(x, y), 1)
+	var sitter_g: Guest = null
+	for g in w.day_cycle.guests:
+		if g.inside and g.state != Guest.S.KNOCKED and sitter_g == null:
+			sitter_g = g
+	if bench and sitter_g:
+		var stand_p := sitter_g.global_position
+		sitter_g.target = bench
+		sitter_g._arrive_cb = str(Guest.S.VIEW)
+		sitter_g._arrived()
+		var mt: Transform3D = bench.model.global_transform
+		var local := mt.affine_inverse() * sitter_g.global_position
+		var f := mt.basis.z.normalized()
+		var facing := Vector3(-sin(sitter_g.visual.rotation.y), 0, -cos(sitter_g.visual.rotation.y))
+		check(absf(local.z) < 0.15 and absf(absf(local.x) - 0.42) < 0.05 and sitter_g.visual.anim == "sit" and facing.dot(f) > 0.95, "visitor sits on the bench seat, facing out (local %s)" % local)
+		if shots:
+			Engine.time_scale = 1.0
+			sitter_g.timer = 60.0
+			var cam := Camera3D.new()
+			w.add_child(cam)
+			var seat := bench.model.global_position + Vector3(0, 0.7, 0)
+			cam.global_position = seat + f * 0.9 + mt.basis.x.normalized() * 0.5 + Vector3(0, 2.2, 0)
+			cam.look_at(seat)
+			cam.current = true
+			w.museum.set_roof_visible(false)
+			await _wait(0.6)
+			await shot("17_bench_sit")
+			cam.queue_free()
+			w.player.camera.current = true
+		sitter_g._finish_activity()
+		check(sitter_g.global_position.distance_to(stand_p) < 0.05, "visitor stands back up where they were")
 	Engine.time_scale = 6.0
 	if shots:
 		Engine.time_scale = 1.0

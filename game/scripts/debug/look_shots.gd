@@ -92,12 +92,15 @@ func run() -> void:
 	w.player._refresh_held()
 	await _wait(0.6)
 	await shot("m_fp_hold_pick")
-	w.player.arm_anim.play("AN_FP_Mine")
-	w.player._oneshot_t = 5.0
-	await _wait(0.3)
-	await shot("n_fp_mine_windup")
-	await _wait(0.2)
-	await shot("o_fp_mine_strike")
+	w.player._oneshot_t = 30.0
+	var mine_len := w.player.arm_anim.get_animation("AN_FP_Mine").length
+	for k in [["n0_fp_mine_raise", 0.2], ["n_fp_mine_windup", 0.5], ["n2_fp_mine_swing", 0.6], ["o_fp_mine_strike", 0.68]]:
+		w.player.arm_anim.play("AN_FP_Mine")
+		w.player.arm_anim.seek(mine_len * float(k[1]), true)
+		w.player.arm_anim.pause()
+		await _wait(0.15)
+		await shot(String(k[0]))
+	w.player.arm_anim.play()
 	w.player._oneshot_t = 0.0
 	GameState.select_slot(2)
 	w.player._refresh_held()

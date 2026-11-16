@@ -608,12 +608,19 @@ def fp_hold_pick(t):
 
 
 def fp_mine(t):
-    """Overhead swing: wind the head up and back over the shoulder, chop it down
-    in front so the spike strikes the rock, a small recoil, then back to ready."""
+    """Full two-handed overhead swing (like a real miner): lift the pick straight
+    up, keep going until the head hangs BEHIND your back with both fists up by
+    your head, then whip it over the top and down so the spike bites the rock in
+    front of you, a little recoil, and back to ready.
+    Arm rotation X sweeps one continuous arc: 122 (ready, head up in front) ->
+    180 (head straight up) -> 290 (head behind the back) -> back over the top ->
+    55 (shaft forward-down, spike into the ground)."""
     keys = [(0.0, PICK_READY),
-            (0.38, ((0.2, 0.3, 0.04), (168, 0, 10))),     # wind-up: head high behind the hands
-            (0.58, ((0.12, 0.62, -0.26), (68, 0, 20))),   # strike: head down in front
-            (0.7, ((0.13, 0.6, -0.23), (76, 0, 20))),     # recoil off the stone
+            (0.2, ((0.17, 0.3, -0.02), (178, 0, 12))),    # raise: head straight up overhead
+            (0.44, ((0.1, 0.22, 0.075), (285, 0, 4))),     # wind-up: hands by the head, pick hanging behind the back
+            (0.52, ((0.1, 0.21, 0.085), (290, 0, 4))),    # (tiny pause at the top of the swing)
+            (0.68, ((0.17, 0.52, -0.02), (60, 0, 15))),       # strike: fast arc over the top, spike bites just below the crosshair
+            (0.78, ((0.18, 0.5, 0.01), (68, 0, 15))),   # recoil off the stone
             (1.0, PICK_READY)]
     r = _fp_keys(keys, t)
     return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"])}
@@ -654,7 +661,7 @@ def fp_grab(t):
 
 FP_ANIMS = [  # name, fn, seconds, keys, loop
     ("Idle", fp_idle, 3.0, 12, True), ("HoldTool", fp_hold_tool, 3.0, 12, True), ("Dig", fp_dig, 0.8, 16, True),
-    ("HoldPick", fp_hold_pick, 3.0, 12, True), ("Mine", fp_mine, 0.85, 16, True), ("Detector", fp_detector, 1.8, 16, True),
+    ("HoldPick", fp_hold_pick, 3.0, 12, True), ("Mine", fp_mine, 1.15, 24, True), ("Detector", fp_detector, 1.8, 16, True),
     ("HoldItem", fp_hold_item, 3.0, 12, True), ("Shove", fp_shove, 0.32, 8, False), ("Throw", fp_throw, 0.45, 10, False),
     ("Grab", fp_grab, 0.35, 8, False),
 ]

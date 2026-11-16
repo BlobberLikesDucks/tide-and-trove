@@ -23,6 +23,8 @@ var pen := {}
 var visits_left := 3
 ## Seconds this visitor still wants to spend inside (set at the door).
 var stay_t := 90.0
+## Where to stand up to after sitting on a bench (INF = not sitting).
+var _sit_return := Vector3.INF
 var speed := 2.3
 var bladder := 0.0
 var hunger := 0.0
@@ -169,6 +171,7 @@ func save_data() -> Dictionary:
 			vis.append([o.cell.x, o.cell.y])
 	d["visited"] = vis
 	d["bus_spot"] = [_bus_spot.x, _bus_spot.z]
+	d["sit_return"] = [_sit_return.x, _sit_return.z] if _sit_return != Vector3.INF else []
 	var pts: Array = []
 	for q in path:
 		pts.append([q.x, q.z])
@@ -215,6 +218,8 @@ func load_data(d: Dictionary) -> void:
 	var bs: Array = d.get("bus_spot", [0, 0])
 	_bus_spot = Vector3(float(bs[0]), 0, float(bs[1]))
 	timer = float(d.get("timer", 0.0))
+	var sr: Array = d.get("sit_return", [])
+	_sit_return = Vector3(float(sr[0]), 0, float(sr[1])) if sr.size() == 2 else Vector3.INF
 	_arrive_cb = String(d.get("arrive_cb", ""))
 	_perceive_t = float(d.get("perceive_t", 0.0))
 	_follow_t = float(d.get("follow_t", 0.0))
@@ -326,7 +331,7 @@ func _process(delta: float) -> void:
 				visual.anim = "idle"
 		S.VIEW, S.RESTROOM, S.STEAL, S.SABOTAGE:
 			timer -= delta
-			if target and is_instance_valid(target):
+			if target and is_instance_valid(target) and _sit_return == Vector3.INF:
 				_face(target.global_position)
 			if timer <= 0.0:
 				_finish_activity()
@@ -628,8 +633,12 @@ func _arrived() -> void:
 				timer = 7.0
 			elif target.type == "dino_slide":
 				timer = 8.0
-			visual.anim = "inspect" if (target.is_case() or target.type in ["microscope_station", "touch_table", "bookshelf"]) else ("dig" if target.type == "dig_pit" and kind in ["kid", "student"] else ("sit" if target.type == "bench" else ("cheer" if target.type in ["dino_slide", "photo_booth"] else "idle")))
-			if kind == "critic":
+			if target.type == "bench":
+				timer = randf_range(8.0, 14.0)
+				_sit_on(target)
+			else:
+				visual.anim = "inspect" if (target.is_case() or target.type in ["microscope_station", "touch_table", "bookshelf"]) else ("dig" if target.type == "dig_pit" and kind in ["kid", "student"] else ("sit" if target.type == "bench" else ("cheer" if target.type in ["dino_slide", "photo_booth"] else "idle")))
+			if kind == "critic" and target.type != "bench":
 				visual.anim = "inspect"
 		S.BUY:
 			state = S.BUY
@@ -657,7 +666,38 @@ func _arrived() -> void:
 			state = S.DECIDE
 
 
+## Sit down on one of the bench's two seats, facing out. If both are taken,
+## they just stand and admire it.
+func _sit_on(o: PlacedObject) -> void:
+	var mt: Transform3D = o.model.global_transform if o.model else o.global_transform
+	var spots := [Vector3(-0.42, 0, 0.04), Vector3(0.42, 0, 0.04)]
+	if randf() < 0.5:
+		spots.reverse()
+	for sp in spots:
+		var wp: Vector3 = mt * sp
+		wp.y = 0.0
+		var free := true
+		for g in cycle.guests:
+			if g != self and is_instance_valid(g) and g.global_position.distance_to(wp) < 0.35:
+				free = false
+		if free:
+			_sit_return = global_position
+			global_position = wp
+			var f := mt.basis.z.normalized()
+			visual.rotation.y = atan2(-f.x, -f.z)
+			visual.anim = "sit"
+			return
+	visual.anim = "idle"
+
+
+func _stand_up() -> void:
+	if _sit_return != Vector3.INF:
+		global_position = _sit_return
+		_sit_return = Vector3.INF
+
+
 func _finish_activity() -> void:
+	_stand_up()
 	var o := target
 	var st := state
 	state = S.DECIDE
@@ -1118,6 +1158,7 @@ func knockback(v: Vector3, by_player: bool) -> void:
 		return
 	if state == S.CLIMB and _climb_obj and is_instance_valid(_climb_obj):
 		_climb_obj.climber = null
+	_stand_up()
 	if state == S.RESTROOM:
 		visual.visible = true
 	if state == S.WAIT_BUS and is_instance_valid(cycle) and cycle.world.traffic:
@@ -1179,6 +1220,7 @@ func _get_up() -> void:
 
 # ------------------------------------------------------------------ leave ---
 func _leave() -> void:
+	_stand_up()
 	if is_instance_valid(queued_at):
 		queued_at.leave_queue(self)
 		queued_at = null
