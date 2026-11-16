@@ -97,6 +97,72 @@ func _on_player_interact() -> void:
 		Events.say("%s: \"%s\"" % [data["name"], arr[randi() % arr.size()]], Color.WHITE)
 
 
+# -------------------------------------------------------------- save/load ---
+## Exact state: where, what job, how far through it, napping / rude, knocked over.
+func save_data(guests: Array) -> Dictionary:
+	var d := {"pos": [global_position.x, global_position.z], "yaw": visual.rotation.y, "state": state, "rogue": rogue,
+		"timer": timer, "knock_t": _knock_t, "anim": visual.anim, "speed": speed,
+		"tool": visual.tool_node.visible if visual.tool_node else false}
+	var pts: Array = []
+	for q in path:
+		pts.append([q.x, q.z])
+	d["path"] = pts
+	if typeof(job) == TYPE_DICTIONARY:
+		d["job"] = {"t": "mess", "i": museum.mess.find(job)}
+	elif typeof(job) == TYPE_OBJECT and is_instance_valid(job):
+		if job is PlacedObject:
+			d["job"] = {"t": "obj", "cell": [(job as PlacedObject).cell.x, (job as PlacedObject).cell.y]}
+		elif job is Guest:
+			d["job"] = {"t": "guest", "i": guests.find(job)}
+	if visual.bubble:
+		d["bubble"] = [visual.bubble.text, visual.bubble.modulate.to_html(), visual.bubble.visible]
+	if state == "knocked":
+		d["ragdoll"] = Ragdoll.save_state(_rd)
+	return d
+
+
+func load_data(d: Dictionary, guests: Array) -> void:
+	global_position = Vector3(float(d["pos"][0]), 0, float(d["pos"][1]))
+	visual.rotation.y = float(d.get("yaw", 0.0))
+	state = String(d.get("state", "idle"))
+	rogue = bool(d.get("rogue", false))
+	timer = float(d.get("timer", 0.0))
+	speed = float(d.get("speed", speed))
+	path.clear()
+	for q in d.get("path", []):
+		path.append(Vector3(float(q[0]), 0, float(q[1])))
+	job = null
+	var jd: Dictionary = d.get("job", {})
+	match String(jd.get("t", "")):
+		"mess":
+			var i := int(jd.get("i", -1))
+			if i >= 0 and i < museum.mess.size():
+				job = museum.mess[i]
+		"obj":
+			for o in museum.all_objects():
+				if o.cell == Vector2i(int(jd["cell"][0]), int(jd["cell"][1])):
+					job = o
+		"guest":
+			var gi := int(jd.get("i", -1))
+			if gi >= 0 and gi < guests.size():
+				job = guests[gi]
+	if job == null and state in ["walk", "work"] and jd.size() > 0:
+		state = "idle"
+	if visual.tool_node:
+		visual.tool_node.visible = bool(d.get("tool", false))
+	if state == "knocked":
+		_knock_t = float(d.get("knock_t", 0.0))
+		_rd = Ragdoll.knock(self, visual, Vector3.ZERO)
+		Ragdoll.load_state(_rd, d.get("ragdoll", {}))
+	else:
+		visual.anim = String(d.get("anim", "idle"))
+	var bb: Array = d.get("bubble", [])
+	if bb.size() == 3 and bool(bb[2]) and String(bb[0]) != "":
+		visual.set_bubble(String(bb[0]), Color.html(String(bb[1])))
+	else:
+		visual.set_bubble("")
+
+
 func morale() -> float:
 	return float(data.get("morale", 70.0))
 

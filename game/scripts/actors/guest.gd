@@ -60,6 +60,8 @@ var _knock_t := 0.0
 var _sfx_t := 0.0
 var _radioed := false
 var _climb_obj: PlacedObject
+## Seed for the random look / name, so a saved guest comes back looking the same.
+var look_seed := 0
 
 
 func setup(p_kind: String, m: Museum, c: DayCycle, spawn: Vector3) -> void:
@@ -68,7 +70,9 @@ func setup(p_kind: String, m: Museum, c: DayCycle, spawn: Vector3) -> void:
 	cycle = c
 	global_position = spawn
 	var rng := RandomNumberGenerator.new()
-	rng.randomize()
+	if look_seed == 0:
+		look_seed = randi() % 2000000000 + 1
+	rng.seed = look_seed
 	var look := CharVisual.random_look(rng)
 	gname = DB.FIRST_NAMES[rng.randi() % DB.FIRST_NAMES.size()]
 	match kind:
@@ -142,6 +146,124 @@ func setup(p_kind: String, m: Museum, c: DayCycle, spawn: Vector3) -> void:
 	has_litter = kind != "spy" and rng.randf() < (0.45 if kind in ["kid", "student"] else 0.3)
 	if has_litter:
 		trash_timer = rng.randf_range(12.0, 50.0)
+
+# ------------------------------------------------------------- save/load ---
+const SAVE_VARS := ["gname", "mood", "notes", "pen", "visits_left", "bladder", "hunger", "inside", "assaulted", "kicked_out",
+	"resolved", "personality", "stolen", "thief_active", "will_tantrum", "will_climb", "tantrum_done", "weight", "greeted",
+	"hit_count", "no_review", "trash_timer", "harsh", "has_litter", "speed"]
+
+
+## Everything needed to put this visitor back exactly where they were and
+## exactly mid-way through whatever they were doing.
+func save_data() -> Dictionary:
+	var d := {"kind": kind, "seed": look_seed, "state": state, "pos": [global_position.x, global_position.y, global_position.z],
+		"yaw": visual.rotation.y, "timer": timer, "arrive_cb": _arrive_cb, "anim": visual.anim, "visible": visual.visible,
+		"perceive_t": _perceive_t, "follow_t": _follow_t, "knock_t": _knock_t, "sfx_t": _sfx_t}
+	for k in SAVE_VARS:
+		d[k] = get(k)
+	var vis: Array = []
+	for o in museum.all_objects():
+		if visited.has(o.get_instance_id()):
+			vis.append([o.cell.x, o.cell.y])
+	d["visited"] = vis
+	d["bus_spot"] = [_bus_spot.x, _bus_spot.z]
+	var pts: Array = []
+	for q in path:
+		pts.append([q.x, q.z])
+	d["path"] = pts
+	d["target"] = [target.cell.x, target.cell.y] if target and is_instance_valid(target) else []
+	d["climb_obj"] = [_climb_obj.cell.x, _climb_obj.cell.y] if _climb_obj and is_instance_valid(_climb_obj) else []
+	if queued_at and is_instance_valid(queued_at):
+		d["queued_at"] = [queued_at.cell.x, queued_at.cell.y]
+		d["queue_i"] = queued_at.queue.find(self)
+	if visual.bubble:
+		d["bubble"] = [visual.bubble.text, visual.bubble.modulate.to_html(), visual.bubble.visible]
+	if state == S.KNOCKED:
+		d["ragdoll"] = Ragdoll.save_state(_rd)
+	return d
+
+
+func _obj_at(c: Variant) -> PlacedObject:
+	if not (c is Array) or (c as Array).size() < 2:
+		return null
+	var cell := Vector2i(int(c[0]), int(c[1]))
+	for o in museum.all_objects():
+		if o.cell == cell:
+			return o
+	return null
+
+
+func load_data(d: Dictionary) -> void:
+	for k in SAVE_VARS:
+		if d.has(k):
+			var v = d[k]
+			if typeof(get(k)) == TYPE_INT:
+				v = int(v)
+			set(k, v)
+	var pp: Array = d.get("pos", [0, 0, 0])
+	if pp.size() == 3:
+		global_position = Vector3(float(pp[0]), float(pp[1]), float(pp[2]))
+	visual.rotation.y = float(d.get("yaw", 0.0))
+	inter.text = gname
+	visited.clear()
+	for c in d.get("visited", []):
+		var vo := _obj_at(c)
+		if vo:
+			visited[vo.get_instance_id()] = true
+	var bs: Array = d.get("bus_spot", [0, 0])
+	_bus_spot = Vector3(float(bs[0]), 0, float(bs[1]))
+	timer = float(d.get("timer", 0.0))
+	_arrive_cb = String(d.get("arrive_cb", ""))
+	_perceive_t = float(d.get("perceive_t", 0.0))
+	_follow_t = float(d.get("follow_t", 0.0))
+	_sfx_t = float(d.get("sfx_t", 0.0))
+	target = _obj_at(d.get("target", []))
+	path.clear()
+	for q in d.get("path", []):
+		path.append(Vector3(float(q[0]), 0, float(q[1])))
+	var st := int(d.get("state", S.ARRIVE))
+	state = st
+	match st:
+		S.BUY:
+			queued_at = _obj_at(d.get("queued_at", []))
+			if queued_at == null:
+				state = S.DECIDE
+			# (the queue itself is rebuilt in saved order by DayCycle.restore)
+		S.CLIMB:
+			_climb_obj = _obj_at(d.get("climb_obj", []))
+			if _climb_obj:
+				_climb_obj.climber = self
+			else:
+				global_position.y = 0.0
+				state = S.DECIDE
+		S.RESTROOM:
+			visual.visible = false
+		S.WAIT_BUS, S.BOARD:
+			if cycle.world.traffic:
+				cycle.world.traffic.take_spot(self, _bus_spot)
+			if st == S.BOARD:
+				state = S.WAIT_BUS  # Traffic re-sends them to the bus door from where they stand
+			if cycle.world.traffic and cycle.world.traffic.is_seat(_bus_spot) and global_position.distance_to(_bus_spot) < 0.3:
+				visual.rotation.y = 0.0
+			if cycle.world.traffic:
+				cycle.world.traffic.waiting(self)
+		S.KNOCKED:
+			_knock_t = float(d.get("knock_t", 0.0))
+			_rd = Ragdoll.knock(self, visual, Vector3.ZERO)
+			Ragdoll.load_state(_rd, d.get("ragdoll", {}))
+			inter.enabled = false
+		S.WALK:
+			if target == null:
+				state = S.DECIDE
+	visual.visible = bool(d.get("visible", true))
+	if state != S.KNOCKED:
+		var an := String(d.get("anim", "idle"))
+		visual.anim = an
+	var bb: Array = d.get("bubble", [])
+	if bb.size() == 3 and bool(bb[2]) and String(bb[0]) != "":
+		visual.set_bubble(String(bb[0]), Color.html(String(bb[1])))
+	else:
+		visual.set_bubble("")
 
 # ------------------------------------------------------------------- tick ---
 func _process(delta: float) -> void:

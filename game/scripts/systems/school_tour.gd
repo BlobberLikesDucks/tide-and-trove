@@ -48,6 +48,47 @@ func setup(c: DayCycle, e: Dictionary) -> void:
 	ev = e
 
 
+func save_data(all: Array) -> Dictionary:
+	var pres: Array = []
+	for o in cycle.museum.all_objects():
+		if presented.has(o.get_instance_id()):
+			pres.append([o.cell.x, o.cell.y])
+	var st: Array = []
+	for g in students:
+		st.append(all.find(g))
+	return {"ev": ev, "teacher": all.find(teacher), "students": st, "active": active, "done": done,
+		"presented": pres, "right": right, "wrong": wrong, "leave_t": _leave_t}
+
+
+## Rebuild the tour from a save (members are already spawned in `all`).
+func load_data(d: Dictionary, c: DayCycle, all: Array) -> void:
+	setup(c, d.get("ev", {}))
+	active = bool(d.get("active", false))
+	done = bool(d.get("done", false))
+	right = int(d.get("right", 0))
+	wrong = int(d.get("wrong", 0))
+	_leave_t = float(d.get("leave_t", -1.0))
+	for cell in d.get("presented", []):
+		for o in cycle.museum.all_objects():
+			if o.cell == Vector2i(int(cell[0]), int(cell[1])):
+				presented[o.get_instance_id()] = true
+	var ti := int(d.get("teacher", -1))
+	if ti >= 0 and ti < all.size():
+		teacher = all[ti]
+		teacher.trip = ev
+		if active and not done:
+			teacher.follow_node = World.instance.player
+	for si in d.get("students", []):
+		var i := int(si)
+		if i >= 0 and i < all.size():
+			var g: Guest = all[i]
+			g.trip = ev
+			g.follow_node = teacher
+			students.append(g)
+	if cycle.world.traffic:
+		cycle.world.traffic._trip_total = students.size() + (1 if teacher else 0)
+
+
 ## Called by Traffic as each person steps off the bus.
 func make_member(kind: String, pos: Vector3, leader: Variant) -> Guest:
 	var g := cycle.spawn_guest(kind, pos)

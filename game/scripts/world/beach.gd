@@ -110,6 +110,34 @@ func spawn_nodes() -> void:
 			_spawn_zone(z["id"])
 
 
+## Every live dig spot, for the save file.
+func save_nodes() -> Array:
+	var out: Array = []
+	for c in nodes_root.get_children():
+		var n := c as DigNode
+		if n == null or n.depleted or n._fading or n.is_queued_for_deletion():
+			continue
+		out.append({"kind": n.kind, "zone": n.zone, "hidden": n.hidden, "size": n.size_k, "life": n.life,
+			"pos": [n.position.x, n.position.z], "rot": n.visual.rotation.y})
+	return out
+
+
+## Put back exactly the spots that were there when the game was saved.
+func restore_nodes(list: Array) -> void:
+	for c in nodes_root.get_children():
+		c.free()
+	_zone_nodes.clear()
+	for e in list:
+		if not DB.NODE_TYPES.has(String(e.get("kind", ""))):
+			continue
+		var n := DigNode.new()
+		nodes_root.add_child(n)
+		n.position = Vector3(float(e["pos"][0]), 0, float(e["pos"][1]))
+		n.setup(String(e["kind"]), String(e["zone"]), bool(e.get("hidden", false)), _rng, float(e.get("size", 1.0)))
+		n.life = float(e.get("life", 200.0))
+		n.visual.rotation.y = float(e.get("rot", 0.0))
+
+
 func _spawn_zone(zid: String) -> void:
 	var counts: Dictionary = DB.ZONE_NODES[zid]
 	for kind in counts.keys():

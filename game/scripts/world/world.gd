@@ -81,6 +81,8 @@ func _ready() -> void:
 	if not GameState.flags.get("intro", false):
 		call_deferred("_intro")
 	update_objective()
+	if not GameState.pending_world.is_empty():
+		restore_snapshot.call_deferred(GameState.take_pending_world())
 	var args := OS.get_cmdline_user_args()
 	if args.has("--autotest") or args.has("--shots"):
 		add_child(Autotest.new())
@@ -243,6 +245,87 @@ func _process(delta: float) -> void:
 		shopkeeper.anim = "wave" if pd > 3.0 and pd < 9.0 else "idle"
 		var d := player.global_position - shopkeeper.global_position
 		shopkeeper.rotation.y = lerp_angle(shopkeeper.rotation.y, atan2(-d.x, -d.z), 0.05)
+
+
+# -------------------------------------------------------------- save/load ---
+## Everything live in the world, so a save comes back EXACTLY as it was.
+func snapshot() -> Dictionary:
+	var pp := player.global_position
+	var s := {"v": 1, "phase": GameState.phase, "ledger": GameState.ledger.duplicate(true),
+		"player": {"pos": [pp.x, pp.y, pp.z], "yaw": player.cam_yaw, "pitch": player.cam_pitch},
+		"nodes": beach.save_nodes()}
+	var mess: Array = []
+	for m in museum.mess:
+		var mn: Node3D = m["node"]
+		if is_instance_valid(mn):
+			mess.append({"kind": m["kind"], "pos": [mn.position.x, mn.position.z], "rot": mn.rotation.y})
+	s["mess"] = mess
+	for o in museum.all_objects():
+		o.data["fill"] = o.fill
+	day_cycle._prune()
+	var st: Array = []
+	for sn in day_cycle.staff_nodes:
+		st.append(sn.save_data(day_cycle.guests) if is_instance_valid(sn) else {})
+	s["staff"] = st
+	s["day"] = day_cycle.snapshot()
+	if traffic:
+		s["traffic"] = traffic.save_data()
+	if player.ragdolled:
+		s["player"]["ragdoll"] = Ragdoll.save_state(player._rd)
+		s["player"]["rag_t"] = player._rag_t
+	return s
+
+
+func restore_snapshot(s: Dictionary) -> void:
+	if s.is_empty():
+		return
+	var pl: Dictionary = s.get("player", {})
+	if pl.has("pos"):
+		player.global_position = Vector3(float(pl["pos"][0]), float(pl["pos"][1]), float(pl["pos"][2]))
+		player.velocity = Vector3.ZERO
+	player.cam_yaw = float(pl.get("yaw", player.cam_yaw))
+	player.cam_pitch = float(pl.get("pitch", player.cam_pitch))
+	if s.has("nodes"):
+		beach.restore_nodes(s["nodes"])
+	for m in museum.mess.duplicate():
+		if is_instance_valid(m["node"]):
+			(m["node"] as Node).free()
+	museum.mess.clear()
+	for m in s.get("mess", []):
+		museum.add_mess(String(m["kind"]), Vector3(float(m["pos"][0]), 0, float(m["pos"][1])))
+		if not museum.mess.is_empty():
+			var mn: Node3D = museum.mess.back()["node"]
+			mn.position = Vector3(float(m["pos"][0]), 0.03, float(m["pos"][1]))
+			mn.rotation.y = float(m.get("rot", 0.0))
+	for o in museum.all_objects():
+		o.fill = int(o.data.get("fill", 0))
+	day_cycle.spawn_staff()
+	if traffic:
+		traffic.clear_vehicles()
+	if s.has("ledger"):
+		GameState.ledger = s["ledger"]
+	var phase := int(s.get("phase", GameState.Phase.PREP))
+	day_cycle.restore(s.get("day", {}), phase)
+	var st: Array = s.get("staff", [])
+	for i in range(mini(st.size(), day_cycle.staff_nodes.size())):
+		if st[i] is Dictionary and (st[i] as Dictionary).has("pos"):
+			day_cycle.staff_nodes[i].load_data(st[i], day_cycle.guests)
+		elif st[i] is Array and (st[i] as Array).size() == 2:
+			day_cycle.staff_nodes[i].global_position = Vector3(float(st[i][0]), 0, float(st[i][1]))
+	if traffic and s.has("traffic"):
+		traffic.restore_vehicles(s["traffic"])
+	if pl.has("ragdoll"):
+		player.knockback(Vector3.ZERO)
+		Ragdoll.load_state(player._rd, pl["ragdoll"])
+		player._rag_t = float(pl.get("rag_t", 0.0))
+	if phase == GameState.Phase.OPEN:
+		_set_sun(day_cycle.clock)
+	elif phase != GameState.Phase.PREP:
+		_set_sun(DayCycle.CLOSE_H)
+	else:
+		_set_sun(9.0)
+	update_objective()
+	GameState.changed.emit()
 
 
 func new_day() -> void:

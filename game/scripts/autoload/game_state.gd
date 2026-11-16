@@ -685,12 +685,30 @@ const SAVE_KEYS := ["day", "money", "up", "half_stars", "quality", "museum_level
 	"emails", "events", "next_mail"]
 
 
+## A save made in the middle of the game also carries a snapshot of the live
+## world (where you stand, the clock, every visitor, litter, dig spots...).
+## World._ready() puts it back after loading.
+var pending_world := {}
+
+
 func to_dict() -> Dictionary:
+	var w := World.instance
+	var snap := {}
+	if w and is_instance_valid(w) and w.is_inside_tree():
+		snap = w.snapshot()  # first: it writes live values (bin fill) into `placed`
 	var d := {}
 	for k in SAVE_KEYS:
 		d[k] = get(k)
 	d["saved_phase"] = phase
+	if not snap.is_empty():
+		d["world"] = snap
 	return d
+
+
+func take_pending_world() -> Dictionary:
+	var s := pending_world
+	pending_world = {}
+	return s
 
 
 func from_dict(d: Dictionary) -> void:
@@ -751,9 +769,10 @@ func from_dict(d: Dictionary) -> void:
 	_fit_hotbar()
 	if not has_tool_item("shovel"):
 		issue_tool("shovel")
-	# Saved during an open day (or the reviews / ledger): that day is over - you
-	# wake up on the next morning's prep phase with what you earned so far.
-	if int(d.get("saved_phase", Phase.PREP)) != Phase.PREP:
+	pending_world = d.get("world", {})
+	# Old saves had no world snapshot: a day saved while open is over - you wake
+	# up on the next morning's prep phase with what you earned so far.
+	if pending_world.is_empty() and int(d.get("saved_phase", Phase.PREP)) != Phase.PREP:
 		day += 1
 	phase = Phase.PREP
 	reset_ledger()

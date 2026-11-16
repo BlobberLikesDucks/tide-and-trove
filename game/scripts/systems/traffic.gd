@@ -49,6 +49,10 @@ func spawn(model_id: String, dir: int, cruise: float, color: Color = Color.TRANS
 	return v
 
 
+## Set while a save is being loaded: waiting guests must not call new buses.
+var restoring := false
+
+
 func _process(delta: float) -> void:
 	vehicles = vehicles.filter(func(x): return is_instance_valid(x))
 	_ambient_t -= delta
@@ -66,6 +70,7 @@ func _process(delta: float) -> void:
 		if _bus_t <= 0.0 and _lane_clear(1):
 			_bus_t = -1.0
 			city_bus = spawn("bus_city", 1, 9.0)
+			city_bus.role = "city"
 			city_bus.stop_at(BUS_DOOR_X - city_bus.door_offset(), _city_bus_arrived)
 
 
@@ -82,13 +87,21 @@ func _lane_clear(dir: int) -> bool:
 func drop_off(kinds: Array, make: Callable) -> void:
 	var model: String = "car_van" if kinds.size() >= 3 else CARS[_rng.randi() % CARS.size()]
 	var car := spawn(model, 1, _rng.randf_range(9.0, 11.0), CAR_COLORS[_rng.randi() % CAR_COLORS.size()])
-	var stop_x := _rng.randf_range(-5.0, 4.0)
-	car.stop_at(stop_x, func() -> void:
-		for i in range(kinds.size()):
-			var p := Vector3(car.position.x - 0.6 + i * 0.7, 0, -29.7)
-			make.call(kinds[i], p)
-		Audio.sfx("pickup", 0.6, -14.0)
-		car.resume_after(1.4))
+	car.role = "drop"
+	car.extra = {"kinds": kinds}
+	car.make = make
+	car.stop_at(_rng.randf_range(-5.0, 4.0), _dropped.bind(car))
+
+
+func _dropped(car: Vehicle) -> void:
+	var kinds: Array = car.extra.get("kinds", [])
+	for i in range(kinds.size()):
+		var p := Vector3(car.position.x - 0.6 + i * 0.7, 0, -29.7)
+		if car.make.is_valid():
+			car.make.call(kinds[i], p)
+	car.extra["kinds"] = []
+	Audio.sfx("pickup", 0.6, -14.0)
+	car.resume_after(1.4)
 
 
 ## The yellow school bus brings a class: the teacher steps out first and the
@@ -98,19 +111,30 @@ func school_trip(count: int, make: Callable) -> void:
 	_trip_total = count + 1
 	_trip_waiting.clear()
 	school_bus = spawn("bus_school", 1, 8.5)
-	school_bus.stop_at(0.2 - school_bus.door_offset(), func() -> void:
-		school_bus.open_door(true)
-		var door := school_bus.door_pos()
-		var teacher: Guest = make.call("teacher", door, null)
-		for i in range(count):
-			await get_tree().create_timer(0.45, false).timeout
-			if not is_instance_valid(teacher):
-				break
-			make.call("student", door, teacher)
-		await get_tree().create_timer(1.0, false).timeout
-		if is_instance_valid(school_bus):
-			school_bus.open_door(false)
-			school_bus.resume_after(0.6))
+	school_bus.role = "school_drop"
+	school_bus.extra = {"left": count, "teacher": false}
+	school_bus.make = make
+	school_bus.stop_at(0.2 - school_bus.door_offset(), _school_unload.bind(school_bus, null))
+
+
+## The class steps off one by one (also resumes half-way after loading a save).
+func _school_unload(bus: Vehicle, teacher: Guest) -> void:
+	bus.open_door(true)
+	var door := bus.door_pos()
+	if not bool(bus.extra.get("teacher", false)):
+		teacher = bus.make.call("teacher", door, null)
+		bus.extra["teacher"] = true
+	while int(bus.extra.get("left", 0)) > 0:
+		await get_tree().create_timer(0.45, false).timeout
+		if not is_instance_valid(bus) or not is_instance_valid(teacher):
+			return
+		bus.make.call("student", door, teacher)
+		bus.extra["left"] = int(bus.extra["left"]) - 1
+	await get_tree().create_timer(1.0, false).timeout
+	if is_instance_valid(bus):
+		bus.role = ""
+		bus.open_door(false)
+		bus.resume_after(0.6)
 
 
 func school_bus_door() -> Vector3:
@@ -122,26 +146,31 @@ func _call_school_bus() -> void:
 	if is_instance_valid(school_bus) and school_bus.stop_x != INF:
 		return
 	school_bus = spawn("bus_school", 1, 8.5)
-	school_bus.stop_at(0.2 - school_bus.door_offset(), func() -> void:
-		school_bus.open_door(true)
-		var door := school_bus.door_pos()
+	school_bus.role = "school_pick"
+	school_bus.stop_at(0.2 - school_bus.door_offset(), _school_pickup.bind(school_bus))
+
+
+func _school_pickup(bus: Vehicle) -> void:
+	bus.open_door(true)
+	var door := bus.door_pos()
+	for g in _trip_waiting:
+		if is_instance_valid(g):
+			g.board_bus(door)
+	var t := 0.0
+	while t < 16.0:
+		await get_tree().create_timer(0.5, false).timeout
+		t += 0.5
+		var left := 0
 		for g in _trip_waiting:
-			if is_instance_valid(g):
-				g.board_bus(door)
-		var t := 0.0
-		while t < 16.0:
-			await get_tree().create_timer(0.5, false).timeout
-			t += 0.5
-			var left := 0
-			for g in _trip_waiting:
-				if is_instance_valid(g) and (g.state == Guest.S.BOARD or g.state == Guest.S.WAIT_BUS):
-					left += 1
-			if left == 0 and t > 1.5:
-				break
-		if is_instance_valid(school_bus):
-			school_bus.open_door(false)
-			school_bus.resume_after(0.8)
-		_trip_waiting.clear())
+			if is_instance_valid(g) and (g.state == Guest.S.BOARD or g.state == Guest.S.WAIT_BUS):
+				left += 1
+		if left == 0 and t > 1.5:
+			break
+	if is_instance_valid(bus):
+		bus.role = ""
+		bus.open_door(false)
+		bus.resume_after(0.8)
+	_trip_waiting.clear()
 
 
 ## Day over: no more waiting.
@@ -175,12 +204,12 @@ func waiting(g: Guest) -> void:
 			_trip_waiting.append(g)
 		if is_instance_valid(school_bus) and school_bus.stopped and school_bus.stop_x != INF:
 			g.board_bus(school_bus_door())
-		else:
+		elif not restoring:
 			_call_school_bus()
 		return
 	if not _waiting.has(g):
 		_waiting.append(g)
-	if is_instance_valid(city_bus) and city_bus.stopped:
+	if is_instance_valid(city_bus) and city_bus.stopped and not restoring:
 		g.board_bus(city_bus.door_pos())
 
 
@@ -216,8 +245,87 @@ func _wait_boarding() -> void:
 		if left == 0 and t > 1.5:
 			break
 	if is_instance_valid(city_bus):
+		city_bus.role = ""
 		city_bus.open_door(false)
 		city_bus.resume_after(0.8)
+
+
+## Give a restored guest back the exact bench seat (or standing spot) they had.
+func take_spot(g: Node, spot: Vector3) -> void:
+	for i in range(SEATS.size()):
+		if SEATS[i].distance_to(spot) < 0.05:
+			_seat_taken[i] = g
+
+
+# -------------------------------------------------------------- save/load ---
+func save_data() -> Dictionary:
+	vehicles = vehicles.filter(func(x): return is_instance_valid(x) and not x.is_queued_for_deletion())
+	var vs: Array = []
+	for v in vehicles:
+		vs.append(v.save_data())
+	return {"vehicles": vs, "ambient_t": _ambient_t, "bus_t": _bus_t, "trip_total": _trip_total,
+		"city": vehicles.find(city_bus), "school": vehicles.find(school_bus)}
+
+
+func clear_vehicles() -> void:
+	for v in vehicles:
+		if is_instance_valid(v):
+			v.free()
+	vehicles.clear()
+	city_bus = null
+	school_bus = null
+	_waiting.clear()
+	_seat_taken.clear()
+	_trip_waiting.clear()
+
+
+## Rebuild every car and bus exactly where it was, doing what it was doing.
+func restore_vehicles(d: Dictionary) -> void:
+	_ambient_t = float(d.get("ambient_t", _ambient_t))
+	_bus_t = float(d.get("bus_t", -1.0))
+	_trip_total = int(d.get("trip_total", _trip_total))
+	var dc: DayCycle = World.instance.day_cycle
+	var made: Array = []
+	for vd in d.get("vehicles", []):
+		var col := Color.TRANSPARENT if String(vd.get("color", "")) == "" else Color.html(String(vd["color"]))
+		var v := spawn(String(vd["model"]), int(vd["dir"]), float(vd["cruise"]), col)
+		v.load_data(vd)
+		made.append(v)
+	var ci := int(d.get("city", -1))
+	city_bus = made[ci] if ci >= 0 and ci < made.size() else null
+	var si := int(d.get("school", -1))
+	school_bus = made[si] if si >= 0 and si < made.size() else null
+	for v in made:
+		match v.role:
+			"drop":
+				v.make = dc._car_make
+				if not v.stopped:
+					v.stop_at(v.stop_x, _dropped.bind(v))
+				elif not (v.extra.get("kinds", []) as Array).is_empty():
+					_dropped(v)
+			"city":
+				if not v.stopped:
+					v.stop_at(v.stop_x, _city_bus_arrived)
+				else:
+					_city_bus_arrived()
+			"school_drop":
+				v.make = dc.tour.make_member if dc.tour else Callable()
+				var teacher: Guest = dc.tour.teacher if dc.tour and is_instance_valid(dc.tour.teacher) else null
+				if not v.make.is_valid():
+					v.role = ""
+					v.resume_after(0.5)
+				elif not v.stopped:
+					v.stop_at(v.stop_x, _school_unload.bind(v, teacher))
+				else:
+					_school_unload(v, teacher)
+			"school_pick":
+				if not v.stopped:
+					v.stop_at(v.stop_x, _school_pickup.bind(v))
+				else:
+					_school_pickup(v)
+	# the class was waiting at the kerb and no bus was on its way yet
+	if not _trip_waiting.is_empty() and not (is_instance_valid(school_bus) and school_bus.role == "school_pick"):
+		_call_school_bus()
 
 
 # ------------------------------------------------------------------ hits ----
@@ -272,13 +380,23 @@ class Vehicle extends Node3D:
 	var _honk_t := 0.0
 	var _resume_t := -1.0
 	var wheel_r := 0.35
+	var model_id := ""
+	var color := Color.TRANSPARENT
+	## What it is doing: "" (just driving), "drop" (bringing visitors), "city"
+	## (city bus collecting the stop), "school_drop" / "school_pick".
+	var role := ""
+	var extra := {}
+	var make: Callable
+	var door_open := false
 
-	func setup(t: Traffic, model_id: String, d: int, c: float, color: Color) -> void:
+	func setup(t: Traffic, model_id_: String, d: int, c: float, color_: Color) -> void:
 		traffic = t
 		dir = d
 		cruise = c
 		speed = c
-		model = Art.model(model_id)
+		model_id = model_id_
+		color = color_
+		model = Art.model(model_id_)
 		Art.strip_collision(model)
 		add_child(model)
 		var b := Art.local_aabb(model)
@@ -293,8 +411,8 @@ class Vehicle extends Node3D:
 		door = model.find_child("Door", true, false) as Node3D
 		if door:
 			_door_rest = door.position
-		if color != Color.TRANSPARENT:
-			Art.tint(model, "CarPaint", color)
+		if color_ != Color.TRANSPARENT:
+			Art.tint(model, "CarPaint", color_)
 		position = Vector3(-Traffic.SPAWN_X * dir, 0.0, Traffic.EAST_Z if dir > 0 else Traffic.WEST_Z)
 		rotation.y = 0.0 if dir > 0 else PI
 		for mi in Art.meshes(model):
@@ -315,7 +433,34 @@ class Vehicle extends Node3D:
 	func resume_after(t: float) -> void:
 		_resume_t = t
 
+	func save_data() -> Dictionary:
+		var wr: Array = []
+		for w in wheels:
+			wr.append((w as Node3D).rotation.z)
+		return {"model": model_id, "color": color.to_html() if color != Color.TRANSPARENT else "", "dir": dir,
+			"cruise": cruise, "speed": speed, "x": position.x, "z": position.z, "stop_x": stop_x if stop_x != INF else null,
+			"stopped": stopped, "parked": parked, "resume_t": _resume_t, "honk_t": _honk_t, "role": role,
+			"extra": extra, "door": door_open, "wheels": wr}
+
+	func load_data(d: Dictionary) -> void:
+		position = Vector3(float(d.get("x", position.x)), 0.0, float(d.get("z", position.z)))
+		speed = float(d.get("speed", cruise))
+		stop_x = INF if d.get("stop_x") == null else float(d["stop_x"])
+		stopped = bool(d.get("stopped", false))
+		parked = bool(d.get("parked", false))
+		_resume_t = float(d.get("resume_t", -1.0))
+		_honk_t = float(d.get("honk_t", 0.0))
+		role = String(d.get("role", ""))
+		extra = d.get("extra", {})
+		var wr: Array = d.get("wheels", [])
+		for i in range(mini(wr.size(), wheels.size())):
+			(wheels[i] as Node3D).rotation.z = float(wr[i])
+		door_open = bool(d.get("door", false))
+		if door:
+			door.position = _door_rest + (Vector3(-1.1, 0, 0) if door_open else Vector3.ZERO)
+
 	func open_door(on: bool) -> void:
+		door_open = on
 		if door == null:
 			return
 		var tw := create_tween()

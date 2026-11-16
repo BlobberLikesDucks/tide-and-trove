@@ -363,6 +363,8 @@ func run() -> void:
 	var before_money := GameState.money
 	var before_objs := GameState.placed.size()
 	check(SaveManager.load_slot(9), "reload slot")
+	check(not GameState.pending_world.is_empty(), "save carries a world snapshot")
+	GameState.take_pending_world()
 	check(GameState.money == before_money and GameState.placed.size() == before_objs, "save roundtrip money/objects")
 	w.museum.load_objects()
 	w.day_cycle.spawn_staff()
@@ -374,6 +376,101 @@ func run() -> void:
 	await _wait(5.0)
 	print("[T] clock=%.2f guests=%d money=%d" % [w.day_cycle.clock, w.day_cycle.guests.size(), GameState.money])
 	check(w.day_cycle.guests.size() > 0, "guests spawned")
+	# --- mid-day save comes back EXACTLY as it was
+	Engine.time_scale = 1.0
+	w.museum.add_mess("trash", w.museum.cell_center(w.museum.entrance()) + Vector3(0.5, 0, 0.5))
+	w.player.global_position = Vector3(3.25, 0.0, -20.5)
+	w.player.cam_yaw = 1.23
+	var snap_before := {"clock": w.day_cycle.clock, "guests": w.day_cycle.guests.size(), "money": GameState.money,
+		"visitors": w.day_cycle.visitors_today, "mess": w.museum.mess.size(), "nodes": w.beach.save_nodes().size(), "day": GameState.day}
+	var names_before: Array = []
+	var where_before: Array = []
+	for g in w.day_cycle.guests:
+		names_before.append(g.gname)
+		where_before.append([g.gname, g.global_position])
+	names_before.sort()
+	# a car is on the road (it must come back at the same spot and speed)
+	if w.traffic.vehicles.is_empty():
+		w.traffic.spawn("car_sedan", 1, 10.0, Color("3f7fd9")).position.x = -12.0
+	# the hard cases: someone mid-fall (ragdoll) and someone on the bus-stop bench
+	var gl: Array = w.day_cycle.guests
+	var knocked: Guest = null
+	var knocked_name := ""
+	if gl.size() >= 2:
+		knocked = gl[0]
+		knocked_name = knocked.gname
+		knocked.knockback(Vector3(3.0, 4.0, 0.0), false)
+		var sitter: Guest = gl[1]
+		sitter.inside = false
+		sitter.state = Guest.S.LEAVE
+		sitter._bus_spot = w.traffic.stop_spot(sitter)
+		sitter.global_position = sitter._bus_spot
+		sitter._arrive_at_stop()
+		await _wait(0.3)
+	var hips_a := Vector3.ZERO
+	if knocked and knocked._rd.has("bodies"):
+		hips_a = (knocked._rd["bodies"]["Hips"] as RigidBody3D).global_position
+	check(SaveManager.save(9), "saved mid-day")
+	var exact_a: Dictionary = JSON.parse_string(JSON.stringify(w.snapshot()))
+	check(SaveManager.load_slot(9), "loaded the mid-day save")
+	w.restore_snapshot(GameState.take_pending_world())
+	var exact_b: Dictionary = JSON.parse_string(JSON.stringify(w.snapshot()))
+	# same frame, no time passed: every visitor, staff member and vehicle must match field for field
+	var diffs: Array = []
+	for key in ["guests"]:
+		var la: Array = exact_a["day"][key]
+		var lb: Array = exact_b["day"][key]
+		for i in range(mini(la.size(), lb.size())):
+			for f in ["kind", "gname", "state", "timer", "pos", "yaw", "path", "target", "anim", "mood", "inside", "queue_i", "bubble", "visible"]:
+				if str(la[i].get(f)) != str(lb[i].get(f)):
+					diffs.append("%s.%s: %s -> %s" % [la[i].get("gname"), f, str(la[i].get(f)), str(lb[i].get(f))])
+	for i in range(mini(exact_a["staff"].size(), exact_b["staff"].size())):
+		for f in ["pos", "state", "timer", "path", "job", "anim"]:
+			if str(exact_a["staff"][i].get(f)) != str(exact_b["staff"][i].get(f)):
+				diffs.append("staff%d.%s" % [i, f])
+	var va: Array = exact_a["traffic"]["vehicles"]
+	var vb: Array = exact_b["traffic"]["vehicles"]
+	if va.size() != vb.size():
+		diffs.append("vehicles %d -> %d" % [va.size(), vb.size()])
+	else:
+		for i in range(va.size()):
+			for f in ["model", "x", "z", "speed", "stopped", "role", "stop_x"]:
+				if str(va[i].get(f)) != str(vb[i].get(f)):
+					diffs.append("vehicle%d.%s: %s -> %s" % [i, f, str(va[i].get(f)), str(vb[i].get(f))])
+	if knocked_name != "":
+		var kb: Guest = null
+		for g in w.day_cycle.guests:
+			if g.gname == knocked_name and g.state == Guest.S.KNOCKED:
+				kb = g
+		check(kb != null and kb._rd.has("bodies") and (kb._rd["bodies"]["Hips"] as RigidBody3D).global_position.distance_to(hips_a) < 0.05, "a knocked-over visitor reloads mid-fall in the same pose")
+		var seated := 0
+		for g in w.day_cycle.guests:
+			if g.state == Guest.S.WAIT_BUS and w.traffic.is_seat(g._bus_spot) and g.visual.anim == "sit":
+				seated += 1
+		check(seated >= 1, "the bus-stop visitor is back on the same bench seat")
+	for d in diffs.slice(0, 12):
+		print("[T]   diff ", d)
+	check(diffs.is_empty() and va.size() > 0, "visitors, staff and %d vehicle(s) restored field for field (%d diffs)" % [va.size(), diffs.size()])
+	await _wait(0.05)
+	var names_after: Array = []
+	var placed_ok := true
+	for g in w.day_cycle.guests:
+		names_after.append(g.gname)
+		var near := false
+		for e in where_before:
+			if e[0] == g.gname and (e[1] as Vector3).distance_to(g.global_position) < 0.6:
+				near = true
+		placed_ok = placed_ok and near
+	names_after.sort()
+	check(GameState.phase == GameState.Phase.OPEN and GameState.day == int(snap_before["day"]), "mid-day load stays on the same day, still open")
+	check(absf(w.day_cycle.clock - float(snap_before["clock"])) < 0.05, "clock restored (%.2f vs %.2f)" % [w.day_cycle.clock, snap_before["clock"]])
+	check(w.player.global_position.distance_to(Vector3(3.25, 0.0, -20.5)) < 0.3 and absf(w.player.cam_yaw - 1.23) < 0.01, "player restored to the exact spot")
+	check(w.day_cycle.guests.size() == int(snap_before["guests"]), "every visitor restored (%d/%d)" % [w.day_cycle.guests.size(), snap_before["guests"]])
+	check(names_after == names_before, "visitors keep their names (positions: exact check above)")
+	check(GameState.money == int(snap_before["money"]) and w.day_cycle.visitors_today == int(snap_before["visitors"]), "money and visitor count restored")
+	check(w.museum.mess.size() == int(snap_before["mess"]), "litter restored")
+	check(w.beach.save_nodes().size() == int(snap_before["nodes"]), "dig spots restored")
+	Engine.time_scale = 6.0
 	if shots:
 		Engine.time_scale = 1.0
 		w.player.global_position = w.museum.cell_center(w.museum.entrance()) + Vector3(0, 0.2, 1.0)

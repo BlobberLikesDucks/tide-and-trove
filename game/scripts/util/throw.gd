@@ -22,7 +22,8 @@ static func arc(parent: Node, from: Vector3, to: Vector3, model_id: String, dura
 	var tw := m.create_tween()
 	tw.tween_method(step, 0.0, 1.0, duration)
 	tw.tween_callback(func() -> void:
-		if on_land.is_valid():
+		# the thrower may be gone by now (left, or replaced when a save is loaded)
+		if on_land.is_valid() and is_instance_valid(on_land.get_object()):
 			on_land.call()
 		if is_instance_valid(m):
 			m.queue_free())

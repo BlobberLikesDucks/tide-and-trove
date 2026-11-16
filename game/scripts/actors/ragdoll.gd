@@ -187,3 +187,35 @@ static func recover(actor: Node3D, visual: CharVisual, rd: Dictionary) -> void:
 	visual.position = Vector3.ZERO
 	visual.rotation = Vector3(0, face, 0)
 	visual.play_once("getup")
+
+
+## Save every body's pose and motion (so a knocked-over person reloads mid-fall).
+static func save_state(rd: Dictionary) -> Dictionary:
+	var out := {}
+	if rd.is_empty() or not rd.has("bodies"):
+		return out
+	for n in (rd["bodies"] as Dictionary).keys():
+		var rb: RigidBody3D = rd["bodies"][n]
+		if not is_instance_valid(rb):
+			continue
+		var t := rb.global_transform
+		var q := t.basis.get_rotation_quaternion()
+		out[n] = [t.origin.x, t.origin.y, t.origin.z, q.x, q.y, q.z, q.w,
+			rb.linear_velocity.x, rb.linear_velocity.y, rb.linear_velocity.z,
+			rb.angular_velocity.x, rb.angular_velocity.y, rb.angular_velocity.z]
+	return out
+
+
+## Put saved poses back onto a freshly knocked ragdoll.
+static func load_state(rd: Dictionary, st: Dictionary) -> void:
+	if rd.is_empty() or not rd.has("bodies"):
+		return
+	for n in st.keys():
+		if not (rd["bodies"] as Dictionary).has(n):
+			continue
+		var rb: RigidBody3D = rd["bodies"][n]
+		var a: Array = st[n]
+		var q := Quaternion(float(a[3]), float(a[4]), float(a[5]), float(a[6])).normalized()
+		rb.global_transform = Transform3D(Basis(q), Vector3(float(a[0]), float(a[1]), float(a[2])))
+		rb.linear_velocity = Vector3(float(a[7]), float(a[8]), float(a[9]))
+		rb.angular_velocity = Vector3(float(a[10]), float(a[11]), float(a[12]))

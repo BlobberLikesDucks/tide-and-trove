@@ -28,6 +28,8 @@ var summary := {}
 var tour: SchoolTour
 var _pending: Array = []
 var _car_t := 0.0
+## The ledger panel's data (kept so a save during the ledger can show it again).
+var ledger_data := {}
 
 
 func setup(w: Node, m: Museum) -> void:
@@ -221,13 +223,14 @@ func arrive_by_car(kinds: Array) -> void:
 		for k in kinds:
 			spawn_guest(k)
 		return
-	world.traffic.drop_off(kinds, func(kind: String, p: Vector3) -> Guest:
-		if GameState.phase != GameState.Phase.OPEN:
-			return null
-		var g := spawn_guest(kind, p)
-		if kind == "celebrity" and g.personality == "crowd":
-			pass
-		return g)
+	world.traffic.drop_off(kinds, _car_make)
+
+
+## A visitor steps out of a car at the kerb.
+func _car_make(kind: String, p: Vector3) -> Guest:
+	if GameState.phase != GameState.Phase.OPEN:
+		return null
+	return spawn_guest(kind, p)
 
 
 ## A class booked over J-Mail arrives in the yellow school bus.
@@ -480,7 +483,92 @@ func to_ledger() -> void:
 			resigned.append("%s (%s)" % [s.data["name"], DB.STAFF[s.type]["name"]])
 			s.quit("low morale")
 	data["resigned"] = resigned
+	ledger_data = data
 	Events.open_panel.emit("ledger", data)
+
+
+# -------------------------------------------------------------- save/load ---
+## The whole running day: clock, visitors (where they are and how they feel),
+## queued arrivals, scheduled events, reviews so far, the school tour.
+func snapshot() -> Dictionary:
+	_prune()
+	var gs: Array = []
+	for g in guests:
+		gs.append(g.save_data())
+	for i in range(guests.size()):
+		gs[i]["leader"] = guests.find(guests[i].leader) if is_instance_valid(guests[i].leader) else -1
+	return {"clock": clock, "hour": _hour, "closing": closing, "close_wait": _close_wait, "visitors": visitors_today,
+		"reviews": reviews, "commend": commendations, "publicity": publicity, "scheduled": _scheduled, "pending": _pending,
+		"spawn_acc": _spawn_acc, "summary": summary, "ledger_data": ledger_data, "guests": gs, "car_t": _car_t,
+		"tour": tour.save_data(guests) if tour and is_instance_valid(tour) else {}}
+
+
+func restore(d: Dictionary, phase: int) -> void:
+	for g in guests:
+		if is_instance_valid(g):
+			g.free()
+	guests.clear()
+	if tour and is_instance_valid(tour):
+		tour.free()
+	tour = null
+	clock = float(d.get("clock", OPEN_H))
+	_hour = int(d.get("hour", int(clock)))
+	closing = bool(d.get("closing", false))
+	_close_wait = float(d.get("close_wait", 0.0))
+	visitors_today = int(d.get("visitors", 0))
+	reviews = d.get("reviews", [])
+	commendations = int(d.get("commend", 0))
+	publicity = int(d.get("publicity", 0))
+	_scheduled = d.get("scheduled", [])
+	_pending = d.get("pending", [])
+	_spawn_acc = float(d.get("spawn_acc", 0.0))
+	_car_t = float(d.get("car_t", 0.0))
+	summary = d.get("summary", {})
+	ledger_data = d.get("ledger_data", {})
+	GameState.phase = phase
+	var list: Array = d.get("guests", [])
+	var made: Array = []
+	for gd in list:
+		var g := Guest.new()
+		g.look_seed = int(gd.get("seed", 0))
+		world.add_child(g)
+		g.setup(String(gd.get("kind", "tourist")), museum, self, Vector3(float(gd["pos"][0]), 0, float(gd["pos"][1])))
+		guests.append(g)
+		made.append(g)
+	var td: Dictionary = d.get("tour", {})
+	if not td.is_empty():
+		tour = SchoolTour.new()
+		world.add_child(tour)
+		tour.load_data(td, self, made)
+	if world.traffic:
+		world.traffic.restoring = true
+	for i in range(made.size()):
+		var li := int(list[i].get("leader", -1))
+		if li >= 0 and li < made.size():
+			made[i].leader = made[li]
+		made[i].load_data(list[i])
+	if world.traffic:
+		world.traffic.restoring = false
+	# snack queues in the order people were standing in them
+	var queued: Array = []
+	for i in range(made.size()):
+		if made[i].state == Guest.S.BUY and made[i].queued_at:
+			queued.append([int(list[i].get("queue_i", 0)), made[i]])
+	queued.sort_custom(func(a, b): return a[0] < b[0])
+	for q in queued:
+		(q[1] as Guest).queued_at.join_queue(q[1])
+	if tour and is_instance_valid(tour.teacher):
+		tour.teacher.gname = String(tour.ev.get("teacher", tour.teacher.gname))
+	if phase == GameState.Phase.OPEN:
+		museum.set_sign_open(not closing)
+		museum.compute_pillars()
+		Audio.play_music("closing" if closing else "open")
+		Events.clock_changed.emit(clock)
+	Events.phase_changed.emit(phase)
+	if phase == GameState.Phase.REVIEWS and not summary.is_empty():
+		Events.open_panel.emit("reviews", summary)
+	elif phase == GameState.Phase.LEDGER and not ledger_data.is_empty():
+		Events.open_panel.emit("ledger", ledger_data)
 
 
 func next_day() -> void:

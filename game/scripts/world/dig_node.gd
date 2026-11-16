@@ -21,7 +21,7 @@ var _spark: Label3D
 var _fading := false
 
 
-func setup(p_kind: String, p_zone: String, p_hidden: bool, rng: RandomNumberGenerator) -> void:
+func setup(p_kind: String, p_zone: String, p_hidden: bool, rng: RandomNumberGenerator, p_size: float = -1.0) -> void:
 	kind = p_kind
 	zone = p_zone
 	hidden = p_hidden
@@ -29,6 +29,8 @@ func setup(p_kind: String, p_zone: String, p_hidden: bool, rng: RandomNumberGene
 	visual = Art.model(def["model"])
 	visual.rotation.y = rng.randf() * TAU
 	size_k = rng.randf_range(0.8, 1.25) if not is_big() else rng.randf_range(0.95, 1.15)
+	if p_size > 0.0:
+		size_k = p_size  # restored from a save
 	visual.scale = Vector3.ONE * size_k
 	add_child(visual)
 	var lr: Array = def.get("life", [180.0, 260.0])
