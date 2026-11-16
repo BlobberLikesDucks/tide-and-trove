@@ -583,13 +583,19 @@ def _fp_aim(fist, elbow_dir, head_dir):
 
 
 def _fp_keys(keys, t):
-    """keys: [(time 0..1, pose)] -> smooth interpolation (smoothstep per segment)."""
+    """keys: [(time 0..1, pose[, ease])] -> interpolation into each key using its
+    ease: smoothstep (default), "in" (accelerate) or "lin" (keep the speed, for a
+    swing that must not stop at every key)."""
     for i in range(len(keys) - 1):
-        t0, a = keys[i]
-        t1, b = keys[i + 1]
+        t0, a = keys[i][0], keys[i][1]
+        t1, b = keys[i + 1][0], keys[i + 1][1]
+        ease = keys[i + 1][2] if len(keys[i + 1]) > 2 else "smooth"
         if t0 <= t <= t1:
             k = (t - t0) / max(1e-6, t1 - t0)
-            k = k * k * (3 - 2 * k)
+            if ease == "in":
+                k = k * k
+            elif ease != "lin":
+                k = k * k * (3 - 2 * k)
             return _fp_lerp(a, b, k)
     return keys[-1][1]
 
@@ -635,13 +641,12 @@ def fp_mine(t):
     then forward-down into the rock just below the crosshair. One back-and-forth
     arc, slerped - never a spin."""
     keys = [(0.0, PICK_READY),
-            (0.22, _fp_aim((0.2, 0.36, 0.0), (0.2, -0.7, -0.7), (0.0, -0.4, 0.92))),          # lift
-            (0.46, _fp_aim((0.15, 0.26, 0.13), (0.15, -0.25, -0.95), (0.0, -0.95, 0.3))),     # wind-up: head back over the shoulder
-            (0.53, _fp_aim((0.15, 0.25, 0.14), (0.15, -0.25, -0.95), (0.0, -0.97, 0.22))),    # (brief pause at the top)
-            (0.59, _fp_aim((0.14, 0.36, 0.08), (0.15, -0.4, -0.9), (-0.02, 0.15, 1.0))),     # over the top: head straight up
-            (0.64, _fp_aim((0.12, 0.46, 0.02), (0.2, -0.6, -0.77), (-0.06, 1.0, 0.1))),      # coming down: head forward
-            (0.69, _fp_aim((0.1, 0.52, -0.07), (0.2, -0.7, -0.68), (-0.12, 0.75, -0.65))),   # strike: head down into the rock
-            (0.79, _fp_aim((0.11, 0.5, -0.04), (0.2, -0.7, -0.68), (-0.1, 0.85, -0.5))),     # recoil
+            (0.5, _fp_aim((0.15, 0.26, 0.13), (0.15, -0.25, -0.95), (0.0, -0.95, 0.3))),     # one smooth rise: head back over the shoulder
+            (0.56, _fp_aim((0.15, 0.25, 0.14), (0.15, -0.25, -0.95), (0.0, -0.97, 0.22))),    # (brief hang at the top)
+            (0.63, _fp_aim((0.14, 0.36, 0.08), (0.15, -0.4, -0.9), (-0.02, 0.15, 1.0)), "in"),     # swing: over the top...
+            (0.68, _fp_aim((0.12, 0.46, 0.02), (0.2, -0.6, -0.77), (-0.06, 1.0, 0.1)), "lin"),      # ...head coming forward...
+            (0.72, _fp_aim((0.1, 0.52, -0.07), (0.2, -0.7, -0.68), (-0.12, 0.75, -0.65)), "lin"),   # ...STRIKE into the rock
+            (0.8, _fp_aim((0.11, 0.5, -0.04), (0.2, -0.7, -0.68), (-0.1, 0.85, -0.5))),      # recoil
             (1.0, PICK_READY)]
     r = _fp_keys(keys, t)
     return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"], up=True)}
@@ -682,7 +687,7 @@ def fp_grab(t):
 
 FP_ANIMS = [  # name, fn, seconds, keys, loop
     ("Idle", fp_idle, 3.0, 12, True), ("HoldTool", fp_hold_tool, 3.0, 12, True), ("Dig", fp_dig, 0.8, 16, True),
-    ("HoldPick", fp_hold_pick, 3.0, 12, True), ("Mine", fp_mine, 1.15, 24, True), ("Detector", fp_detector, 1.8, 16, True),
+    ("HoldPick", fp_hold_pick, 3.0, 12, True), ("Mine", fp_mine, 1.1, 30, True), ("Detector", fp_detector, 1.8, 16, True),
     ("HoldItem", fp_hold_item, 3.0, 12, True), ("Shove", fp_shove, 0.32, 8, False), ("Throw", fp_throw, 0.45, 10, False),
     ("Grab", fp_grab, 0.35, 8, False),
 ]

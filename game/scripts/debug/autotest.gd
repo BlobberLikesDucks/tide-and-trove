@@ -448,6 +448,8 @@ func run() -> void:
 	check(SaveManager.load_slot(9), "loaded the mid-day save")
 	w.restore_snapshot(GameState.take_pending_world())
 	var exact_b: Dictionary = JSON.parse_string(JSON.stringify(w.snapshot()))
+	var money_after := GameState.money
+	var visitors_after: int = w.day_cycle.visitors_today
 	# same frame, no time passed: every visitor, staff member and vehicle must match field for field
 	var diffs: Array = []
 	for key in ["guests"]:
@@ -500,7 +502,7 @@ func run() -> void:
 	check(w.player.global_position.distance_to(Vector3(3.25, 0.0, -20.5)) < 0.3 and absf(w.player.cam_yaw - 1.23) < 0.01, "player restored to the exact spot")
 	check(w.day_cycle.guests.size() == int(snap_before["guests"]), "every visitor restored (%d/%d)" % [w.day_cycle.guests.size(), snap_before["guests"]])
 	check(names_after == names_before, "visitors keep their names (positions: exact check above)")
-	check(GameState.money == int(snap_before["money"]) and w.day_cycle.visitors_today == int(snap_before["visitors"]), "money and visitor count restored")
+	check(money_after == int(snap_before["money"]) and visitors_after == int(snap_before["visitors"]), "money and visitor count restored")
 	check(w.museum.mess.size() == int(snap_before["mess"]), "litter restored")
 	check(w.beach.save_nodes().size() == int(snap_before["nodes"]), "dig spots restored")
 	# --- benches: visitors sit ON the seat, facing out, and stand back up after

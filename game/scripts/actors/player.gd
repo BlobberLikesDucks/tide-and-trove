@@ -407,7 +407,9 @@ func _play_use() -> void:
 	var clip := _use_clip()
 	_play(clip, true)
 	if arm_anim and arm_anim.has_animation(clip):
-		_oneshot_t = minf(arm_anim.get_animation(clip).length, 0.7)
+		# the pickaxe always plays its WHOLE swing (cutting it short left it stuck up top)
+		var full := arm_anim.get_animation(clip).length
+		_oneshot_t = full if clip == "AN_FP_Mine" else minf(full, 0.7)
 
 
 func drop_held() -> void:

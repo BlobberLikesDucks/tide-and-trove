@@ -102,6 +102,22 @@ func run() -> void:
 		await shot(String(k[0]))
 	w.player.arm_anim.play()
 	w.player._oneshot_t = 0.0
+	# the REAL click path: one Use press must play the whole swing (up, then down)
+	await _wait(0.6)
+	var arm: Node3D = w.player.fp.find_child("ArmR", true, false)
+	w.player._play_use()
+	var t0 := Time.get_ticks_msec()
+	var last := -1.0
+	while Time.get_ticks_msec() - t0 < 1500:
+		await get_tree().process_frame
+		var el := (Time.get_ticks_msec() - t0) / 1000.0
+		if el - last >= 0.08:
+			last = el
+			print("[LOOK] %.2fs %-16s pos=%s" % [el, w.player.arm_anim.current_animation, arm.position.snapped(Vector3(0.01, 0.01, 0.01))])
+	await _wait(0.4)
+	w.player._play_use()
+	await _wait(0.78)
+	await shot("q_click_strike")
 	# the full radio log (V): long messages must be readable in full
 	for msg in ["A guest is waiting at the Amber Lemonade Stand - serve them before they give up and leave a bad review!",
 			"The restroom needs cleaning! Send a janitor or grab a mop yourself before the next visitors complain.",
