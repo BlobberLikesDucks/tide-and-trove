@@ -374,7 +374,7 @@ func update_objective() -> void:
 		if GameState.flags.get("won", false):
 			t = "Ammonite Bay is protected! Keep growing your museum."
 		elif act == 1:
-			t = "Buy the Ammonite Cliffs permit, then reach 1 star for the Sea Caves (%s Upgrade Tree)" % Settings.prompt("skill_tree")
+			t = "Reach %d star for the Ammonite Cliffs permit, then %d stars for the Sea Caves (%s Upgrade Tree)" % [int(DB.SKILLS["zone_cliffs"]["tier"]), int(DB.SKILLS["zone_caves"]["tier"]), Settings.prompt("skill_tree")]
 		elif act == 2:
 			t = "Find all 8 Cove Tyrant bones in the Sea Caves (%d/8 cleaned)" % GameState.owned_pieces("apex").size()
 		else:

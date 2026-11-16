@@ -129,12 +129,12 @@ var SPECIES := {
 		"size": "A single molar is as big as a shoebox and weighs about 2 kg.",
 		"fact": "Fishing trawlers still drag mammoth teeth up from the North Sea floor: during the Ice Age it was dry grassland. The ridged enamel plates ground tough grasses."},
 	"cave_bear": {"name": "Cave Bear Skull", "sci": "Ursus spelaeus", "era": "Cenozoic", "period": "Pleistocene (Ice Age)",
-		"diet": "Herbivore", "habitat": "Land", "rarity": "rare", "model": "mammal_skull", "color": Color("d6c4a0"), "shape": "skull", "case": "big", "matrix": "jacket", "zone": "shore",
+		"diet": "Herbivore", "habitat": "Land", "rarity": "rare", "model": "mammal_skull", "color": Color("d6c4a0"), "shape": "skull", "case": "medium", "matrix": "sandstone", "zone": "shore",
 		"size": "A skull about 45 cm long; the bear was bigger than a grizzly.",
 		"fact": "Despite its size, chemical clues in its teeth show the cave bear ate mostly plants. Thousands of skeletons were found in European caves where they hibernated."},
-	"mammoth_tusk": {"name": "Woolly Mammoth Tusk", "sci": "Mammuthus primigenius", "era": "Cenozoic", "period": "Pleistocene (Ice Age)",
-		"diet": "Herbivore", "habitat": "Land", "rarity": "epic", "model": "tusk", "color": Color("efe2c4"), "shape": "tusk", "case": "big", "matrix": "jacket", "zone": "shore",
-		"size": "Tusks up to 4 m long, curling in a spiral.",
+	"mammoth_tusk": {"name": "Woolly Mammoth Tusk Tip", "sci": "Mammuthus primigenius", "era": "Cenozoic", "period": "Pleistocene (Ice Age)",
+		"diet": "Herbivore", "habitat": "Land", "rarity": "epic", "model": "tusk", "color": Color("efe2c4"), "shape": "tusk", "case": "medium", "matrix": "tar", "zone": "shore",
+		"size": "This tip is about 60 cm long; a whole tusk grew up to 4 m, curling in a spiral.",
 		"fact": "Tusks are giant incisor teeth that grew all life long, laying down yearly growth rings like a tree. Scientists read those rings to learn where a mammoth travelled."},
 	# ---------------- Ammonite Cliffs (Mesozoic: Jurassic) ----------------------
 	"ammonite": {"name": "Ammonite", "sci": "Dactylioceras commune", "era": "Mesozoic", "period": "Early Jurassic (about 180 million years ago)",
@@ -190,7 +190,7 @@ var SPECIES := {
 		"size": "Plates up to 60 cm tall on a 9 m animal.",
 		"fact": "The plates were full of blood vessels and may have been used for display or to warm up and cool down. Stegosaurus had a brain about the size of a lime."},
 	"ichthyosaurus": {"name": "Ichthyosaurus", "sci": "Ichthyosaurus communis", "era": "Mesozoic", "period": "Early Jurassic (200 - 190 million years ago)",
-		"diet": "Piscivore", "habitat": "Open Ocean", "rarity": "rare", "model": "bone", "color": Color("efe3c4"), "shape": "skull", "case": "mega", "matrix": "jacket", "zone": "cliffs",
+		"diet": "Piscivore", "habitat": "Open Ocean", "rarity": "rare", "model": "bone", "color": Color("efe3c4"), "shape": "skull", "case": "mega", "matrix": "jacket", "zone": "caves",
 		"skeleton": "skeleton_ichthyosaur", "pieces": ["skull", "back", "ribs", "flippers", "tail"],
 		"size": "About 2 - 3 m long - like a dolphin.",
 		"fact": "Ichthyosaurs were dolphin-shaped marine reptiles that gave birth to live young at sea. Joseph and Mary Anning found the first skeleton recognised by science on the English coast in 1811 - 12."},
@@ -254,7 +254,7 @@ var SPECIES := {
 		"diet": "Carnivore", "habitat": "Open Ocean", "rarity": "epic", "model": "bone", "color": Color("ddd2bd"), "shape": "skull", "case": "mega", "matrix": "jacket", "zone": "caves",
 		"skeleton": "skeleton_apex", "pieces": ["skull", "jaw", "neck", "back", "ribs", "fore", "hind", "tail"], "fictional": true,
 		"size": "Estimated 15 m - longer than three cars nose to tail.",
-		"fact": "Unknown to science until you dug it up. This apex marine reptile exists only in the strata of Ammonite Bay. Its bite marks appear on ichthyosaur bones all along the cliffs. (In-game species - not a real animal.)"},
+		"fact": "Unknown to science until you dug it up. This apex marine reptile exists only in the strata of Ammonite Bay. Its bite marks appear on ichthyosaur bones all along the coast. (In-game species - not a real animal.)"},
 	# ---------------- Paleozoic Shelf -------------------------------------------
 	"trilobite": {"name": "Trilobite", "sci": "Calymene blumenbachii", "era": "Paleozoic", "period": "Silurian (about 430 million years ago)",
 		"diet": "Detritivore", "habitat": "Shallow Reef", "rarity": "common", "model": "trilobite", "color": Color("8a7f74"), "shape": "trilobite", "case": "small", "matrix": "slate", "zone": "reef",
@@ -336,10 +336,10 @@ var LIVING := {
 
 # ----------------------------------------------------------- zones & nodes --
 var ZONES := [
-	{"id": "shore", "name": "Driftwood Shore", "era": "Cenozoic", "skill": "", "x0": -25.0, "x1": 25.0, "cliff": "cliff_ceno"},
-	{"id": "cliffs", "name": "Ammonite Cliffs", "era": "Mesozoic", "skill": "zone_cliffs", "x0": 25.0, "x1": 65.0, "cliff": "cliff_meso"},
-	{"id": "caves", "name": "Sea Caves", "era": "Mesozoic", "skill": "zone_caves", "x0": 65.0, "x1": 105.0, "cliff": "cliff_meso"},
-	{"id": "reef", "name": "Paleozoic Shelf", "era": "Paleozoic", "skill": "zone_reef", "x0": -70.0, "x1": -25.0, "cliff": "cliff_paleo"},
+	{"id": "shore", "name": "Driftwood Shore", "era": "Cenozoic", "skill": "", "stars": 0, "x0": -25.0, "x1": 25.0, "cliff": "cliff_ceno"},
+	{"id": "cliffs", "name": "Ammonite Cliffs", "era": "Mesozoic", "skill": "zone_cliffs", "stars": 1, "x0": 25.0, "x1": 65.0, "cliff": "cliff_meso"},
+	{"id": "caves", "name": "Sea Caves", "era": "Mesozoic", "skill": "zone_caves", "stars": 2, "x0": 65.0, "x1": 105.0, "cliff": "cliff_meso"},
+	{"id": "reef", "name": "Paleozoic Shelf", "era": "Paleozoic", "skill": "zone_reef", "stars": 3, "x0": -70.0, "x1": -25.0, "cliff": "cliff_paleo"},
 ]
 const BEACH_Z0 := -10.0
 const BEACH_Z1 := 44.0
@@ -373,6 +373,16 @@ var ZONE_GEMS := {
 	"reef": [[16, "gem:silver"], [12, "gem:gold"], [10, "gem:sapphire"], [8, "gem:opal"], [8, "geode"]],
 }
 const RARITY_WEIGHT := {"common": 10.0, "uncommon": 5.0, "rare": 2.0, "epic": 0.7}
+## Star rating that unlocks each case size (its blueprint's tree tier). A shore
+## only gives fossils whose case is unlocked at that shore's own star rating.
+const CASE_STARS := {"small": 0, "medium": 0, "big": 1, "mega": 2}
+
+
+func zone_stars(zone: String) -> int:
+	for z in ZONES:
+		if z["id"] == zone:
+			return int(z.get("stars", 0))
+	return 0
 
 
 ## Fossil drop table for a zone + spot kind, built from the species list:
@@ -387,6 +397,8 @@ func fossil_table(zone: String, kind: String) -> Array:
 		if d["zone"] != zone:
 			continue
 		var c: String = d["case"]
+		if int(CASE_STARS[c]) > zone_stars(zone):
+			continue
 		var w: float = RARITY_WEIGHT[d["rarity"]]
 		var entry: String = ("piece:" if d.has("pieces") else "fossil:") + String(sp)
 		if big:
@@ -441,9 +453,9 @@ var SKILLS := {
 	"dig_4": {"name": "Strong Arms IV", "cost": 3, "cash": 250, "req": ["dig_3"], "tier": 3, "x": 1, "icon": "pickaxe", "desc": "Dig and mine another 12% faster."},
 	"dig_5": {"name": "Strong Arms V", "cost": 4, "cash": 450, "req": ["dig_4"], "tier": 4, "x": 1, "icon": "pickaxe", "desc": "Dig and mine another 12% faster."},
 	"dig_6": {"name": "Master Excavator", "cost": 5, "cash": 800, "req": ["dig_5"], "tier": 5, "x": 1, "icon": "pickaxe", "desc": "Dig and mine another 12% faster."},
-	"zone_cliffs": {"name": "Ammonite Cliffs Permit", "cost": 2, "cash": 0, "req": [], "tier": 0, "x": 2, "icon": "ammonite", "desc": "Open the cliffs east of the museum: ammonites, early dinosaurs and ichthyosaur bones."},
-	"zone_caves": {"name": "Sea Caves Permit", "cost": 3, "cash": 250, "req": ["zone_cliffs"], "tier": 1, "x": 2, "icon": "ammonite", "desc": "Open the coastal sea caves. T. rex, Triceratops... and something even bigger."},
-	"zone_reef": {"name": "Paleozoic Shelf Permit", "cost": 5, "cash": 600, "req": ["zone_caves"], "tier": 2, "x": 2, "icon": "ammonite", "desc": "Open the ancient slate shelf to the west: trilobites, armoured fish and Dimetrodon."},
+	"zone_cliffs": {"name": "Ammonite Cliffs Permit", "cost": 2, "cash": 0, "req": [], "tier": 1, "x": 2, "icon": "ammonite", "desc": "Open the cliffs east of the museum: ammonites, early dinosaurs and big fossils for the Big Case."},
+	"zone_caves": {"name": "Sea Caves Permit", "cost": 3, "cash": 250, "req": ["zone_cliffs"], "tier": 2, "x": 2, "icon": "ammonite", "desc": "Open the coastal sea caves. T. rex, Triceratops, ichthyosaurs: whole skeletons for the Mega Case."},
+	"zone_reef": {"name": "Paleozoic Shelf Permit", "cost": 5, "cash": 600, "req": ["zone_caves"], "tier": 3, "x": 2, "icon": "ammonite", "desc": "Open the ancient slate shelf to the west: trilobites, armoured fish and Dimetrodon."},
 	"speed_1": {"name": "Beach Legs I", "cost": 1, "cash": 0, "req": [], "tier": 0, "x": 3, "icon": "happy", "desc": "+12% walk and sprint speed."},
 	"speed_2": {"name": "Beach Legs II", "cost": 2, "cash": 0, "req": ["speed_1"], "tier": 1, "x": 3, "icon": "happy", "desc": "+12% walk and sprint speed."},
 	"speed_3": {"name": "Beach Legs III", "cost": 3, "cash": 120, "req": ["speed_2"], "tier": 3, "x": 3, "icon": "happy", "desc": "+12% walk and sprint speed."},

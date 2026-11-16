@@ -180,6 +180,10 @@ func refresh_hud() -> void:
 
 
 func _process(delta: float) -> void:
+	# Build Mode gets a clean screen: no status (top-left) or rating (top-right) card
+	var building := World.instance != null and World.instance.build != null and World.instance.build.active
+	$HUD/StatusCard.visible = not building
+	$HUD/RatingCard.visible = not building
 	_hud_t -= delta
 	if _hud_t <= 0.0:
 		_hud_t = 0.2

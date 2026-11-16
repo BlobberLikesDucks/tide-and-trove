@@ -215,6 +215,25 @@ func run() -> void:
 	GameState.half_stars = 6
 	check(not GameState.buy_skill("zone_reef"), "tree: can't skip a node's parents")
 	check(not GameState.buy_skill("staff_slot_4"), "tree: 5-star tier locked at 3 stars")
+	# --- each shore matches its star rating (no finds for cases you can't build yet)
+	var zones_ok := true
+	var reachable := {}
+	for z in DB.ZONES:
+		var zs := int(z["stars"])
+		if z["skill"] != "" and int(DB.SKILLS[z["skill"]]["tier"]) != zs:
+			zones_ok = false
+		for kind in DB.NODE_TYPES.keys():
+			for e in DB.fossil_table(z["id"], kind):
+				var sp := String(e[1]).split(":")[1]
+				reachable[sp] = true
+				if int(DB.CASE_STARS[DB.SPECIES[sp]["case"]]) > zs:
+					zones_ok = false
+	check(zones_ok, "every shore only drops fossils for cases unlocked at its star rating")
+	check(reachable.size() == DB.SPECIES.size(), "every species can still be found somewhere (%d/%d)" % [reachable.size(), DB.SPECIES.size()])
+	for c in DB.CASE_STARS.keys():
+		if c != "small":
+			zones_ok = zones_ok and int(DB.SKILLS["bp_case_" + c]["tier"]) == int(DB.CASE_STARS[c])
+	check(zones_ok, "case star ratings match their blueprints")
 	var cash0 := GameState.money
 	check(not GameState.build_unlocked("display_case_mega"), "Mega case is locked until its blueprint is bought")
 	for id in ["ticket_1", "zone_cliffs", "lic_food", "bp_case_medium", "bp_case_big", "bp_case_mega", "equip_1", "backpack_1", "hotbar_1", "dig_1", "dig_2"]:
@@ -526,6 +545,8 @@ func _round2() -> void:
 	w.build.enter()
 	check(w.build.active, "Build Mode works while the museum is open")
 	check(not w.player.fp.visible, "Build Mode hides the first-person arms")
+	await _wait(0.1)
+	check(not w.ui.get_node("HUD/StatusCard").visible and not w.ui.get_node("HUD/RatingCard").visible, "Build Mode hides the top-left and top-right HUD cards")
 	w.build._select("bench")
 	w.build.cell = spot
 	w.build.rot = 0
@@ -535,6 +556,8 @@ func _round2() -> void:
 	check(GameState.money == mbefore - 25 + int(floor(25 * GameState.refund_rate())), "selling refunds only %d%%" % int(GameState.refund_rate() * 100))
 	w.build.exit()
 	check(w.player.fp.visible, "arms back after Build Mode")
+	await _wait(0.1)
+	check(w.ui.get_node("HUD/StatusCard").visible and w.ui.get_node("HUD/RatingCard").visible, "HUD cards back after Build Mode")
 	# --- player gets hit by a car
 	for v in w.traffic.vehicles:
 		if is_instance_valid(v):
