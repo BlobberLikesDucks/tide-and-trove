@@ -10,6 +10,11 @@ var w: World
 var shots := false
 var out_dir := "user://shots"
 var failures: Array = []
+## What visitors got up to during the first open day (sampled).
+var _seen := {}
+var _inside_t := {}
+var _litter := 0
+var _left_inside: Array = []
 
 
 func _ready() -> void:
@@ -59,6 +64,17 @@ func _skip_dialog() -> void:
 func _on_panel(n: String, data: Variant) -> void:
 	match n:
 		"reviews":
+			if not _inside_t.is_empty() and not _seen.has("checked"):
+				_seen["checked"] = true
+				var tot := 0.0
+				for v in _inside_t.values():
+					tot += float(v)
+				var avg := tot / _inside_t.size()
+				print("[T] visitor states seen: ", _seen.keys(), " avg time inside %.1fs, litter dropped %d" % [avg, _litter])
+				check(_seen.has(Guest.S.VIEW) and _seen.has(Guest.S.BROWSE), "visitors look at exhibits AND stroll around")
+				check(_seen.has(Guest.S.BUY) or w.museum.all_objects().filter(func(o): return o.def.get("cat", "") == "Concessions").is_empty(), "visitors go to the snack stands")
+				check(_litter > 0, "visitors drop litter (%d)" % _litter)
+				check(avg > 25.0, "visitors stay inside a good while (avg %.1fs)" % avg)
 			print("[T] REVIEWS count=%d avg=%.2f delta=%.1f quality=%.1f half_stars=%d up+%d" % [data["count"], data["avg"], data["delta"], data["new_q"], data["new_h"], data["up"]])
 			for r in data["shown"].slice(0, 5):
 				print("[T]   %d* %s - %s (%s)" % [r["stars"], r["text"], r["name"], r["kind"]])
@@ -75,6 +91,22 @@ func _on_panel(n: String, data: Variant) -> void:
 		"trivia", "choice", "exhibit", "podium", "discipline":
 			print("[T] panel opened: ", n)
 			_close_then(Callable())
+
+
+func _sample_guests() -> void:
+	var had := {}
+	while GameState.phase == GameState.Phase.OPEN:
+		await _wait(0.25)
+		for g in w.day_cycle.guests:
+			if not is_instance_valid(g):
+				continue
+			_seen[g.state] = true
+			var id: int = g.get_instance_id()
+			if g.inside:
+				_inside_t[id] = float(_inside_t.get(id, 0.0)) + 0.25 * Engine.time_scale
+			if had.get(id, false) and not g.has_litter:
+				_litter += 1
+			had[id] = g.has_litter
 
 
 func _close_then(cb: Callable) -> void:
@@ -372,6 +404,7 @@ func run() -> void:
 	Settings.values["day_len"] = 2.0
 	Engine.time_scale = 6.0
 	w.day_cycle.open_museum()
+	_sample_guests()
 	check(GameState.phase == GameState.Phase.OPEN, "museum opened")
 	await _wait(5.0)
 	print("[T] clock=%.2f guests=%d money=%d" % [w.day_cycle.clock, w.day_cycle.guests.size(), GameState.money])

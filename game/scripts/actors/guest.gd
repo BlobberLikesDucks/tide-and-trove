@@ -6,7 +6,7 @@ extends Node3D
 ## reacts to incidents, writes a review, then waits at the bus stop and rides
 ## the bus away. School classes follow the player on a guided tour.
 
-enum S { ARRIVE, DECIDE, WALK, VIEW, BUY, RESTROOM, TANTRUM, CLIMB, STEAL, SABOTAGE, LEAVE, KNOCKED, WAIT_BUS, BOARD, FOLLOW }
+enum S { ARRIVE, DECIDE, WALK, VIEW, BUY, RESTROOM, TANTRUM, CLIMB, STEAL, SABOTAGE, LEAVE, KNOCKED, WAIT_BUS, BOARD, FOLLOW, BROWSE }
 
 var kind := "tourist"
 var gname := ""
@@ -21,6 +21,8 @@ var mood := 60.0
 var notes := {}
 var pen := {}
 var visits_left := 3
+## Seconds this visitor still wants to spend inside (set at the door).
+var stay_t := 90.0
 var speed := 2.3
 var bladder := 0.0
 var hunger := 0.0
@@ -143,14 +145,14 @@ func setup(p_kind: String, m: Museum, c: DayCycle, spawn: Vector3) -> void:
 	var to_door: Array[Vector3] = [Vector3(spawn.x * 0.3, 0, -27.0), museum.door_outside(), museum.cell_center(museum.entrance())]
 	path = to_door
 	state = S.ARRIVE
-	has_litter = kind != "spy" and rng.randf() < (0.45 if kind in ["kid", "student"] else 0.3)
+	has_litter = kind != "spy" and rng.randf() < (0.6 if kind in ["kid", "student"] else 0.42)
 	if has_litter:
-		trash_timer = rng.randf_range(12.0, 50.0)
+		trash_timer = rng.randf_range(15.0, 70.0)
 
 # ------------------------------------------------------------- save/load ---
 const SAVE_VARS := ["gname", "mood", "notes", "pen", "visits_left", "bladder", "hunger", "inside", "assaulted", "kicked_out",
 	"resolved", "personality", "stolen", "thief_active", "will_tantrum", "will_climb", "tantrum_done", "weight", "greeted",
-	"hit_count", "no_review", "trash_timer", "harsh", "has_litter", "speed"]
+	"hit_count", "no_review", "trash_timer", "harsh", "has_litter", "speed", "stay_t"]
 
 
 ## Everything needed to put this visitor back exactly where they were and
@@ -253,7 +255,7 @@ func load_data(d: Dictionary) -> void:
 			Ragdoll.load_state(_rd, d.get("ragdoll", {}))
 			inter.enabled = false
 		S.WALK:
-			if target == null:
+			if target == null and _arrive_cb != str(S.BROWSE):
 				state = S.DECIDE
 	visual.visible = bool(d.get("visible", true))
 	if state != S.KNOCKED:
@@ -289,6 +291,7 @@ func _process(delta: float) -> void:
 				_perceive()
 		return
 	if inside and state != S.LEAVE:
+		stay_t -= delta
 		_perceive_t -= delta
 		if _perceive_t <= 0.0:
 			_perceive_t = 1.0
@@ -316,6 +319,11 @@ func _process(delta: float) -> void:
 				visual.set_bubble("...", UIKit.CORAL)
 			elif timer <= 0.0:
 				_quit_queue(true)
+		S.BROWSE:
+			timer -= delta
+			if timer <= 0.0:
+				state = S.DECIDE
+				visual.anim = "idle"
 		S.VIEW, S.RESTROOM, S.STEAL, S.SABOTAGE:
 			timer -= delta
 			if target and is_instance_valid(target):
@@ -387,9 +395,14 @@ func _enter() -> void:
 		GameState.earn(price, "Tickets")
 		GameState.stats["visitors"] = int(GameState.stats["visitors"]) + 1
 		cycle.visitors_today += 1
-	if randf() < 0.22:
+	if randf() < 0.1:
 		museum.add_mess("sand", global_position)
 	var p := GameState.pillars
+	# how long they stay: about a third to two thirds of the day, longer when there's more to do
+	var day_s := maxf(1.0, float(Settings.get_v("day_len"))) * 60.0
+	stay_t = randf_range(0.33, 0.66) * day_s * (1.0 + minf(0.4, float(p["fun_points"]) * 0.01))
+	if kind == "critic" or kind == "nerd":
+		stay_t *= 1.25
 	mood = 58.0 + (float(p["fun"]) - 50.0) * 0.18 + (float(p["decor"]) - 40.0) * 0.1 + (float(p["clean"]) - 70.0) * 0.12
 	if float(p["fun_points"]) < 10.0:
 		_note("boring", -1.5)
@@ -474,14 +487,20 @@ func _decide() -> void:
 			return
 		_leave()
 		return
-	if visits_left <= 0:
+	# leave whenever they've had enough: time's up, they're miserable, or they've
+	# seen what they came for (then they linger a little longer first)
+	if stay_t <= 0.0 or mood < 12.0:
 		_leave()
+		return
+	if visits_left <= 0:
+		stay_t = minf(stay_t, randf_range(8.0, 25.0))
+	# sometimes just stroll around and take the place in
+	if randf() < 0.25:
+		_wander()
 		return
 	var pick := _pick_target()
 	if pick == null or not _go_to(pick):
-		visits_left -= 1
-		if visits_left <= 0:
-			_leave()
+		_wander()
 
 
 func _pick_target() -> PlacedObject:
@@ -490,7 +509,7 @@ func _pick_target() -> PlacedObject:
 	for o in museum.all_objects():
 		var w := 0.0
 		if o.is_case():
-			w = (3.0 + (1.0 if o.case_size() != "small" else 0.0)) if not o.fossil_entry().is_empty() else 0.0
+			w = (3.0 + (1.0 if o.case_size() != "small" else 0.0)) if not o.fossil_entry().is_empty() else 0.5
 			if kind == "nerd" or kind == "critic":
 				w *= 2.0
 		elif o.is_mega():
@@ -563,8 +582,33 @@ func _go_to(o: PlacedObject, after: int = S.VIEW) -> bool:
 	return true
 
 
+## Walk to a random open spot in the museum and have a look around there.
+func _wander() -> void:
+	var c := museum.random_free_cell()
+	var p := museum.path_points(cur_cell(), c)
+	target = null
+	if p.is_empty():
+		_browse()
+		return
+	path = p
+	_arrive_cb = str(S.BROWSE)
+	state = S.WALK
+
+
+func _browse() -> void:
+	state = S.BROWSE
+	timer = randf_range(2.0, 5.5)
+	visual.anim = "idle"
+	visual.rotation.y += randf_range(-1.6, 1.6)
+	if randf() < 0.3:
+		visual.play_once("wave" if randf() < 0.3 else "cheer")
+
+
 func _arrived() -> void:
 	var after := int(_arrive_cb)
+	if after == S.BROWSE:
+		_browse()
+		return
 	if target == null or not is_instance_valid(target):
 		state = S.DECIDE
 		return
