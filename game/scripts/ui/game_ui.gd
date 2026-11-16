@@ -57,6 +57,7 @@ func _ready() -> void:
 	dialog_panel.gui_input.connect(_on_dialog_input)
 	Events.toast.connect(_toast)
 	Events.walkie.connect(_walkie)
+	($HUD/Walkie/Screen/Channel as Label).text = "CH 7  -  MUSEUM STAFF      %s full log" % Settings.prompt("radio")
 	Events.prompt.connect(_on_prompt)
 	Events.objective_changed.connect(_on_objective)
 	Events.open_panel.connect(open)
@@ -260,6 +261,10 @@ func _toast(text: String, color: Color) -> void:
 	tw.tween_callback(p.queue_free)
 
 
+## Every radio message today (newest first), for the full radio log (V).
+var radio_log: Array = []
+
+
 func _walkie(text: String, kind: String, pos: Vector3) -> void:
 	walkie_panel.visible = true
 	var col: Color = WALKIE_COLORS.get(kind, Color("8dffb0"))
@@ -270,6 +275,9 @@ func _walkie(text: String, kind: String, pos: Vector3) -> void:
 	if world() and world().day_cycle:
 		var c: float = world().day_cycle.clock
 		clock = "%02d:%02d " % [int(c), int(fmod(c, 1.0) * 60.0)]
+	radio_log.push_front({"text": clock + text + dist, "color": col})
+	if radio_log.size() > 60:
+		radio_log.resize(60)
 	var l := UIKit.label(clock + text + dist, 14, col, true)
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -345,7 +353,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if world() and (world().build.active or (world().office and world().office.seated) or world().player.ragdolled):
 		return
-	var map := {"pause": "pause", "skill_tree": "skills", "field_guide": "guide", "inventory": "inventory", "management": "management"}
+	var map := {"pause": "pause", "skill_tree": "skills", "field_guide": "guide", "inventory": "inventory", "management": "management", "radio": "radio"}
 	for a in map.keys():
 		if event.is_action_pressed(a):
 			open(map[a], false if a == "field_guide" else null)
@@ -357,7 +365,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _toggle_action(n: String) -> String:
-	var map := {"skills": "skill_tree", "guide": "field_guide", "inventory": "inventory", "management": "management"}
+	var map := {"skills": "skill_tree", "guide": "field_guide", "inventory": "inventory", "management": "management", "radio": "radio"}
 	return map.get(n, "pause")
 
 

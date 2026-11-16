@@ -94,7 +94,7 @@ func run() -> void:
 	await shot("m_fp_hold_pick")
 	w.player._oneshot_t = 30.0
 	var mine_len := w.player.arm_anim.get_animation("AN_FP_Mine").length
-	for k in [["n0_fp_mine_raise", 0.2], ["n_fp_mine_windup", 0.5], ["n2_fp_mine_swing", 0.6], ["o_fp_mine_strike", 0.68]]:
+	for k in [["n0_mine_a", 0.0], ["n0_mine_b", 0.22], ["n0_mine_c", 0.36], ["n0_mine_d", 0.5], ["n0_mine_e", 0.59], ["n0_mine_f", 0.64], ["n0_mine_g", 0.69], ["n0_mine_h", 0.79]]:
 		w.player.arm_anim.play("AN_FP_Mine")
 		w.player.arm_anim.seek(mine_len * float(k[1]), true)
 		w.player.arm_anim.pause()
@@ -102,6 +102,16 @@ func run() -> void:
 		await shot(String(k[0]))
 	w.player.arm_anim.play()
 	w.player._oneshot_t = 0.0
+	# the full radio log (V): long messages must be readable in full
+	for msg in ["A guest is waiting at the Amber Lemonade Stand - serve them before they give up and leave a bad review!",
+			"The restroom needs cleaning! Send a janitor or grab a mop yourself before the next visitors complain.",
+			"The shoplifter got away with merchandise from the gift shop! Hire security to catch them next time.",
+			"A Museum Critic just arrived (Pemberton Quill). Keep it spotless!"]:
+		Events.radio(msg, "info", Vector3.ZERO)
+	w.ui.open("radio")
+	await _wait(0.5)
+	await shot("p_radio_log")
+	w.ui.close_panel()
 	GameState.select_slot(2)
 	w.player._refresh_held()
 	await _wait(0.8)

@@ -70,7 +70,44 @@ func build(n: String, data: Variant) -> Control:
 			return SettingsPanel.create(ui.close_panel)
 		"gameover":
 			return gameover(String(data))
+		"radio":
+			return radio_log()
 	return null
+
+
+## The whole radio log, every message in full (the walkie on the HUD only fits
+## the last five, trimmed to one line).
+func radio_log() -> Control:
+	var m := _modal("Radio Log", 860, 0)
+	var body: VBoxContainer = m["body"]
+	var log: Array = ui.radio_log
+	var hint := UIKit.label("Every message from your staff radio today, newest first. Press %s or Esc to close." % Settings.prompt("radio"), 15, UIKit.MUTED)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size = Vector2(800, 0)
+	body.add_child(hint)
+	if log.is_empty():
+		body.add_child(UIKit.label("No radio messages yet.", 17, UIKit.MUTED))
+		return m["root"]
+	var s := UIKit.scroll(420)
+	(s["scroll"] as Control).custom_minimum_size = Vector2(800, 420)
+	body.add_child(s["scroll"])
+	var list: VBoxContainer = s["body"]
+	var screen := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color("1d3a2c")
+	sb.set_corner_radius_all(10)
+	sb.set_content_margin_all(14)
+	screen.add_theme_stylebox_override("panel", sb)
+	screen.custom_minimum_size = Vector2(780, 0)
+	list.add_child(screen)
+	var lines := UIKit.vbox(8)
+	screen.add_child(lines)
+	for e in log:
+		var l := UIKit.label(String(e["text"]), 17, e["color"], true)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size = Vector2(750, 0)
+		lines.add_child(l)
+	return m["root"]
 
 
 func _modal(title: String, w: float = 780.0, h: float = 0.0, closable: bool = true) -> Dictionary:
@@ -348,7 +385,7 @@ const GUIDE_TOPICS := [
 	["Office & J-Mail", "The 3-star expansion adds an office computer to the Prep Lab. Sit down and read your [b]J-Mail[/b] every morning: schools book class trips (they pay well - give the class a guided tour and only tell them true facts!), collectors make offers, newspapers ask questions...\n\n[b]Beware of scams:[/b] if an email promises free money or asks you to send yours, DELETE it. Falling for one costs a huge share of your cash."],
 	["Stars & the Upgrade Tree", "Open the Upgrade Tree with [b]T[/b]. It is much bigger than the window: drag to move around, scroll to zoom, or jump to a branch with the buttons on top. Nodes sit on [b]star tiers[/b] (0 to 5 stars); a tier stays locked until your museum has that many stars. Buy a node's parents first."],
 	["Staff", "You start with [b]no staff slots[/b]. Each star tier from 2 stars up has a [b]Staff Slot +1[/b] node, and every job must be unlocked first.\n\nStaff have morale. Praise them, give raises, and never shove them, or they quit."],
-	["Controls", "[b]Move[/b] WASD - [b]Sprint[/b] Shift - [b]Jump[/b] Space\n[b]Interact / pick up[/b] F - [b]Use held item[/b] Left mouse (HOLD to dig)\n[b]Inventory / backpack[/b] E (or Tab) - [b]Hotbar[/b] 1-9 / wheel\n[b]Drop[/b] Q - [b]Trash held item[/b] X\n[b]Build Mode[/b] B - [b]Upgrade Tree[/b] T - [b]Guide[/b] G - [b]Management[/b] M - [b]Pause[/b] Esc\n\nEverything can be remapped in Settings, and gamepads work too."],
+	["Controls", "[b]Move[/b] WASD - [b]Sprint[/b] Shift - [b]Jump[/b] Space\n[b]Interact / pick up[/b] F - [b]Use held item[/b] Left mouse (HOLD to dig)\n[b]Inventory / backpack[/b] E (or Tab) - [b]Hotbar[/b] 1-9 / wheel\n[b]Drop[/b] Q - [b]Trash held item[/b] X\n[b]Build Mode[/b] B - [b]Upgrade Tree[/b] T - [b]Guide[/b] G - [b]Management[/b] M - [b]Radio log[/b] V - [b]Pause[/b] Esc\n\nEverything can be remapped in Settings, and gamepads work too."],
 ]
 
 

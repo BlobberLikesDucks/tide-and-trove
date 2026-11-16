@@ -23,7 +23,7 @@ import math
 
 import bmesh
 import bpy
-from mathutils import Euler, Vector
+from mathutils import Euler, Matrix, Quaternion, Vector
 
 from tt.geo import *  # noqa
 from tt.geo import _merge, _xf  # noqa
@@ -517,7 +517,7 @@ pipe.REGISTRY["character"]["anim"] = True
 # (arm-local: +Y = knuckles forward, +Z = thumb up, a held shaft runs along -Z).
 # Clips are object-transform keys baked here (animation skill) and merged per
 # NLA track name on export, so Godot gets AN_FP_* clips that move both arms.
-FP_TOOL_GAP = {"tool": 0.40, "pick": 0.30}
+FP_TOOL_GAP = {"tool": 0.40, "pick": 0.15}
 
 
 def _fp_arm(sx):
@@ -552,16 +552,34 @@ def _fp_rest(side, t=0.0, low=0.0):
     return (sx * 0.21, 0.44, -0.2 - low + b), (-4, -sx * 8, sx * 12)
 
 
-def _fp_two_hand(rl, rr, gap):
-    """Left fist on the shaft that hangs from the right grip (arm-local -Z)."""
+def _fp_two_hand(rl, rr, gap, up=False):
+    """Left fist on the shaft that hangs from the right grip (arm-local -Z), or
+    that rises from it (arm-local +Z, the pickaxe: head on the thumb side)."""
     e = Euler([math.radians(a) for a in rr])
-    d = e.to_matrix() @ Vector((0, 0, -1))
+    d = e.to_matrix() @ Vector((0, 0, 1 if up else -1))
     ll = Vector(rl) + d * gap
     return (tuple(ll), rr)
 
 
 def _fp_lerp(a, b, k):
-    return (tuple(a[0][i] + (b[0][i] - a[0][i]) * k for i in range(3)), tuple(a[1][i] + (b[1][i] - a[1][i]) * k for i in range(3)))
+    """Position lerp + rotation SLERP (shortest way between the two poses)."""
+    qa = Euler([math.radians(x) for x in a[1]]).to_quaternion()
+    qb = Euler([math.radians(x) for x in b[1]]).to_quaternion()
+    e = qa.slerp(qb, k).to_euler("XYZ")
+    return (tuple(a[0][i] + (b[0][i] - a[0][i]) * k for i in range(3)), tuple(math.degrees(x) for x in e))
+
+
+def _fp_aim(fist, elbow_dir, head_dir):
+    """A hand pose from where the fist is, which way the forearm runs (fist ->
+    elbow) and which way the held shaft points (fist -> tool head, thumb side).
+    The fist's frame: +Y knuckles forward (forearm along -Y), +Z thumb/shaft."""
+    f = Vector(elbow_dir).normalized()
+    h = Vector(head_dir)
+    h = (h - f * h.dot(f)).normalized()       # keep the shaft square to the forearm (hammer grip)
+    y = -f
+    x = y.cross(h).normalized()
+    m = Matrix((x, y, h)).transposed()        # columns = local X, Y, Z in camera space
+    return (tuple(fist), tuple(math.degrees(v) for v in m.to_euler("XYZ")))
 
 
 def _fp_keys(keys, t):
@@ -596,34 +614,37 @@ def fp_dig(t):
     return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["tool"])}
 
 
-## Pickaxe: carried UPRIGHT on the shoulder side (shaft rises forward from the
-## fists, head up top, spike pointing forward-down) - never like a shovel.
-PICK_READY = ((0.22, 0.38, -0.16), (122, 0, 16))
+## Pickaxe: a hammer grip on the BACK end of the handle (both fists close
+## together at the butt), the shaft rising from the thumb side to the head.
+## (Godot turns the held pick 180 degrees so its head is on the thumb side.)
+## Every pose keeps the forearm pointing back toward you - arm rotation X stays
+## between -80 and +65 degrees, so the arms never flip over.
+PICK_READY = _fp_aim((0.22, 0.4, -0.2), (0.25, -0.85, -0.45), (0.0, -0.15, 1.0))
 
 
 def fp_hold_pick(t):
     b = math.sin(t * math.tau) * 0.006
-    r = ((PICK_READY[0][0], PICK_READY[0][1], PICK_READY[0][2] + b), (PICK_READY[1][0] + math.sin(t * math.tau) * 2.0, 0, 16))
-    return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"])}
+    r = ((PICK_READY[0][0], PICK_READY[0][1], PICK_READY[0][2] + b), PICK_READY[1])
+    return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"], up=True)}
 
 
 def fp_mine(t):
-    """Full two-handed overhead swing (like a real miner): lift the pick straight
-    up, keep going until the head hangs BEHIND your back with both fists up by
-    your head, then whip it over the top and down so the spike bites the rock in
-    front of you, a little recoil, and back to ready.
-    Arm rotation X sweeps one continuous arc: 122 (ready, head up in front) ->
-    180 (head straight up) -> 290 (head behind the back) -> back over the top ->
-    55 (shaft forward-down, spike into the ground)."""
+    """Miner's overhead swing (like the reference poses), hands on the BACK end of
+    the handle. Forearms always come up from the bottom of the screen; the
+    forearm rolls (not just tilts) so the head goes up, back over the shoulder,
+    then forward-down into the rock just below the crosshair. One back-and-forth
+    arc, slerped - never a spin."""
     keys = [(0.0, PICK_READY),
-            (0.2, ((0.17, 0.3, -0.02), (178, 0, 12))),    # raise: head straight up overhead
-            (0.44, ((0.1, 0.22, 0.075), (285, 0, 4))),     # wind-up: hands by the head, pick hanging behind the back
-            (0.52, ((0.1, 0.21, 0.085), (290, 0, 4))),    # (tiny pause at the top of the swing)
-            (0.68, ((0.17, 0.52, -0.02), (60, 0, 15))),       # strike: fast arc over the top, spike bites just below the crosshair
-            (0.78, ((0.18, 0.5, 0.01), (68, 0, 15))),   # recoil off the stone
+            (0.22, _fp_aim((0.2, 0.36, 0.0), (0.2, -0.7, -0.7), (0.0, -0.4, 0.92))),          # lift
+            (0.46, _fp_aim((0.15, 0.26, 0.13), (0.15, -0.25, -0.95), (0.0, -0.95, 0.3))),     # wind-up: head back over the shoulder
+            (0.53, _fp_aim((0.15, 0.25, 0.14), (0.15, -0.25, -0.95), (0.0, -0.97, 0.22))),    # (brief pause at the top)
+            (0.59, _fp_aim((0.14, 0.36, 0.08), (0.15, -0.4, -0.9), (-0.02, 0.15, 1.0))),     # over the top: head straight up
+            (0.64, _fp_aim((0.12, 0.46, 0.02), (0.2, -0.6, -0.77), (-0.06, 1.0, 0.1))),      # coming down: head forward
+            (0.69, _fp_aim((0.1, 0.52, -0.07), (0.2, -0.7, -0.68), (-0.12, 0.75, -0.65))),   # strike: head down into the rock
+            (0.79, _fp_aim((0.11, 0.5, -0.04), (0.2, -0.7, -0.68), (-0.1, 0.85, -0.5))),     # recoil
             (1.0, PICK_READY)]
     r = _fp_keys(keys, t)
-    return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"])}
+    return {"R": r, "L": _fp_two_hand(r[0], r[1], FP_TOOL_GAP["pick"], up=True)}
 
 
 def fp_detector(t):
@@ -668,9 +689,17 @@ FP_ANIMS = [  # name, fn, seconds, keys, loop
 
 
 def _fp_set(ob, pose):
+    """Pose an arm. Rotations are keyed as quaternions kept on the same
+    hemisphere as the previous key, so playback always takes the short way
+    (an euler wrap from 290 to 60 degrees used to spin the arm all the way round)."""
     ob.location = Vector(pose[0])
-    ob.rotation_mode = "XYZ"
-    ob.rotation_euler = Euler([math.radians(a) for a in pose[1]])
+    q = Euler([math.radians(a) for a in pose[1]]).to_quaternion()
+    prev = ob.get("_q")
+    if prev is not None and q.dot(Quaternion(prev)) < 0.0:
+        q.negate()
+    ob["_q"] = list(q)
+    ob.rotation_mode = "QUATERNION"
+    ob.rotation_quaternion = q
 
 
 @asset("fp_arms", tier="prop", res=512, group="characters")
@@ -693,7 +722,7 @@ def fp_arms():
             for side, ob in arms.items():
                 _fp_set(ob, pose[side])
                 ob.keyframe_insert("location", frame=1 + t * frames)
-                ob.keyframe_insert("rotation_euler", frame=1 + t * frames)
+                ob.keyframe_insert("rotation_quaternion", frame=1 + t * frames)
         for side, ob in arms.items():
             ad = ob.animation_data
             act = ad.action

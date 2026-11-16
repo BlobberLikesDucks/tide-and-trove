@@ -41,6 +41,7 @@ var ACTIONS := {
 	"inventory": {"label": "Inventory / Backpack", "kb": {"type": "key", "code": KEY_E}, "kb2": {"type": "key", "code": KEY_TAB}, "pad": {"type": "button", "code": JOY_BUTTON_DPAD_DOWN}},
 	"management": {"label": "Management", "kb": {"type": "key", "code": KEY_M}, "pad": {"type": "button", "code": JOY_BUTTON_DPAD_RIGHT}},
 	"pause": {"label": "Pause", "kb": {"type": "key", "code": KEY_ESCAPE}, "pad": {"type": "button", "code": JOY_BUTTON_START}},
+	"radio": {"label": "Open Radio Log", "kb": {"type": "key", "code": KEY_V}},
 	"rotate": {"label": "Rotate (Build)", "kb": {"type": "key", "code": KEY_R}, "pad": {"type": "button", "code": JOY_BUTTON_RIGHT_SHOULDER}},
 	"build_place": {"label": "Place (Build)", "kb": {"type": "mouse", "code": MOUSE_BUTTON_LEFT}, "pad": {"type": "button", "code": JOY_BUTTON_A}},
 	"build_remove": {"label": "Remove (Build)", "kb": {"type": "mouse", "code": MOUSE_BUTTON_RIGHT}, "pad": {"type": "button", "code": JOY_BUTTON_X}},
@@ -48,7 +49,7 @@ var ACTIONS := {
 	"build_next": {"label": "Next Item (Build)", "kb": {"type": "key", "code": KEY_C}, "pad": {"type": "axis", "axis": JOY_AXIS_TRIGGER_RIGHT, "dir": 1.0}},
 }
 const REMAPPABLE := ["move_forward", "move_back", "move_left", "move_right", "sprint", "jump", "interact", "use_item", "drop_item", "trash_item", "hotbar_next", "hotbar_prev",
-	"build_mode", "skill_tree", "field_guide", "inventory", "management", "pause", "rotate", "build_place", "build_remove", "build_prev", "build_next",
+	"build_mode", "skill_tree", "field_guide", "inventory", "management", "radio", "pause", "rotate", "build_place", "build_remove", "build_prev", "build_next",
 	"look_left", "look_right", "look_up", "look_down"]
 
 var values := {

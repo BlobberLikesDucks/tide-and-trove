@@ -44,6 +44,7 @@ Download the latest build from the [Releases page](https://github.com/BlobberLik
 | Upgrade Tree (drag to move, scroll to zoom) | T | D-pad Up |
 | Guide + Field Guide | G | D-pad Left |
 | Management (staff, finances) | M | D-pad Right |
+| Radio log (every staff radio message in full) | V | - |
 | Office computer (J-Mail): stand up | Esc or F | Start |
 | Pause (save any time) | Esc | Start |
 

@@ -260,6 +260,8 @@ func _refresh_held() -> void:
 			Art.strip_collision(held_node)
 			held_node.scale = Vector3.ONE * sc
 			held_node.position = pos
+			if mid == "pickaxe":
+				held_node.rotation = Vector3(0, 0, PI)  # grip the butt end, head on the thumb side, spike leading the swing
 			grip_r.add_child(held_node)
 			for mi in Art.meshes(held_node):
 				mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
