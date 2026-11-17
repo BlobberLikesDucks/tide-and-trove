@@ -94,6 +94,11 @@ func run() -> void:
 	await shot("m_fp_hold_pick")
 	w.player._oneshot_t = 30.0
 	var mine_len := w.player.arm_anim.get_animation("AN_FP_Mine").length
+	var an := w.player.arm_anim.get_animation("AN_FP_Mine")
+	var tracks: Array = []
+	for i in range(an.get_track_count()):
+		tracks.append(str(an.track_get_path(i)))
+	print("[LOOK] Mine tracks: ", tracks, " len=", mine_len, " pick parent=", w.player.held_node.get_parent().name if w.player.held_node else "none")
 	for k in [["n0_mine_a", 0.0], ["n0_mine_b", 0.22], ["n0_mine_c", 0.36], ["n0_mine_d", 0.5], ["n0_mine_e", 0.59], ["n0_mine_f", 0.64], ["n0_mine_g", 0.69], ["n0_mine_h", 0.79]]:
 		w.player.arm_anim.play("AN_FP_Mine")
 		w.player.arm_anim.seek(mine_len * float(k[1]), true)

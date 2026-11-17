@@ -39,6 +39,8 @@ const LOOP_CLIPS := ["AN_FP_Idle", "AN_FP_HoldTool", "AN_FP_Dig", "AN_FP_HoldPic
 var visual: CharVisual
 var arm_anim: AnimationPlayer
 var grip_r: Node3D
+## The pickaxe's own animated mount in the first-person arms (see fp_arms in Blender).
+var pick_mount: Node3D
 var held_node: Node3D
 var _held_key := ""
 var focus: Interactable
@@ -74,6 +76,7 @@ func _ready() -> void:
 	aim.target_position = Vector3(0, 0, -REACH)
 	Art.prepare(arms)
 	grip_r = arms.find_child("GripR", true, false)
+	pick_mount = arms.find_child("PickMount", true, false)
 	arm_anim = arms.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if arm_anim:
 		for n in LOOP_CLIPS:
@@ -260,9 +263,13 @@ func _refresh_held() -> void:
 			Art.strip_collision(held_node)
 			held_node.scale = Vector3.ONE * sc
 			held_node.position = pos
-			if mid == "pickaxe":
-				held_node.rotation = Vector3(0, 0, PI)  # grip the butt end, head on the thumb side, spike leading the swing
-			grip_r.add_child(held_node)
+			# the pickaxe rides its own animated mount (its swing is keyframed in
+			# Blender, and the hands are baked onto its handle); everything else
+			# sits in the right fist
+			if mid == "pickaxe" and pick_mount:
+				pick_mount.add_child(held_node)
+			else:
+				grip_r.add_child(held_node)
 			for mi in Art.meshes(held_node):
 				mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 				mi.layers = 2

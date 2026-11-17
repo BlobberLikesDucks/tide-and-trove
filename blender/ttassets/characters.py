@@ -707,18 +707,137 @@ def _fp_set(ob, pose):
     ob.rotation_quaternion = q
 
 
+## ---- Pickaxe clips: AUTHORED as Blender keyframes on "PickMount" -----------
+## PickMount IS the pick (the game parents the pickaxe model to it): origin = the
+## butt end, where the right fist grips; local -Z runs up the handle to the
+## head; local -Y is the spike. Its euler X = 180 - phi, where phi is the
+## handle's angle from straight up (negative = tilted back over the shoulder,
+## positive = forward/down), so the swing can only turn the way the keys go.
+## Interpolation is Blender's: Bezier, with an ease-in into the strike (the
+## pick accelerates over the top) and an ease-out bounce off the rock.
+## Both hands are then baked onto the handle at every frame.
+##   key: (time 0..1, phi deg, grip position, yaw deg, interpolation)
+PICK_CLIPS = {
+    "HoldPick": (3.0, [
+        (0.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER"),
+        (0.5, 13, (0.22, 0.428, -0.214), 12, "BEZIER"),
+        (1.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER")]),
+    "Mine": (1.1, [
+        (0.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER"),       # ready: pick upright in both hands
+        (0.46, -118, (0.18, 0.36, 0.42), 4, "BEZIER"),      # smooth rise: arms up out of the top of the view, pick hanging down your back
+        (0.55, -124, (0.18, 0.35, 0.44), 4, "EASE_IN"),     # hang at the top, then accelerate...
+        (0.72, 118, (0.1, 0.52, -0.1), 14, "EASE_OUT"),     # ...over the top and down: STRIKE
+        (0.8, 108, (0.11, 0.5, -0.07), 14, "BEZIER"),       # bounce off the rock
+        (1.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER")]),     # back to ready
+}
+## Where each forearm runs to (an elbow just below/behind the camera), so the
+## arms always come up from the bottom of the screen.
+FP_ELBOW = {"R": Vector((0.26, -0.05, -0.48)), "L": Vector((-0.16, -0.05, -0.5))}
+def _fp_elbow(side, fist):
+    """Low hands: the forearm runs back-down to an elbow below the camera.
+    Hands raised for the wind-up: the elbows rise above the fists, so the
+    whole arm (and the pick hanging down your back) leaves through the top of
+    the view instead of sweeping past your face."""
+    lift = max(0.0, min(1.0, (fist.z + 0.05) / 0.45))
+    sx = 1.0 if side == "R" else -1.0
+    raised = fist + Vector((sx * 0.1, -0.35, 0.3))  # arms raised: the elbows end up above the fists, out of view
+    return FP_ELBOW[side].lerp(raised, lift)
+
+
+PICK_GAP = 0.14  # the left fist sits just above the right one, both at the back of the handle
+_PICK_FLIP = Matrix.Rotation(math.pi, 3, "X")  # fist frame <-> pick frame (head on the thumb side, spike leading)
+
+
+def _fcurves(ob):
+    act = ob.animation_data.action
+    try:
+        return list(act.fcurves)
+    except AttributeError:  # Blender 5 layered actions
+        from bpy_extras import anim_utils
+        return list(anim_utils.action_get_channelbag_for_slot(act, ob.animation_data.action_slot).fcurves)
+
+
+def _push_nla(ob, name, side=""):
+    ad = ob.animation_data
+    act = ad.action
+    act.name = "AN_FP_%s%s" % (name, ("_" + side) if side else "")
+    act.use_fake_user = True
+    ad.action = None
+    tr = ad.nla_tracks.new()
+    tr.name = "AN_FP_" + name
+    tr.strips.new(act.name, 1, act)
+    tr.mute = True
+
+
+def _mount_from_hand(mount, pose):
+    """Outside the pick clips the mount just follows the right fist."""
+    m = Euler([math.radians(a) for a in pose[1]]).to_matrix() @ _PICK_FLIP
+    mount.location = Vector(pose[0])
+    mount.rotation_mode = "XYZ"
+    mount.rotation_euler = m.to_euler("XYZ", mount.rotation_euler)
+
+
+def _pick_clip(name, secs, keys, arms, mount):
+    frames = max(2, int(round(secs * anims.FPS)))
+    for ob in list(arms.values()) + [mount]:
+        ob.animation_data_create().action = None
+        ob.pop("_q", None)
+    mount.rotation_mode = "XYZ"
+    eases = []
+    for t, phi, g, yaw, ease in keys:
+        f = 1 + t * frames
+        mount.location = Vector(g)
+        mount.rotation_euler = Euler((math.radians(180.0 - phi), 0.0, math.radians(yaw)))
+        mount.keyframe_insert("location", frame=f)
+        mount.keyframe_insert("rotation_euler", frame=f)
+        eases.append((f, ease))
+    for fc in _fcurves(mount):
+        for kp in fc.keyframe_points:
+            ease = min(eases, key=lambda e: abs(e[0] - kp.co.x))[1]
+            if ease in ("EASE_IN", "EASE_OUT"):
+                kp.interpolation = "QUAD"
+                kp.easing = ease
+            else:
+                kp.interpolation = "BEZIER"
+                kp.handle_left_type = "AUTO_CLAMPED"
+                kp.handle_right_type = "AUTO_CLAMPED"
+        fc.update()
+    # bake the hands onto the handle, frame by frame
+    scn = bpy.context.scene
+    for f in range(1, frames + 2):
+        scn.frame_set(f)
+        m = mount.matrix_basis
+        g = m.translation.copy()
+        head = (m.to_3x3() @ Vector((0, 0, -1))).normalized()
+        gl = g + head * PICK_GAP
+        poses = {"R": _fp_aim(g, _fp_elbow("R", g) - g, head), "L": _fp_aim(gl, _fp_elbow("L", gl) - gl, head)}
+        for side, ob in arms.items():
+            _fp_set(ob, poses[side])
+            ob.keyframe_insert("location", frame=f)
+            ob.keyframe_insert("rotation_quaternion", frame=f)
+    _push_nla(mount, name)
+    for side, ob in arms.items():
+        _push_nla(ob, name, side)
+
+
 @asset("fp_arms", tier="prop", res=512, group="characters")
 def fp_arms():
     """First-person view-model arms: two rigid sleeved forearms with modelled fists
-    (GripR/GripL at the fist centre) and baked AN_FP_* clips."""
+    (GripR/GripL at the fist centre), the animated PickMount, and AN_FP_* clips."""
+    bpy.context.scene.render.fps = anims.FPS  # clips are laid out at 30 fps (the default 24 played them 25% slow)
+    bpy.context.scene.render.fps_base = 1.0
     root = empty("FPArms")
     arms = {}
     for side, sx in (("R", 1), ("L", -1)):
         ob = finish(_fp_arm(sx), "Arm" + side, root, smooth=60, subsurf=1)
         empty("Grip" + side, ob)
         arms[side] = ob
+    mount = empty("PickMount", root)
     for name, fn, secs, keys, loop in FP_ANIMS:
-        for ob in arms.values():
+        if name in PICK_CLIPS:
+            _pick_clip(name, PICK_CLIPS[name][0], PICK_CLIPS[name][1], arms, mount)
+            continue
+        for ob in list(arms.values()) + [mount]:
             ob.animation_data_create().action = None
         frames = max(2, int(round(secs * anims.FPS)))
         for i in range(keys + 1):
@@ -728,19 +847,16 @@ def fp_arms():
                 _fp_set(ob, pose[side])
                 ob.keyframe_insert("location", frame=1 + t * frames)
                 ob.keyframe_insert("rotation_quaternion", frame=1 + t * frames)
+            _mount_from_hand(mount, pose["R"])
+            mount.keyframe_insert("location", frame=1 + t * frames)
+            mount.keyframe_insert("rotation_euler", frame=1 + t * frames)
+        _push_nla(mount, name)
         for side, ob in arms.items():
-            ad = ob.animation_data
-            act = ad.action
-            act.name = "AN_FP_%s_%s" % (name, side)
-            act.use_fake_user = True
-            ad.action = None
-            tr = ad.nla_tracks.new()
-            tr.name = "AN_FP_" + name
-            tr.strips.new(act.name, 1, act)
-            tr.mute = True
+            _push_nla(ob, name, side)
     rest = fp_idle(0.0)
     for side, ob in arms.items():
         _fp_set(ob, rest[side])
+    _mount_from_hand(mount, rest["R"])
     return root
 
 
