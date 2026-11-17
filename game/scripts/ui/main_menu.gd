@@ -21,7 +21,7 @@ func _ready() -> void:
 	_build_ui()
 	Audio.play_music("menu")
 	var args := OS.get_cmdline_user_args()
-	if args.has("--autotest") or args.has("--shots") or args.has("--look"):
+	if args.has("--autotest") or args.has("--shots") or args.has("--look") or args.has("--crowd"):
 		call_deferred("_start_new", 9)
 	elif args.has("--menushot"):
 		_menushot(args)

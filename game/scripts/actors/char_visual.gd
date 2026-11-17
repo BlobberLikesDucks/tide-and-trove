@@ -8,7 +8,7 @@ extends Node3D
 
 const MODEL_ID := "character"
 const ACCESSORIES := ["Hat_Safari", "Hat_Cap", "Hat_Fedora", "Hat_Top", "Sunglasses", "Glasses", "Hair_Long", "Hair_Bun", "Beard",
-	"Backpack", "Clipboard", "Vest", "Tie", "Coat", "PhotoCamera", "Lanyard"]
+	"Backpack", "Clipboard", "Vest", "Tie", "Coat", "PhotoCamera", "Lanyard", "Balaclava"]
 const HATS := ["Hat_Safari", "Hat_Cap", "Hat_Fedora", "Hat_Top"]
 const LOOPS := ["idle", "walk", "run", "dig", "sweep", "tantrum", "sit", "sleep", "wave", "cheer", "climb", "inspect"]
 const SKIN := [Color("e8b48e"), Color("e0ac83"), Color("c68a5e"), Color("9a6440"), Color("6b4329"), Color("ebbd98")]  # warm light tones (very pale ones read as grey under the toon light)
@@ -63,12 +63,18 @@ func setup(look: Dictionary) -> void:
 			var hn := model.find_child(n, true, false)
 			if hn is Node3D:
 				(hn as Node3D).visible = false
+	var masked := acc.has("Balaclava")  # a ski mask covers ALL hair (and beards)
+	if masked:
+		for n in ["Hair_Long", "Hair_Bun", "Beard"]:
+			var hn := model.find_child(n, true, false)
+			if hn is Node3D:
+				(hn as Node3D).visible = false
 	var hair := model.find_child("SM_Char_Hair", true, false)
 	if hair is Node3D:
-		(hair as Node3D).visible = not hatted and not acc.has("Hair_Long")
+		(hair as Node3D).visible = not hatted and not masked and not acc.has("Hair_Long")
 	var sides := model.find_child("Hair_Sides", true, false)
 	if sides is Node3D:
-		(sides as Node3D).visible = hatted
+		(sides as Node3D).visible = hatted and not masked
 	for k in ["Skin", "Shirt", "Pants", "Shoe", "Hair", "Hat", "Accent", "Pack", "Coat"]:
 		if look.has(k):
 			Art.tint(model, k, look[k], float(look.get("glow", 0.0)) if k == "Shirt" else 0.0)

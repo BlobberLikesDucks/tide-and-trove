@@ -86,6 +86,8 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.has("--autotest") or args.has("--shots"):
 		add_child(Autotest.new())
+	elif args.has("--crowd"):
+		add_child(CrowdTest.new())
 	elif args.has("--look"):
 		add_child(LookShots.new())
 

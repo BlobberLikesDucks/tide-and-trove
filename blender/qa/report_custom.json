@@ -1267,7 +1267,7 @@
  {
   "id": "character",
   "tier": "character",
-  "tris": 13027,
+  "tris": 14631,
   "budget": 60000,
   "materials": [
    "Accent",
@@ -1282,11 +1282,11 @@
    "Shoe",
    "Skin"
   ],
-  "objects": 20,
+  "objects": 21,
   "collision": 0,
   "issues": [],
   "verdict": "SHIP",
-  "seconds": 10.3
+  "seconds": 11.5
  },
  {
   "id": "fp_arms",

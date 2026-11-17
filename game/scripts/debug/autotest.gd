@@ -440,6 +440,15 @@ func run() -> void:
 		sitter.global_position = sitter._bus_spot
 		sitter._arrive_at_stop()
 		await _wait(0.3)
+	# (cars keep dropping visitors off during that wait: take the "before" numbers now)
+	snap_before = {"clock": w.day_cycle.clock, "guests": w.day_cycle.guests.size(), "money": GameState.money,
+		"visitors": w.day_cycle.visitors_today, "mess": w.museum.mess.size(), "nodes": w.beach.save_nodes().size(), "day": GameState.day}
+	names_before.clear()
+	where_before.clear()
+	for g in w.day_cycle.guests:
+		names_before.append(g.gname)
+		where_before.append([g.gname, g.global_position])
+	names_before.sort()
 	var hips_a := Vector3.ZERO
 	if knocked and knocked._rd.has("bodies"):
 		hips_a = (knocked._rd["bodies"]["Hips"] as RigidBody3D).global_position
@@ -459,6 +468,9 @@ func run() -> void:
 			for f in ["kind", "gname", "state", "timer", "pos", "yaw", "path", "target", "anim", "mood", "inside", "queue_i", "bubble", "visible"]:
 				if str(la[i].get(f)) != str(lb[i].get(f)):
 					diffs.append("%s.%s: %s -> %s" % [la[i].get("gname"), f, str(la[i].get(f)), str(lb[i].get(f))])
+					if f == "queue_i":
+						var gg: Guest = w.day_cycle.guests[i]
+						print("[T]   DEBUG queue: saved state=%s queued_at=%s target=%s | now state=%s queued_at=%s q=%s" % [la[i].get("state"), la[i].get("queued_at"), la[i].get("target"), gg.state, gg.queued_at, gg.queued_at.queue if gg.queued_at else "-"])
 	for i in range(mini(exact_a["staff"].size(), exact_b["staff"].size())):
 		for f in ["pos", "state", "timer", "path", "job", "anim"]:
 			if str(exact_a["staff"][i].get(f)) != str(exact_b["staff"][i].get(f)):

@@ -430,6 +430,21 @@ def build_accessories(rig, body):
         cyl(p, C_ACC, 0.052, 0.022, loc=(0, 0.07, 1.825), rot=(30, 0, 0), seg=14)
     acc["Hair_Bun"] = ("Head", hair_bun)
 
+    def balaclava(p):
+        """Knitted ski mask (shoplifters): a shell over the whole head and neck
+        with one wide eye slit; ribbed rims around the slit and the neck."""
+        t = bmesh.new()
+        bmesh.ops.create_icosphere(t, subdivisions=4, radius=0.176)
+        slit = [v for v in t.verts if v.co.y < -0.06 and -0.012 < v.co.z * 1.08 < 0.05 and abs(v.co.x) < 0.118]
+        bmesh.ops.delete(t, geom=slit, context="VERTS")
+        _xf(t, loc=HEAD_C + Vector((0, -0.004, 0.006)), scale=(1.0, 1.1, 1.08))
+        _merge(p, t, C_HAT)
+        cyl(p, C_HAT, 0.08, 0.16, loc=(0, 0.01, 1.53), seg=18)            # neck tube
+        lathe(p, C_HAT, [(0.0, 0.0), (0.086, 0.0), (0.09, 0.03), (0.086, 0.06), (0.0, 0.06)], seg=18, loc=(0, 0.01, 1.45))  # ribbed hem
+        for z in (1.68, 1.737):                                            # thick rims above/below the eye slit
+            rbox(p, C_HAT, (0.24, 0.03, 0.016), loc=(0, -0.176, z), r=0.007)
+    acc["Balaclava"] = ("Head", balaclava)
+
     def beard(p):
         sph(p, C_HAIR, 0.118, loc=(0, -0.07, 1.6), scale=(1.12, 0.85, 0.85), u=18, v=12)
         tube(p, C_HAIR, [(-0.05, -0.16, 1.645), (0, -0.168, 1.65), (0.05, -0.16, 1.645)], 0.017, seg=6)

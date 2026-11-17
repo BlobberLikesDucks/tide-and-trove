@@ -111,9 +111,12 @@ func setup(p_kind: String, m: Museum, c: DayCycle, spawn: Vector3) -> void:
 			weight = 3.0
 			speed = 1.9
 		"shoplifter":
-			look["acc"] = ["Hat_Cap", "Sunglasses"] if rng.randf() < 0.5 else ["Hat_Cap"]
-			look["Shirt"] = Color("5a5f6a")
-			look["Hat"] = Color("2a2a30")
+			# unmistakable: black ski mask and black clothes head to toe
+			look["acc"] = ["Balaclava"]
+			look["Shirt"] = Color("16161a")
+			look["Pants"] = Color("16161a")
+			look["Shoe"] = Color("101012")
+			look["Hat"] = Color("1c1c20")
 			visits_left = 2
 		"spy":
 			gname = "Suspicious Person"
@@ -267,8 +270,10 @@ func load_data(d: Dictionary) -> void:
 		var an := String(d.get("anim", "idle"))
 		visual.anim = an
 	var bb: Array = d.get("bubble", [])
-	if bb.size() == 3 and bool(bb[2]) and String(bb[0]) != "":
-		visual.set_bubble(String(bb[0]), Color.html(String(bb[1])))
+	if bb.size() == 3 and visual.bubble:
+		visual.bubble.text = String(bb[0])
+		visual.bubble.modulate = Color.html(String(bb[1]))
+		visual.bubble.visible = bool(bb[2])
 	else:
 		visual.set_bubble("")
 
@@ -459,11 +464,15 @@ func _decide() -> void:
 			bladder = 0.0
 		elif _go_to(rr[randi() % rr.size()], S.RESTROOM):
 			return
-	if hunger > 75.0 and kind != "spy":
+	if hunger > 65.0 and kind != "spy":
 		var stands: Array = []
+		var machines: Array = museum.objects_of("vending_machine")
 		for o in museum.all_objects():
 			if o.def.get("cat", "") == "Concessions":
 				stands.append(o)
+		if not machines.is_empty() and (stands.is_empty() or randf() < 0.45):
+			if _go_to(machines[randi() % machines.size()], S.VIEW):  # buys a snack from the machine
+				return
 		if not stands.is_empty() and _go_to(stands[randi() % stands.size()], S.BUY):
 			return
 		hunger = 30.0
@@ -499,8 +508,13 @@ func _decide() -> void:
 		return
 	if visits_left <= 0:
 		stay_t = minf(stay_t, randf_range(8.0, 25.0))
-	# sometimes just stroll around and take the place in
-	if randf() < 0.25:
+	# sometimes just stroll around and take the place in (more often when
+	# there is little to look at, so a small museum doesn't get one big huddle)
+	var things := 0
+	for o in museum.all_objects():
+		if o.view_value() > 0.0:
+			things += 1
+	if randf() < 0.25 + 0.4 * (1.0 - minf(1.0, things / 5.0)):
 		_wander()
 		return
 	var pick := _pick_target()
@@ -556,7 +570,8 @@ func _pick_target() -> PlacedObject:
 				w = 0.35
 		if visited.has(o.get_instance_id()):
 			w *= 0.25
-		if w > 0.0:
+		if w > 0.0:  # nobody likes a huddle: busy exhibits are less tempting
+			w /= 1.0 + 1.2 * _viewers(o)
 			opts.append([o, w])
 			total += w
 	if opts.is_empty():
@@ -573,6 +588,10 @@ func _go_to(o: PlacedObject, after: int = S.VIEW) -> bool:
 	if o == null or not is_instance_valid(o):
 		return false
 	var sc := museum.stand_cell(o, cur_cell())
+	for k in range(3):  # stand_cell is a bit random: take the least crowded spot next to it
+		var alt := museum.stand_cell(o, cur_cell())
+		if alt.x >= 0 and _crowd(alt) < _crowd(sc):
+			sc = alt
 	if sc.x < 0:
 		visited[o.get_instance_id()] = true
 		return false
@@ -588,8 +607,39 @@ func _go_to(o: PlacedObject, after: int = S.VIEW) -> bool:
 
 
 ## Walk to a random open spot in the museum and have a look around there.
+## How many other visitors are looking at / heading to this object.
+func _viewers(o: PlacedObject) -> int:
+	var n := 0
+	for g in cycle.guests:
+		if g != self and is_instance_valid(g) and g.target == o and (g.state == S.VIEW or g.state == S.WALK or g.state == S.BUY):
+			n += 1
+	return n
+
+
+## Visitors within ~1 cell of a cell (for spreading out).
+func _crowd(c: Vector2i) -> int:
+	var n := 0
+	for g in cycle.guests:
+		if g != self and is_instance_valid(g) and g.inside:
+			var d: Vector2i = g.cur_cell() - c
+			if absi(d.x) <= 1 and absi(d.y) <= 1:
+				n += 1
+	return n
+
+
 func _wander() -> void:
+	# best of a few random spots: away from other people and from the doorway
 	var c := museum.random_free_cell()
+	var best := -1e9
+	for k in range(5):
+		var cand := museum.random_free_cell()
+		var dd: Vector2i = cand - museum.entrance()
+		var score := -2.0 * _crowd(cand) + minf(3.0, Vector2(dd).length()) * 0.6 + randf() * 0.5
+		if cand == cur_cell():
+			score -= 2.0
+		if score > best:
+			best = score
+			c = cand
 	var p := museum.path_points(cur_cell(), c)
 	target = null
 	if p.is_empty():
@@ -1158,6 +1208,9 @@ func knockback(v: Vector3, by_player: bool) -> void:
 		return
 	if state == S.CLIMB and _climb_obj and is_instance_valid(_climb_obj):
 		_climb_obj.climber = null
+	if is_instance_valid(queued_at):  # knocked flat = out of the snack queue
+		queued_at.leave_queue(self)
+	queued_at = null
 	_stand_up()
 	if state == S.RESTROOM:
 		visual.visible = true
