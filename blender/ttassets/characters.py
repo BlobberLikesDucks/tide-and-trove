@@ -722,13 +722,12 @@ PICK_CLIPS = {
         (0.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER"),
         (0.5, 13, (0.22, 0.428, -0.214), 12, "BEZIER"),
         (1.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER")]),
-    "Mine": (1.1, [
-        (0.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER"),       # ready: pick upright in both hands
-        (0.46, -118, (0.18, 0.36, 0.42), 4, "BEZIER"),      # smooth rise: arms up out of the top of the view, pick hanging down your back
-        (0.55, -124, (0.18, 0.35, 0.44), 4, "EASE_IN"),     # hang at the top, then accelerate...
-        (0.72, 118, (0.1, 0.52, -0.1), 14, "EASE_OUT"),     # ...over the top and down: STRIKE
-        (0.8, 108, (0.11, 0.5, -0.07), 14, "BEZIER"),       # bounce off the rock
-        (1.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER")]),     # back to ready
+    "Mine": (1.0, [
+        (0.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER"),     # ready: pick upright in both hands
+        (0.42, -55, (0.26, 0.42, 0.02), 8, "BEZIER"),     # raise: up to the right, head tilting back over the shoulder (stays in view)
+        (0.5, -58, (0.26, 0.42, 0.03), 8, "EASE_IN"),     # brief hold, then accelerate...
+        (0.7, 105, (0.12, 0.5, -0.3), 14, "BEZIER"),      # ...down into the STRIKE (a hard stop on impact)
+        (1.0, 10, (0.22, 0.42, -0.22), 12, "BEZIER")]),   # smooth return to ready (no bounce)
 }
 ## Where each forearm runs to (an elbow just below/behind the camera), so the
 ## arms always come up from the bottom of the screen.
@@ -738,10 +737,38 @@ def _fp_elbow(side, fist):
     Hands raised for the wind-up: the elbows rise above the fists, so the
     whole arm (and the pick hanging down your back) leaves through the top of
     the view instead of sweeping past your face."""
-    lift = max(0.0, min(1.0, (fist.z + 0.05) / 0.45))
+    lift = max(0.0, min(1.0, (fist.z - 0.2) / 0.25))  # only for hands raised well above the view
     sx = 1.0 if side == "R" else -1.0
     raised = fist + Vector((sx * 0.1, -0.35, 0.3))  # arms raised: the elbows end up above the fists, out of view
     return FP_ELBOW[side].lerp(raised, lift)
+
+
+def _fp_forearm_angle(phi):
+    """Forearm direction (fist -> elbow) in the swing plane, as an angle like
+    phi (0 = up, -90 = back, -180 = down): back-down at ready, straight down
+    with the pick raised, back and a little up at the strike (arms reaching
+    down to the rock). Piecewise-linear in phi, so it is continuous."""
+    if phi <= 10.0:
+        return -120.0 + (phi - 10.0) * (55.0 / 68.0)
+    return -120.0 + (min(phi, 105.0) - 10.0) / 95.0 * 40.0
+
+
+def _fp_hand(fist, phi, yaw, side):
+    """A fist pose whose sideways axis is locked to the swing plane (in a straight
+    overhead swing the palms keep facing sideways and only the wrist bends), so the
+    hand can never roll over - the old thumb-from-handle aim flipped the hand in a
+    single frame whenever the handle lined up with the forearm (the "twitch")."""
+    th = math.radians(_fp_forearm_angle(phi))
+    rz = Matrix.Rotation(yaw, 3, "Z")
+    x = rz @ Vector((1.0, 0.0, 0.0))
+    sx = 0.12 if side == "R" else -0.18           # elbows a little out to the side
+    f = (rz @ Vector((sx, math.sin(th), math.cos(th)))).normalized()
+    f = (f - x * f.dot(x) * 0.0).normalized()
+    y = -f
+    xx = (x - y * x.dot(y)).normalized()
+    z = xx.cross(y).normalized()
+    m = Matrix((xx, y, z)).transposed()
+    return (tuple(fist), tuple(math.degrees(v) for v in m.to_euler("XYZ")))
 
 
 PICK_GAP = 0.14  # the left fist sits just above the right one, both at the back of the handle
@@ -804,17 +831,39 @@ def _pick_clip(name, secs, keys, arms, mount):
         fc.update()
     # bake the hands onto the handle, frame by frame
     scn = bpy.context.scene
+    qa = {"near": 9.0, "step": 0.0}
+    last = {}
     for f in range(1, frames + 2):
         scn.frame_set(f)
         m = mount.matrix_basis
         g = m.translation.copy()
         head = (m.to_3x3() @ Vector((0, 0, -1))).normalized()
         gl = g + head * PICK_GAP
-        poses = {"R": _fp_aim(g, _fp_elbow("R", g) - g, head), "L": _fp_aim(gl, _fp_elbow("L", gl) - gl, head)}
+        phi = 180.0 - math.degrees(mount.rotation_euler.x)
+        yaw = mount.rotation_euler.z
+        poses = {"R": _fp_hand(g, phi, yaw, "R"), "L": _fp_hand(gl, phi, yaw, "L")}
         for side, ob in arms.items():
             _fp_set(ob, poses[side])
             ob.keyframe_insert("location", frame=f)
             ob.keyframe_insert("rotation_quaternion", frame=f)
+            # QA: the forearm (fist -> 0.85 m toward the elbow, ~0.07 m thick)
+            # must never come near the camera, and must never jump between frames
+            q = Quaternion(ob["_q"])
+            p0 = Vector(poses[side][0])
+            fdir = q.to_matrix() @ Vector((0, -1, 0))
+            tt = max(0.0, min(0.85, -p0.dot(fdir)))
+            qa["near"] = min(qa["near"], (p0 + fdir * tt).length)
+            if side in last:
+                stp = math.degrees(q.rotation_difference(last[side]).angle)
+                qa["step"] = max(qa["step"], stp)
+                if stp > 20.0:
+                    print("[FPQA]   frame %d %s turns %.0f deg (phi %.0f)" % (f, side, stp, 180.0 - math.degrees(mount.rotation_euler.x)))
+            last[side] = q
+    print("[FPQA] %s: closest forearm to camera %.2f m, biggest arm turn per frame %.1f deg" % (name, qa["near"], qa["step"]))
+    if qa["step"] > 70.0:  # a fast strike turns ~50 deg/frame; a hand flipping over is far more
+        raise RuntimeError("FP %s: an arm jumps %.0f degrees in one frame" % (name, qa["step"]))
+    if qa["near"] < 0.2:
+        raise RuntimeError("FP %s: a forearm passes through the camera (%.2f m)" % (name, qa["near"]))
     _push_nla(mount, name)
     for side, ob in arms.items():
         _push_nla(ob, name, side)
