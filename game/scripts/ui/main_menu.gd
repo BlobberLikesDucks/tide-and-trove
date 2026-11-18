@@ -43,6 +43,10 @@ func _menushot(args: PackedStringArray) -> void:
 	await get_tree().create_timer(0.5).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(out + "/00c_settings.png")
+	_credits()
+	await get_tree().create_timer(0.5).timeout
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(out + "/00d_credits.png")
 	get_tree().quit()
 
 
@@ -75,6 +79,8 @@ func _build_ui() -> void:
 	(menu_box.get_node("NewGame") as Button).pressed.connect(UIKit._btn_pressed.bind(_slots.bind(true)))
 	(menu_box.get_node("LoadGame") as Button).pressed.connect(UIKit._btn_pressed.bind(_slots.bind(false)))
 	(menu_box.get_node("Settings") as Button).pressed.connect(UIKit._btn_pressed.bind(_settings))
+	(menu_box.get_node("Credits") as Button).pressed.connect(UIKit._btn_pressed.bind(_credits))
+	(menu_box.get_node("Credits") as Button).icon = UIKit.icon_tex("star", 26)
 	(menu_box.get_node("Quit") as Button).pressed.connect(UIKit._btn_pressed.bind(_quit))
 	UIKit.focus_first(menu_box)
 
@@ -88,6 +94,34 @@ func _continue() -> void:
 func _settings() -> void:
 	var sp := SettingsPanel.create(_close_overlay)
 	_show_overlay(sp)
+
+
+## Credits, read from res://data/credits.tres (edit the names there).
+func _credits() -> void:
+	var cr := Credits.load_default()
+	var m := UIKit.modal("Credits", 620, 0, _close_overlay)
+	var body: VBoxContainer = m["body"]
+	var head := UIKit.label(cr.title, 26, UIKit.TEXT, true)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.add_child(head)
+	for e in cr.entries:
+		if e == null:
+			continue
+		var card := UIKit.card()
+		card.custom_minimum_size = Vector2(560, 0)
+		body.add_child(card)
+		var v := UIKit.vbox(2)
+		card.add_child(v)
+		var role := UIKit.label(e.role, 15, UIKit.MUTED)
+		role.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(role)
+		var nm := UIKit.label(e.name, 24, UIKit.TEXT, true)
+		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(nm)
+	var thanks := UIKit.label("Made for the Dar Al Fikr AI Competition 2026", 14, UIKit.MUTED)
+	thanks.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.add_child(thanks)
+	_show_overlay(m["root"])
 
 
 func _show_overlay(c: Control) -> void:

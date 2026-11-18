@@ -164,6 +164,12 @@ theme_override_constants/icon_max_width = 26
 text = "Settings"
 icon = ExtResource("23_hl5e0")
 
+[node name="Credits" type="Button" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=771205133]
+custom_minimum_size = Vector2(400, 46)
+layout_mode = 2
+theme_override_constants/icon_max_width = 26
+text = "Credits"
+
 [node name="Quit" type="Button" parent="MenuUI/Root/Column/MenuPanel/Buttons" unique_id=384114570]
 custom_minimum_size = Vector2(400, 46)
 layout_mode = 2
