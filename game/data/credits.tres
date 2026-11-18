@@ -1,17 +1,23 @@
-[gd_resource type="Resource" script_class="Credits" format=3]
+[gd_resource type="Resource" script_class="Credits" format=3 uid="uid://bqxkiiipvr6at"]
 
-[ext_resource type="Script" path="res://scripts/data/credits.gd" id="1_credits"]
-[ext_resource type="Script" path="res://scripts/data/credit_entry.gd" id="2_entry"]
+[ext_resource type="Script" uid="uid://o62ck62fdted" path="res://scripts/data/credits.gd" id="1_credits"]
+[ext_resource type="Script" uid="uid://byyr18mogxp24" path="res://scripts/data/credit_entry.gd" id="2_entry"]
 
 [sub_resource type="Resource" id="Resource_name1"]
 script = ExtResource("2_entry")
-name = "[NAME1]"
+name = "Jawad Batwa"
 role = "Creator/Developer"
 
 [sub_resource type="Resource" id="Resource_name2"]
 script = ExtResource("2_entry")
-name = "[NAME2]"
+name = "Ziyad Khayyat"
 role = "Game Designer"
+
+[sub_resource type="Resource" id="Resource_2q5yg"]
+script = ExtResource("2_entry")
+name = "Abdulmajid Alhakbani"
+role = "Playtester/Game Designer"
+metadata/_custom_type_script = "uid://byyr18mogxp24"
 
 [sub_resource type="Resource" id="Resource_claude"]
 script = ExtResource("2_entry")
@@ -20,5 +26,4 @@ role = "AI"
 
 [resource]
 script = ExtResource("1_credits")
-title = "Tide & Trove"
-entries = Array[ExtResource("2_entry")]([SubResource("Resource_name1"), SubResource("Resource_name2"), SubResource("Resource_claude")])
+entries = Array[ExtResource("2_entry")]([SubResource("Resource_name1"), SubResource("Resource_name2"), SubResource("Resource_2q5yg"), SubResource("Resource_claude")])
